@@ -18712,6 +18712,18 @@ img {
   color: var(--primary, #f4511e);
 }
 
+.checkout-compact-payment.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f6f6f7;
+}
+
+.checkout-compact-payment.is-disabled:hover {
+  border-color: #ececef;
+  background: #f6f6f7;
+  box-shadow: none;
+}
+
 .checkout-compact-payment > span:last-child {
   min-width: 0;
   display: flex;
@@ -20545,6 +20557,16 @@ img {
 .order-retry-method.selected {
   border-color: var(--food-primary);
   background: #fff8f5;
+}
+
+.order-retry-method.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.order-retry-method.is-disabled:hover {
+  border-color: #e7e2dd;
+  background: #fff;
 }
 
 .order-retry-method input {

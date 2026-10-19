@@ -1,4 +1,4 @@
-﻿using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Models;
 using DatMonAnOnline.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -126,6 +126,21 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            await _context.Donhangs
+                .FromSqlInterpolated(
+                    $"SELECT * FROM donhang WHERE MaDonHang = {donHang.MaDonHang} FOR UPDATE")
+                .AsNoTracking()
+                .ToListAsync();
+
+            var idem = await IdempotencyStore.CheckAsync(
+                _context, Request, khachHang.MaTaiKhoan, request);
+
+            if (idem.Result != null)
+                return idem.Result;
+
             var daThanhCong = await _context.Thanhtoans.AnyAsync(x =>
                 x.MaDonHang == donHang.MaDonHang &&
                 x.TrangThaiThanhToan == "ThanhCong"
@@ -133,6 +148,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (daThanhCong)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn hàng đã thanh toán thành công."
@@ -146,6 +162,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (dangCho)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn hàng đang có giao dịch chờ thanh toán."
@@ -158,20 +175,36 @@ namespace DatMonAnOnline.API.Controllers
 
             if (phuongThuc == null)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Phương thức thanh toán không hợp lệ hoặc đã tắt."
                 });
             }
 
+            var tuChoiVi = await TruViFoodPayNeuCan(
+                khachHang,
+                phuongThuc.TenPhuongThuc,
+                donHang.ThanhTien);
+
+            if (tuChoiVi != null)
+            {
+                await transaction.RollbackAsync();
+                return tuChoiVi;
+            }
+
+            var laFoodPay = LaFoodPay(phuongThuc.TenPhuongThuc);
+
             var thanhToan = new Thanhtoan
             {
                 MaDonHang = donHang.MaDonHang,
                 MaPhuongThuc = phuongThuc.MaPhuongThuc,
                 SoTien = donHang.ThanhTien,
-                TrangThaiThanhToan = "ChoThanhToan",
-                MaGiaoDich = null,
-                ThoiGianThanhToan = null
+                TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
+                MaGiaoDich = laFoodPay
+                    ? $"FOODPAY_{DateTime.Now:yyyyMMddHHmmss}"
+                    : null,
+                ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
             };
 
             _context.Thanhtoans.Add(thanhToan);
@@ -181,13 +214,30 @@ namespace DatMonAnOnline.API.Controllers
             if (string.Equals(
                 phuongThuc.TenPhuongThuc,
                 "COD",
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase) ||
+                laFoodPay)
             {
                 thongBaoDonMoi =
                     await TaoThongBaoDonMoiChoQuan(donHang);
             }
 
             await _context.SaveChangesAsync();
+
+            var response = new
+            {
+                message = "Tạo thanh toán thành công.",
+                maThanhToan = thanhToan.MaThanhToan,
+                maDonHang = thanhToan.MaDonHang,
+                maPhuongThuc = thanhToan.MaPhuongThuc,
+                tenPhuongThuc = phuongThuc.TenPhuongThuc,
+                soTien = thanhToan.SoTien,
+                trangThaiThanhToan = thanhToan.TrangThaiThanhToan
+            };
+
+            var result = await IdempotencyStore.SaveSuccessAsync(
+                _context, idem, response);
+
+            await transaction.CommitAsync();
 
             if (thongBaoDonMoi.HasValue)
             {
@@ -198,16 +248,7 @@ namespace DatMonAnOnline.API.Controllers
                 );
             }
 
-            return Ok(new
-            {
-                message = "Tạo thanh toán thành công.",
-                maThanhToan = thanhToan.MaThanhToan,
-                maDonHang = thanhToan.MaDonHang,
-                maPhuongThuc = thanhToan.MaPhuongThuc,
-                tenPhuongThuc = phuongThuc.TenPhuongThuc,
-                soTien = thanhToan.SoTien,
-                trangThaiThanhToan = thanhToan.TrangThaiThanhToan
-            });
+            return result;
         }
 
         [HttpGet("don-hang/{maDonHang:int}")]
@@ -340,8 +381,24 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            await _context.Thanhtoans
+                .FromSqlInterpolated(
+                    $"SELECT * FROM thanhtoan WHERE MaThanhToan = {id} FOR UPDATE")
+                .AsNoTracking()
+                .ToListAsync();
+
+            var idem = await IdempotencyStore.CheckAsync(
+                _context, Request, khachHang.MaTaiKhoan, request);
+
+            if (idem.Result != null)
+                return idem.Result;
+
             if (thanhToan.TrangThaiThanhToan != "ChoThanhToan")
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Chỉ mô phỏng được giao dịch đang chờ thanh toán."
@@ -353,9 +410,19 @@ namespace DatMonAnOnline.API.Controllers
                 "COD",
                 StringComparison.OrdinalIgnoreCase))
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Thanh toán khi nhận hàng không mô phỏng. Giao dịch sẽ thành công khi quán hoàn thành đơn."
+                });
+            }
+
+            if (LaFoodPay(thanhToan.MaPhuongThucNavigation.TenPhuongThuc))
+            {
+                await transaction.RollbackAsync();
+                return BadRequest(new
+                {
+                    message = "Thanh toán FoodPay không mô phỏng. Giao dịch thành công ngay khi đặt đơn."
                 });
             }
 
@@ -376,16 +443,7 @@ namespace DatMonAnOnline.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (thongBaoDonMoi.HasValue)
-            {
-                await GuiDonMoiRealtimeAnToan(
-                    thongBaoDonMoi.Value.MaTaiKhoan,
-                    thongBaoDonMoi.Value.ThongBao,
-                    donHang
-                );
-            }
-
-            return Ok(new
+            var response = new
             {
                 message = ketQua == "ThanhCong"
                     ? "Thanh toán thành công."
@@ -398,7 +456,23 @@ namespace DatMonAnOnline.API.Controllers
                 maGiaoDich = thanhToan.MaGiaoDich,
                 thoiGianThanhToan =
                     thanhToan.ThoiGianThanhToan
-            });
+            };
+
+            var result = await IdempotencyStore.SaveSuccessAsync(
+                _context, idem, response);
+
+            await transaction.CommitAsync();
+
+            if (thongBaoDonMoi.HasValue)
+            {
+                await GuiDonMoiRealtimeAnToan(
+                    thongBaoDonMoi.Value.MaTaiKhoan,
+                    thongBaoDonMoi.Value.ThongBao,
+                    donHang
+                );
+            }
+
+            return result;
         }
 
         [HttpPost("{id:int}/doi-phuong-thuc")]
@@ -461,8 +535,24 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            await _context.Donhangs
+                .FromSqlInterpolated(
+                    $"SELECT * FROM donhang WHERE MaDonHang = {donHang.MaDonHang} FOR UPDATE")
+                .AsNoTracking()
+                .ToListAsync();
+
+            var idem = await IdempotencyStore.CheckAsync(
+                _context, Request, khachHang.MaTaiKhoan, request);
+
+            if (idem.Result != null)
+                return idem.Result;
+
             if (thanhToanCu.TrangThaiThanhToan == "ThanhCong")
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn đã thanh toán thành công, không thể đổi phương thức."
@@ -471,6 +561,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (thanhToanCu.TrangThaiThanhToan != "ThatBai")
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Chỉ đổi phương thức khi giao dịch thất bại."
@@ -479,6 +570,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (donHang.MaTrangThai == 6)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn hàng đã huỷ, không thể đổi phương thức thanh toán."
@@ -492,6 +584,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (daThanhCong)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn hàng đã thanh toán thành công."
@@ -505,6 +598,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (dangCho)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Đơn hàng đang có giao dịch chờ thanh toán."
@@ -517,20 +611,36 @@ namespace DatMonAnOnline.API.Controllers
 
             if (phuongThuc == null)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     message = "Phương thức thanh toán không hợp lệ hoặc đã tắt."
                 });
             }
 
+            var tuChoiVi = await TruViFoodPayNeuCan(
+                khachHang,
+                phuongThuc.TenPhuongThuc,
+                donHang.ThanhTien);
+
+            if (tuChoiVi != null)
+            {
+                await transaction.RollbackAsync();
+                return tuChoiVi;
+            }
+
+            var laFoodPay = LaFoodPay(phuongThuc.TenPhuongThuc);
+
             var thanhToanMoi = new Thanhtoan
             {
                 MaDonHang = thanhToanCu.MaDonHang,
                 MaPhuongThuc = phuongThuc.MaPhuongThuc,
                 SoTien = donHang.ThanhTien,
-                TrangThaiThanhToan = "ChoThanhToan",
-                MaGiaoDich = null,
-                ThoiGianThanhToan = null
+                TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
+                MaGiaoDich = laFoodPay
+                    ? $"FOODPAY_{DateTime.Now:yyyyMMddHHmmss}"
+                    : null,
+                ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
             };
 
             _context.Thanhtoans.Add(thanhToanMoi);
@@ -540,13 +650,31 @@ namespace DatMonAnOnline.API.Controllers
             if (string.Equals(
                 phuongThuc.TenPhuongThuc,
                 "COD",
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase) ||
+                laFoodPay)
             {
                 thongBaoDonMoi =
                     await TaoThongBaoDonMoiChoQuan(donHang);
             }
 
             await _context.SaveChangesAsync();
+
+            var response = new
+            {
+                message = "Đã tạo giao dịch mới với phương thức thanh toán khác.",
+                maThanhToanCu = thanhToanCu.MaThanhToan,
+                maThanhToanMoi = thanhToanMoi.MaThanhToan,
+                maPhuongThuc = thanhToanMoi.MaPhuongThuc,
+                tenPhuongThuc = phuongThuc.TenPhuongThuc,
+                soTien = thanhToanMoi.SoTien,
+                trangThaiThanhToan =
+                    thanhToanMoi.TrangThaiThanhToan
+            };
+
+            var result = await IdempotencyStore.SaveSuccessAsync(
+                _context, idem, response);
+
+            await transaction.CommitAsync();
 
             if (thongBaoDonMoi.HasValue)
             {
@@ -557,17 +685,45 @@ namespace DatMonAnOnline.API.Controllers
                 );
             }
 
-            return Ok(new
+            return result;
+        }
+
+        private static bool LaFoodPay(string? tenPhuongThuc)
+        {
+            return string.Equals(
+                tenPhuongThuc,
+                "FoodPay",
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<IActionResult?> TruViFoodPayNeuCan(
+            Khachhang khachHang,
+            string tenPhuongThuc,
+            decimal soTien)
+        {
+            if (!LaFoodPay(tenPhuongThuc))
+                return null;
+
+            await _context.Khachhangs
+                .FromSqlInterpolated(
+                    $"SELECT * FROM khachhang WHERE MaKhachHang = {khachHang.MaKhachHang} FOR UPDATE")
+                .AsNoTracking()
+                .ToListAsync();
+
+            await _context.Entry(khachHang).ReloadAsync();
+
+            var soTienVi = (int)soTien;
+
+            if (khachHang.DiemTichLuy < soTienVi)
             {
-                message = "Đã tạo giao dịch mới với phương thức thanh toán khác.",
-                maThanhToanCu = thanhToanCu.MaThanhToan,
-                maThanhToanMoi = thanhToanMoi.MaThanhToan,
-                maPhuongThuc = thanhToanMoi.MaPhuongThuc,
-                tenPhuongThuc = phuongThuc.TenPhuongThuc,
-                soTien = thanhToanMoi.SoTien,
-                trangThaiThanhToan =
-                    thanhToanMoi.TrangThaiThanhToan
-            });
+                return BadRequest(new
+                {
+                    message = "Số dư ví FoodPay không đủ để thanh toán."
+                });
+            }
+
+            khachHang.DiemTichLuy -= soTienVi;
+            return null;
         }
 
         private async Task<bool> ExpireOnlineOrderIfNeeded(Thanhtoan payment)

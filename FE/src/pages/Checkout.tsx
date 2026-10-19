@@ -22,6 +22,7 @@ import {
   Store,
   TicketPercent,
   UtensilsCrossed,
+  Wallet,
   X,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ import {
   type TienDonHang,
 } from "../services/orderService";
 import { getCart, reserveCartForCheckout } from "../services/cartService";
+import { getCustomerProfile } from "../services/customerService";
 import {
   checkPromotion,
   getVoucherWallet,
@@ -229,6 +231,8 @@ function Checkout() {
     setSelectedPaymentId,
   ] = useState<number | null>(null);
 
+  const [soDuVi, setSoDuVi] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     if (!localStorage.getItem("token")) {
@@ -256,18 +260,21 @@ function Checkout() {
           addressData,
           paymentData,
           cart,
+          profile,
         ] = await Promise.all([
           getAddresses(),
           getPaymentMethods(),
           getCart(
             maGioHang,
           ) as Promise<GioHang>,
+          getCustomerProfile() as Promise<{ diemTichLuy: number }>,
         ]);
 
         if (cancelled) return;
 
         setAddresses(addressData);
         setPhuongThucList(paymentData);
+        setSoDuVi(Number(profile.diemTichLuy ?? 0));
 
         const defaultAddress =
           addressData.find(
@@ -424,6 +431,21 @@ function Checkout() {
 
     return () => window.clearInterval(interval);
   }, [maGioHang]);
+
+  useEffect(() => {
+    if (selectedPaymentId == null || !checkoutData) return;
+
+    const selected = phuongThucList.find(
+      (item) => item.maPhuongThuc === selectedPaymentId,
+    );
+
+    if (
+      selected?.tenPhuongThuc === "FoodPay" &&
+      soDuVi < Number(checkoutData.thanhTien)
+    ) {
+      setSelectedPaymentId(null);
+    }
+  }, [selectedPaymentId, checkoutData, soDuVi, phuongThucList]);
 
   const applyPromotionCode =
     async (code: string) => {
@@ -695,7 +717,9 @@ function Checkout() {
 
         if (
           payment.tenPhuongThuc ===
-          "COD"
+            "COD" ||
+          payment.tenPhuongThuc ===
+            "FoodPay"
         ) {
           navigate(
             `/don-hang/${donDaTao.maDonHang}`,
@@ -724,7 +748,9 @@ function Checkout() {
 
       if (
         payment.tenPhuongThuc ===
-        "COD"
+          "COD" ||
+        payment.tenPhuongThuc ===
+          "FoodPay"
       ) {
         navigate(
           `/don-hang/${response.maDonHang}`,
@@ -848,6 +874,12 @@ function Checkout() {
     payment?.tenPhuongThuc
       .toUpperCase()
       .includes("COD") ?? false;
+
+  const isFoodPayPayment =
+    payment?.tenPhuongThuc === "FoodPay";
+
+  const thanhToanNgay =
+    isCodPayment || isFoodPayPayment;
 
   return (
     <main className="checkout-review-page">
@@ -1119,7 +1151,9 @@ function Checkout() {
             {payment && (
               <div className="checkout-review-payment">
                 <span>
-                  {isCodPayment ? (
+                  {isFoodPayPayment ? (
+                    <Wallet size={18} />
+                  ) : thanhToanNgay ? (
                     <Banknote size={18} />
                   ) : (
                     <Smartphone
@@ -1154,7 +1188,9 @@ function Checkout() {
                 "Đang xử lý..."
               ) : (
                 <>
-                  {isCodPayment ? (
+                  {isFoodPayPayment ? (
+                    <Wallet size={17} />
+                  ) : thanhToanNgay ? (
                     <Banknote size={17} />
                   ) : (
                     <QrCode size={17} />
@@ -1163,7 +1199,9 @@ function Checkout() {
                   <span>
                     {isCodPayment
                       ? "Đặt đơn COD"
-                      : "Tiến hành thanh toán"}
+                      : isFoodPayPayment
+                        ? "Thanh toán FoodPay"
+                        : "Tiến hành thanh toán"}
                   </span>
 
                   <ArrowRight size={16} />
@@ -1563,6 +1601,13 @@ function Checkout() {
                       item.tenPhuongThuc
                         .toUpperCase()
                         .includes("COD");
+                    const isFoodPay =
+                      item.tenPhuongThuc === "FoodPay";
+                    const duTien =
+                      soDuVi >=
+                      Number(checkoutData?.thanhTien ?? 0);
+                    const khoaFoodPay =
+                      isFoodPay && !duTien;
 
                     return (
                       <label
@@ -1574,20 +1619,22 @@ function Checkout() {
                           item.maPhuongThuc
                             ? "selected"
                             : ""
-                        }`}
+                        }${khoaFoodPay ? " is-disabled" : ""}`}
                       >
                         <input
                           type="radio"
                           name="payment"
+                          disabled={khoaFoodPay}
                           checked={
                             selectedPaymentId ===
                             item.maPhuongThuc
                           }
-                          onChange={() =>
+                          onChange={() => {
+                            if (khoaFoodPay) return;
                             setSelectedPaymentId(
                               item.maPhuongThuc,
-                            )
-                          }
+                            );
+                          }}
                         />
 
                         <span className="payment-compact-icon">
@@ -1595,6 +1642,8 @@ function Checkout() {
                             <Banknote
                               size={18}
                             />
+                          ) : isFoodPay ? (
+                            <Wallet size={18} />
                           ) : (
                             <Smartphone
                               size={18}
@@ -1612,7 +1661,11 @@ function Checkout() {
                           <small>
                             {isCod
                               ? "Khi nhận món"
-                              : "Quét mã QR"}
+                              : isFoodPay
+                                ? khoaFoodPay
+                                  ? `Số dư ${soDuVi.toLocaleString("vi-VN")} đ, chưa đủ`
+                                  : `Ví ${soDuVi.toLocaleString("vi-VN")} đ`
+                                : "Quét mã QR"}
                           </small>
                         </span>
                       </label>

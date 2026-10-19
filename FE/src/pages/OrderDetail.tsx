@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getOrderById, getOrderStatusHistory } from "../services/orderService";
+import { getCustomerProfile } from "../services/customerService";
 import OrderReviewPanel from "../components/OrderReviewPanel";
 import PaymentQr from "../components/PaymentQr";
 import { getRestaurantById } from "../services/restaurantService";
@@ -20,6 +21,7 @@ import {
     Star,
     Store,
     UtensilsCrossed,
+    Wallet,
     XCircle,
 } from "lucide-react";
 import {
@@ -94,6 +96,7 @@ function OrderDetail() {
     const [qrBusy, setQrBusy] = useState(false);
     const [qrPaymentId, setQrPaymentId] = useState<number | null>(null);
     const [qrMethodName, setQrMethodName] = useState("");
+    const [soDuVi, setSoDuVi] = useState(0);
 
     useEffect(() => {
     const maDonHang = Number(id);
@@ -130,6 +133,15 @@ function OrderDetail() {
                     : [];
             } catch {
                 methodData = [];
+            }
+
+            try {
+                const profile = await getCustomerProfile() as { diemTichLuy: number };
+                if (!cancelled) {
+                    setSoDuVi(Number(profile.diemTichLuy ?? 0));
+                }
+            } catch {
+                if (!cancelled) setSoDuVi(0);
             }
 
             if (cancelled) return;
@@ -275,7 +287,7 @@ function OrderDetail() {
             );
             const newPaymentId = Number(created.maThanhToanMoi);
 
-            if (method.tenPhuongThuc === "COD") {
+            if (method.tenPhuongThuc === "COD" || method.tenPhuongThuc === "FoodPay") {
                 setShowRetry(false);
                 setPaymentVersion((current) => current + 1);
                 return;
@@ -695,13 +707,15 @@ function OrderDetail() {
             <section className="order-detail-card order-payment-card">
                 <div className="order-payment-heading">
                     <span className="order-payment-icon">
-                        {latestPayment.tenPhuongThuc
-                            .toUpperCase()
-                            .includes("COD") ? (
-                            <Banknote size={19} />
-                        ) : (
-                            <Smartphone size={19} />
-                        )}
+                    {latestPayment.tenPhuongThuc
+                        .toUpperCase()
+                        .includes("COD") ? (
+                        <Banknote size={19} />
+                    ) : latestPayment.tenPhuongThuc === "FoodPay" ? (
+                        <Wallet size={19} />
+                    ) : (
+                        <Smartphone size={19} />
+                    )}
                     </span>
 
                     <div>
@@ -721,7 +735,8 @@ function OrderDetail() {
                 {order.trangThai !== "DaHuy" &&
                     latestPayment.trangThaiThanhToan ===
                         "ChoThanhToan" &&
-                    latestPayment.tenPhuongThuc !== "COD" && (
+                    latestPayment.tenPhuongThuc !== "COD" &&
+                    latestPayment.tenPhuongThuc !== "FoodPay" && (
                         <button
                             type="button"
                             className="order-detail-primary-button"
@@ -753,6 +768,10 @@ function OrderDetail() {
                                     const isCod = item.tenPhuongThuc
                                         .toUpperCase()
                                         .includes("COD");
+                                    const isFoodPay = item.tenPhuongThuc === "FoodPay";
+                                    const khoaFoodPay =
+                                        isFoodPay &&
+                                        soDuVi < Number(order.thanhTien);
 
                                     return (
                                         <label
@@ -762,20 +781,22 @@ function OrderDetail() {
                                                 item.maPhuongThuc
                                                     ? "selected"
                                                     : ""
-                                            }`}
+                                            }${khoaFoodPay ? " is-disabled" : ""}`}
                                         >
                                             <input
                                                 type="radio"
                                                 name="retry-payment"
+                                                disabled={khoaFoodPay}
                                                 checked={
                                                     selectedMethodId ===
                                                     item.maPhuongThuc
                                                 }
-                                                onChange={() =>
+                                                onChange={() => {
+                                                    if (khoaFoodPay) return;
                                                     setSelectedMethodId(
                                                         item.maPhuongThuc
-                                                    )
-                                                }
+                                                    );
+                                                }}
                                             />
 
                                             <span className="order-retry-radio" />
@@ -783,6 +804,8 @@ function OrderDetail() {
                                             <span className="order-retry-icon">
                                                 {isCod ? (
                                                     <Banknote size={17} />
+                                                ) : isFoodPay ? (
+                                                    <Wallet size={17} />
                                                 ) : (
                                                     <Smartphone size={17} />
                                                 )}
@@ -796,7 +819,11 @@ function OrderDetail() {
                                                 <small>
                                                     {isCod
                                                         ? "Thanh toán khi nhận món"
-                                                        : "Thanh toán trực tuyến"}
+                                                        : isFoodPay
+                                                          ? khoaFoodPay
+                                                            ? `Số dư ${soDuVi.toLocaleString("vi-VN")} đ, chưa đủ`
+                                                            : `Ví ${soDuVi.toLocaleString("vi-VN")} đ`
+                                                          : "Thanh toán trực tuyến"}
                                                 </small>
                                             </span>
                                         </label>

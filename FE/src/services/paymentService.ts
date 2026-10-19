@@ -1,4 +1,5 @@
 import { apiFetch } from "./api";
+import { getIdempotencyKey } from "./idempotency";
 
 function authHeaders() {
   const token = localStorage.getItem("token");
@@ -13,10 +14,13 @@ export async function getPaymentMethods() {
 }
 
 export async function createPayment(maDonHang: number, maPhuongThuc: number) {
-  return apiFetch("/thanh-toan", {
+  const path = "/thanh-toan";
+  const body = { maDonHang, maPhuongThuc };
+  const key = await getIdempotencyKey(`POST ${path}`, body);
+  return apiFetch(path, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ maDonHang, maPhuongThuc }),
+    headers: { ...authHeaders(), "Idempotency-Key": key },
+    body: JSON.stringify(body),
   });
 }
 
@@ -31,18 +35,24 @@ export async function simulatePayment(
   id: number,
   ketQua: "ThanhCong" | "ThatBai",
 ) {
-  return apiFetch(`/thanh-toan/${id}/mo-phong`, {
+  const path = `/thanh-toan/${id}/mo-phong`;
+  const body = { ketQua };
+  const key = await getIdempotencyKey(`PUT ${path}`, body);
+  return apiFetch(path, {
     method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify({ ketQua }),
+    headers: { ...authHeaders(), "Idempotency-Key": key },
+    body: JSON.stringify(body),
   });
 }
 
 export async function changePaymentMethod(id: number, maPhuongThuc: number) {
-  return apiFetch(`/thanh-toan/${id}/doi-phuong-thuc`, {
+  const path = `/thanh-toan/${id}/doi-phuong-thuc`;
+  const body = { maPhuongThuc };
+  const key = await getIdempotencyKey(`POST ${path}`, body);
+  return apiFetch(path, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ maPhuongThuc }),
+    headers: { ...authHeaders(), "Idempotency-Key": key },
+    body: JSON.stringify(body),
   });
 }
 

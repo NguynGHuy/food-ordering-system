@@ -1,4 +1,5 @@
 import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from "./api";
+import { getIdempotencyKey } from "./idempotency";
 
 export interface DatHangRequest {
   maGioHang: number;
@@ -38,9 +39,14 @@ export async function checkPreCheckout(
 
 export async function placeOrder(data: DatHangRequest): Promise<DatHangResult> {
   const token = localStorage.getItem("token");
-  return apiFetch("/don-hang/dat-hang", {
+  const path = "/don-hang/dat-hang";
+  const key = await getIdempotencyKey(`POST ${path}`, data);
+  return apiFetch(path, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Idempotency-Key": key,
+    },
     body: JSON.stringify(data),
   });
 }
@@ -68,10 +74,16 @@ export async function getMyOrders<T = unknown>(
 
 export async function cancelOrder(id: number, lyDoHuy: string) {
   const token = localStorage.getItem("token");
-  return apiFetch(`/don-hang/${id}/huy`, {
+  const path = `/don-hang/${id}/huy`;
+  const body = { lyDoHuy };
+  const key = await getIdempotencyKey(`PUT ${path}`, body);
+  return apiFetch(path, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ lyDoHuy }),
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Idempotency-Key": key,
+    },
+    body: JSON.stringify(body),
   });
 }
 export async function getOrderById(id: number): Promise<OrderDetails> {

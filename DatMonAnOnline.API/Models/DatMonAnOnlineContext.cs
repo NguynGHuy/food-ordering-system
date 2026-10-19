@@ -484,7 +484,7 @@ public partial class DatMonAnOnlineContext : DbContext
 
             entity.HasIndex(e => e.MaThanhToan, "UQ_HoanTien_ThanhToan").IsUnique();
 
-            entity.Property(e => e.KenhHoanTien).HasColumnType("enum('MoMo','ZaloPay','VNPay','ChuyenKhoan','ThuCong')");
+            entity.Property(e => e.KenhHoanTien).HasColumnType("enum('MoMo','ZaloPay','VNPay','ChuyenKhoan','ThuCong','FoodPay')");
             entity.Property(e => e.LyDoHoan).HasMaxLength(500);
             entity.Property(e => e.MaGiaoDichHoan).HasMaxLength(100);
             entity.Property(e => e.MaYeuCauHoan).HasMaxLength(100);

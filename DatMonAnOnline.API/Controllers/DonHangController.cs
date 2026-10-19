@@ -97,50 +97,73 @@ namespace DatMonAnOnline.API.Controllers
             if (maTaiKhoan == null)
                 return Unauthorized(new { Message = "Vui lòng đăng nhập." });
 
-            var khachHang = await _context.Khachhangs
-                .FirstOrDefaultAsync(k => k.MaTaiKhoan == maTaiKhoan);
-
-            if (khachHang == null) return Unauthorized();
-
-            var diaChi = await _context.Diachis.FirstOrDefaultAsync(d =>
-                d.MaDiaChi == request.MaDiaChi &&
-                d.MaKhachHang == khachHang.MaKhachHang
-            );
-
-            if (diaChi == null)
-                return BadRequest(new { Message = "Địa chỉ giao hàng không hợp lệ." });
-
-            var (tongTienHang, phiShip, soTienGiam, maNhaHang, loi) =
-                await TinhTienDonHang(
-                    khachHang.MaKhachHang,
-                    request.MaGioHang,
-                    request.MaKhuyenMai
-                );
-
-            if (loi != null)
-                return BadRequest(new { Message = loi });
-
-            var thanhTien = tongTienHang + phiShip - soTienGiam;
-            var nhaHangId = maNhaHang!.Value;
-
-            var nhaHangNhanDon = await _context.Nhahangs
-                .AsNoTracking()
-                .Where(n => n.MaNhaHang == nhaHangId)
-                .Select(n => new
-                {
-                    n.MaTaiKhoan,
-                    n.TenNhaHang
-                })
-                .FirstOrDefaultAsync();
-
-            if (nhaHangNhanDon == null)
-                return BadRequest(new { Message = "Không tìm thấy nhà hàng nhận đơn." });
-
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
             try
             {
+                var khachDaKhoa = await _context.Khachhangs
+                    .FromSqlInterpolated(
+                        $"SELECT * FROM khachhang WHERE MaTaiKhoan = {maTaiKhoan} FOR UPDATE")
+                    .ToListAsync();
+
+                var khachHang = khachDaKhoa.SingleOrDefault();
+
+                if (khachHang == null)
+                {
+                    await transaction.RollbackAsync();
+                    return Unauthorized();
+                }
+
+                var idem = await IdempotencyStore.CheckAsync(
+                    _context, Request, maTaiKhoan.Value, request);
+
+                if (idem.Result != null)
+                    return idem.Result;
+
+                var diaChi = await _context.Diachis.FirstOrDefaultAsync(d =>
+                    d.MaDiaChi == request.MaDiaChi &&
+                    d.MaKhachHang == khachHang.MaKhachHang
+                );
+
+                if (diaChi == null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "Địa chỉ giao hàng không hợp lệ." });
+                }
+
+                var (tongTienHang, phiShip, soTienGiam, maNhaHang, loi) =
+                    await TinhTienDonHang(
+                        khachHang.MaKhachHang,
+                        request.MaGioHang,
+                        request.MaKhuyenMai
+                    );
+
+                if (loi != null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = loi });
+                }
+
+                var thanhTien = tongTienHang + phiShip - soTienGiam;
+                var nhaHangId = maNhaHang!.Value;
+
+                var nhaHangNhanDon = await _context.Nhahangs
+                    .AsNoTracking()
+                    .Where(n => n.MaNhaHang == nhaHangId)
+                    .Select(n => new
+                    {
+                        n.MaTaiKhoan,
+                        n.TenNhaHang
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (nhaHangNhanDon == null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "Không tìm thấy nhà hàng nhận đơn." });
+                }
+
                 // Đơn hàng - khóa nhà hàng trong lúc kiểm tra và tạo đơn
                 var nhaHangsDaKhoa = await _context.Nhahangs
                     .FromSqlInterpolated(
@@ -181,7 +204,6 @@ namespace DatMonAnOnline.API.Controllers
 
                 var hopDongNhanDon = hopDongsDaKhoa.SingleOrDefault();
 
-                /* tam - test
                 if (hopDongNhanDon == null)
                 {
                     await transaction.RollbackAsync();
@@ -193,7 +215,6 @@ namespace DatMonAnOnline.API.Controllers
                             "Không thể tạo đơn mới."
                     });
                 }
-                */
 
                 // Đơn hàng - khóa lượt sử dụng khuyến mãi
                 decimal giamGiaNhaHang = 0;
@@ -387,12 +408,37 @@ namespace DatMonAnOnline.API.Controllers
                     });
                 }
 
+                var laFoodPay = string.Equals(
+                    phuongThuc.TenPhuongThuc,
+                    "FoodPay",
+                    StringComparison.OrdinalIgnoreCase);
+
+                if (laFoodPay)
+                {
+                    var soTienVi = (int)thanhTien;
+
+                    if (khachHang.DiemTichLuy < soTienVi)
+                    {
+                        await transaction.RollbackAsync();
+                        return BadRequest(new
+                        {
+                            Message = "Số dư ví FoodPay không đủ để thanh toán."
+                        });
+                    }
+
+                    khachHang.DiemTichLuy -= soTienVi;
+                }
+
                 var thanhToan = new Thanhtoan
                 {
                     MaDonHang = donHang.MaDonHang,
                     MaPhuongThuc = phuongThuc.MaPhuongThuc,
                     SoTien = thanhTien,
-                    TrangThaiThanhToan = "ChoThanhToan"
+                    TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
+                    ThoiGianThanhToan = laFoodPay ? DateTime.Now : null,
+                    MaGiaoDich = laFoodPay
+                        ? $"FOODPAY_{DateTime.Now:yyyyMMddHHmmss}"
+                        : null
                 };
 
                 _context.Thanhtoans.Add(thanhToan);
@@ -402,7 +448,8 @@ namespace DatMonAnOnline.API.Controllers
                 if (string.Equals(
                     phuongThuc.TenPhuongThuc,
                     "COD",
-                    StringComparison.OrdinalIgnoreCase))
+                    StringComparison.OrdinalIgnoreCase) ||
+                    laFoodPay)
                 {
                     var noiDung =
                         $"Bạn có đơn hàng mới {donHang.MaDonHangHienThi}, " +
@@ -433,6 +480,20 @@ namespace DatMonAnOnline.API.Controllers
                     .RemoveRange(gioHang.Chitietgiohangs);
 
                 await _context.SaveChangesAsync();
+
+                var response = new
+                {
+                    Message = "Đặt hàng thành công",
+                    MaDonHang = donHang.MaDonHang,
+                    MaDonHangHienThi = donHang.MaDonHangHienThi,
+                    MaThanhToan = thanhToan.MaThanhToan,
+                    TenPhuongThuc = phuongThuc.TenPhuongThuc,
+                    ThanhTien = thanhTien
+                };
+
+                var result = await IdempotencyStore.SaveSuccessAsync(
+                    _context, idem, response);
+
                 await transaction.CommitAsync();
                 _checkoutReservations.Release(request.MaGioHang);
 
@@ -482,15 +543,7 @@ namespace DatMonAnOnline.API.Controllers
                     }
                 }
 
-                return Ok(new
-                {
-                    Message = "Đặt hàng thành công",
-                    MaDonHang = donHang.MaDonHang,
-                    MaDonHangHienThi = donHang.MaDonHangHienThi,
-                    MaThanhToan = thanhToan.MaThanhToan,
-                    TenPhuongThuc = phuongThuc.TenPhuongThuc,
-                    ThanhTien = thanhTien
-                });
+                return result;
             }
             catch (Exception ex)
             {
@@ -813,6 +866,21 @@ namespace DatMonAnOnline.API.Controllers
 
             var role = User.FindFirstValue(ClaimTypes.Role);
 
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            await _context.Donhangs
+                .FromSqlInterpolated(
+                    $"SELECT * FROM donhang WHERE MaDonHang = {id} FOR UPDATE")
+                .AsNoTracking()
+                .ToListAsync();
+
+            var idem = await IdempotencyStore.CheckAsync(
+                _context, Request, maTaiKhoan.Value, request);
+
+            if (idem.Result != null)
+                return idem.Result;
+
             var donHang = await _context.Donhangs
                 .Include(order => order.Thanhtoans)
                     .ThenInclude(payment => payment.MaPhuongThucNavigation)
@@ -820,7 +888,10 @@ namespace DatMonAnOnline.API.Controllers
                 .FirstOrDefaultAsync(order => order.MaDonHang == id);
 
             if (donHang == null)
+            {
+                await transaction.RollbackAsync();
                 return NotFound(new { Message = "Đơn hàng không tồn tại." });
+            }
 
             if (role == "KhachHang")
             {
@@ -830,6 +901,7 @@ namespace DatMonAnOnline.API.Controllers
                 if (khachHang == null ||
                     donHang.MaKhachHang != khachHang.MaKhachHang)
                 {
+                    await transaction.RollbackAsync();
                     return StatusCode(403, new
                     {
                         Message = "Bạn không có quyền huỷ đơn hàng này."
@@ -844,6 +916,7 @@ namespace DatMonAnOnline.API.Controllers
                 if (nhaHang == null ||
                     donHang.MaNhaHang != nhaHang.MaNhaHang)
                 {
+                    await transaction.RollbackAsync();
                     return StatusCode(403, new
                     {
                         Message = "Đơn hàng này không thuộc quán của bạn."
@@ -853,6 +926,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (donHang.MaTrangThai > 2)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(new
                 {
                     Message = "Không thể huỷ đơn hàng ở trạng thái hiện tại."
@@ -873,8 +947,6 @@ namespace DatMonAnOnline.API.Controllers
             var lyDo = request.LyDoHuy.Trim();
             decimal soTienHoan = 0;
             var daHoanTien = false;
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var claimed = await _context.Donhangs
                 .Where(order =>
@@ -899,7 +971,7 @@ namespace DatMonAnOnline.API.Controllers
             var khoanHoan = donHang.Thanhtoans
                 .Where(payment =>
                     payment.TrangThaiThanhToan == "ThanhCong" &&
-                    payment.MaPhuongThucNavigation.TenPhuongThuc is "Momo" or "VNPay" or "ZaloPay")
+                    payment.MaPhuongThucNavigation.TenPhuongThuc is "Momo" or "VNPay" or "ZaloPay" or "FoodPay")
                 .OrderByDescending(payment => payment.MaThanhToan)
                 .FirstOrDefault();
 
@@ -987,7 +1059,7 @@ namespace DatMonAnOnline.API.Controllers
                     MaTaiKhoanXuLy = maTaiKhoan.Value,
                     SoTienHoan = soTienHoan,
                     LyDoHoan = lyDo,
-                    KenhHoanTien = "ThuCong",
+                    KenhHoanTien = "FoodPay",
                     TrangThai = "ThanhCong",
                     MaYeuCauHoan = $"HOAN-{donHang.MaDonHang}",
                     ThoiGianYeuCau = bayGio,
@@ -999,6 +1071,17 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            var response = new
+            {
+                Message = "Huỷ đơn hàng thành công.",
+                DaHoanTien = daHoanTien,
+                SoTienHoan = soTienHoan
+            };
+
+            var result = await IdempotencyStore.SaveSuccessAsync(
+                _context, idem, response);
+
             await transaction.CommitAsync();
 
             foreach (var item in thongBaoHuyDaTao)
@@ -1046,12 +1129,7 @@ namespace DatMonAnOnline.API.Controllers
                 }
             }
 
-            return Ok(new
-            {
-                Message = "Huỷ đơn hàng thành công.",
-                DaHoanTien = daHoanTien,
-                SoTienHoan = soTienHoan
-            });
+            return result;
         }
 
         [HttpGet("~/api/trang-thai-don-hang")]
@@ -1486,7 +1564,6 @@ namespace DatMonAnOnline.API.Controllers
                 );
             }
 
-            /* tam - test
             var homNay = DateOnly.FromDateTime(DateTime.Now);
 
             var coHopDongHieuLuc = await _context.Hopdongnhahangs
@@ -1505,7 +1582,6 @@ namespace DatMonAnOnline.API.Controllers
                     "Nhà hàng chưa có hợp đồng còn hiệu lực để nhận đơn mới."
                 );
             }
-            */
 
             var trangThaiNhaHang =
                 TrangThaiNhaHangHelper.KiemTra(nhaHang);

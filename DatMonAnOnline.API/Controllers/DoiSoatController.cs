@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace DatMonAnOnline.API.Controllers;
@@ -197,7 +198,7 @@ public class AdminDoiSoatController : ControllerBase
             return BadRequest(new { message = "Kỳ đối soát không tồn tại hoặc chưa được nhà hàng xác nhận." });
 
         var isDup = await _context.Doisoatnhahangs.AnyAsync(x => x.MaGiaoDichDoiSoat == maGiaoDich);
-        if (isOverlap) return Conflict(new { message = "Mã giao dịch này đã được sử dụng cho một kỳ đối soát khác." });
+        if (isDup) return Conflict(new { message = "Mã giao dịch này đã được sử dụng cho một kỳ đối soát khác." });
 
         doiSoat.TrangThai = "DaThanhToan";
         doiSoat.NgayThanhToan = DateTime.Now;
