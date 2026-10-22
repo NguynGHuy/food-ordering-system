@@ -23,6 +23,7 @@ import {
 } from "../services/restaurantService";
 import { getRestaurantOrders } from "../services/orderService";
 import ScrollReveal from "../components/ScrollReveal";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 interface RestaurantOrderSummary {
   maDonHang: number;
@@ -127,6 +128,8 @@ function QuanHome() {
 
     return () => window.clearTimeout(initialLoadTimer);
   }, [loadDashboard]);
+
+  useRealtimeRefresh(["donHang", "nhaHang", "hopDong"], loadDashboard);
 
   if (loading) {
     return (

@@ -56,7 +56,9 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<DatMonAnOnlineContext>();
+        var realtime = scope.ServiceProvider.GetRequiredService<IRealtimeNotificationService>();
         var expiredBefore = DateTime.Now.Subtract(OrderPaymentRules.OnlinePaymentLifetime);
+        var realtimeEvents = new List<(int AccountId, Thongbao Notification, Donhang Order)>();
 
         var candidates = await context.Donhangs
             .Include(order => order.Thanhtoans)
@@ -118,7 +120,7 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
                 GhiChu = "Hệ thống tự hủy: thanh toán online quá hạn 15 phút."
             });
 
-            context.Thongbaos.Add(new Thongbao
+            var notification = new Thongbao
             {
                 MaTaiKhoan = order.MaKhachHangNavigation.MaTaiKhoan,
                 TieuDe = "Đơn hàng đã tự hủy",
@@ -127,10 +129,32 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
                 DuongDan = $"/don-hang/{order.MaDonHang}",
                 DaDoc = false,
                 NgayTao = DateTime.Now
-            });
+            };
+            context.Thongbaos.Add(notification);
+            realtimeEvents.Add((
+                order.MaKhachHangNavigation.MaTaiKhoan,
+                notification,
+                order));
         }
 
         if (context.ChangeTracker.HasChanges())
+        {
             await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var item in realtimeEvents)
+            {
+                await Task.WhenAll(
+                    realtime.GuiThongBaoAsync(item.AccountId, item.Notification),
+                    realtime.GuiDonHangDaHuyAsync(
+                        item.AccountId,
+                        new
+                        {
+                            item.Order.MaDonHang,
+                            item.Order.MaDonHangHienThi,
+                            trangThai = "DaHuy",
+                            lyDoHuy = item.Order.LyDoHuy
+                        }));
+            }
+        }
     }
 }

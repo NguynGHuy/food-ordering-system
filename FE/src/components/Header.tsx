@@ -14,6 +14,7 @@ import {
   UserRound,
   UsersRound,
   Utensils,
+  WalletCards,
 } from "lucide-react";
 
 import { getCurrentUser } from "../services/userService";
@@ -337,6 +338,16 @@ function Header() {
                         <ReceiptText size={18} />
 
                         <span>Đơn hàng của tôi</span>
+                      </Link>
+
+                      <Link
+                        to="/vi"
+                        className="dropdown-item"
+                        onClick={closeMenu}
+                      >
+                        <WalletCards size={18} />
+
+                        <span>Lịch sử giao dịch ví</span>
                       </Link>
 
                       <Link

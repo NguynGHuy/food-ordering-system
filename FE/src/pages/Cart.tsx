@@ -72,9 +72,6 @@ function Cart() {
             );
 
             setCart(data);
-            if (data.daHetHan) {
-                alert("Giỏ hàng đã hết hạn sau 5 phút không hoạt động.");
-            }
         } catch (err) {
             setError(
                 err instanceof Error
@@ -390,6 +387,16 @@ if (cart.chiTiet.length === 0) {
             Xóa giỏ hàng
         </button>
     </header>
+
+    {cart.canLamMoi && (
+        <div className="cart-refresh-notice" role="status">
+            <CircleAlert size={18} />
+            <span>
+                Giỏ hàng đã lâu chưa được chỉnh sửa. Món, giá và ưu đãi sẽ
+                được kiểm tra lại khi thanh toán; các món của bạn vẫn được giữ nguyên.
+            </span>
+        </div>
+    )}
 
     <div className="restaurant-cart-layout">
         <section className="cart-items-panel">

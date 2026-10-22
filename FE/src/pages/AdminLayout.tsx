@@ -12,7 +12,8 @@ import {
     UtensilsCrossed,
     X,
     FileText,
-    Wallet
+    Wallet,
+    Landmark
 } from "lucide-react";
 import {
     Link,
@@ -59,6 +60,12 @@ const NAV_ITEMS = [
         label: "Đối soát doanh thu",
         description: "Thanh toán cho nhà hàng",
         icon: Wallet,
+    },
+    {
+        to: "/admin/tai-chinh",
+        label: "Tài chính nền tảng",
+        description: "Doanh thu và công nợ",
+        icon: Landmark,
     },
     {
         to: "/admin/khuyen-mai",

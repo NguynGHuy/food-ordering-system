@@ -97,6 +97,7 @@ function OrderDetail() {
     const [qrPaymentId, setQrPaymentId] = useState<number | null>(null);
     const [qrMethodName, setQrMethodName] = useState("");
     const [soDuVi, setSoDuVi] = useState(0);
+    const displayedOrderId = order?.maDonHang;
 
     useEffect(() => {
     const maDonHang = Number(id);
@@ -136,9 +137,9 @@ function OrderDetail() {
             }
 
             try {
-                const profile = await getCustomerProfile() as { diemTichLuy: number };
+                const profile = await getCustomerProfile() as { soDuVi: number };
                 if (!cancelled) {
-                    setSoDuVi(Number(profile.diemTichLuy ?? 0));
+                    setSoDuVi(Number(profile.soDuVi ?? 0));
                 }
             } catch {
                 if (!cancelled) setSoDuVi(0);
@@ -190,7 +191,7 @@ function OrderDetail() {
     };
 }, [id, paymentVersion]);
     useEffect(() => {
-    if (!order) return;
+    if (!displayedOrderId) return;
 
     const elements = Array.from(
         document.querySelectorAll<HTMLElement>(
@@ -255,7 +256,7 @@ function OrderDetail() {
         cancelAnimationFrame(secondFrame);
         observer?.disconnect();
     };
-}, [order?.maDonHang, showReview]);
+}, [displayedOrderId, showReview]);
     const latestPayment = [...payments].sort(
         (a, b) => b.maThanhToan - a.maThanhToan
     )[0];

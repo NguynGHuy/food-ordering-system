@@ -88,7 +88,6 @@ function Promotions() {
       setCounts(data.counts);
       if (data.pageNumber !== pageNumber) setPageNumber(data.pageNumber);
     } catch (err) {
-      console.error("Lỗi lấy danh sách khuyến mãi:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -127,7 +126,6 @@ function Promotions() {
           : `Đã bật mã ${item.maCode}.`,
       );
     } catch (err) {
-      console.error("Lỗi thay đổi trạng thái mã:", err);
       setError(
         err instanceof Error
           ? err.message

@@ -78,7 +78,6 @@ function QuanRestaurantInfo() {
       setRestaurant(data);
       setForm(toForm(data));
     } catch (err) {
-      console.error("Lỗi lấy thông tin nhà hàng:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -157,7 +156,6 @@ function QuanRestaurantInfo() {
 
       window.setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      console.error("Lỗi cập nhật nhà hàng:", err);
       setError(
         err instanceof Error ? err.message : "Cập nhật thông tin thất bại.",
       );

@@ -16,13 +16,16 @@ namespace DatMonAnOnline.API.Controllers
     {
         private readonly DatMonAnOnlineContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IRealtimeNotificationService _realtime;
 
         public AdminController(
             DatMonAnOnlineContext context,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            IRealtimeNotificationService realtime)
         {
             _context = context;
             _environment = environment;
+            _realtime = realtime;
         }
 
         [HttpPost("khuyen-mai")]
@@ -380,7 +383,7 @@ namespace DatMonAnOnline.API.Controllers
                 ? $"Hồ sơ nhà hàng {nhaHang.TenNhaHang} và hợp đồng {hopDong.SoHopDong} đã được duyệt."
                 : $"Hồ sơ nhà hàng bị từ chối. Lý do: {lyDo}";
 
-            _context.Thongbaos.Add(new Thongbao
+            var thongBao = new Thongbao
             {
                 MaTaiKhoan = nhaHang.MaTaiKhoan,
                 TieuDe = duyet ? "Hồ sơ đã được duyệt" : "Hồ sơ bị từ chối",
@@ -389,7 +392,8 @@ namespace DatMonAnOnline.API.Controllers
                 DuongDan = "/quan/hop-dong",
                 DaDoc = false,
                 NgayTao = thoiGian
-            });
+            };
+            _context.Thongbaos.Add(thongBao);
 
             await _context.SaveChangesAsync();
 
@@ -407,6 +411,17 @@ namespace DatMonAnOnline.API.Controllers
                 });
 
             await transaction.CommitAsync();
+
+            await Task.WhenAll(
+                _realtime.GuiThongBaoAsync(nhaHang.MaTaiKhoan, thongBao),
+                _realtime.GuiDuLieuThayDoiAsync(
+                    nhaHang.MaTaiKhoan,
+                    new[] { "hopDong", "hoSoPhapLy", "nhaHang" },
+                    new { nhaHang.MaNhaHang, hopDong.MaHopDong, hanhDong = duyet ? "Duyet" : "TuChoi" }),
+                _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                    "Admin",
+                    new[] { "hopDong", "nhaHang", "tongQuan" },
+                    new { nhaHang.MaNhaHang, hopDong.MaHopDong }));
 
             return result;
         }

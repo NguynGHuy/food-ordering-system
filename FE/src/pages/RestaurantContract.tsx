@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, FileText, Percent, RefreshCw } from "lucide-react";
 import {
@@ -8,6 +8,7 @@ import {
     submitContractForReview,
     startNewContract,
 } from "../services/contractService";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 import type {
     ContractPreview,
@@ -86,6 +87,12 @@ function RestaurantContract() {
             cancelled = true;
         };
     }, [version, preparingNew]);
+
+    const refreshRealtime = useCallback(() => {
+        setVersion((previous) => previous + 1);
+    }, []);
+
+    useRealtimeRefresh(["hopDong", "nhaHang"], refreshRealtime);
 
     const loading = !result || result.version !== version;
     const contract = result?.data;

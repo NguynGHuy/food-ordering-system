@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   Check,
   CircleDollarSign,
@@ -57,6 +57,17 @@ function formatMoney(value: number) {
   return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
 }
 
+async function getRestaurantId() {
+  const user = (await getCurrentUser()) as CurrentUser;
+  const maNhaHang = user.nhaHang?.maNhaHang;
+
+  if (!maNhaHang) {
+    throw new Error("Không tìm thấy thông tin nhà hàng.");
+  }
+
+  return maNhaHang;
+}
+
 function RestaurantTopping() {
   const [groups, setGroups] = useState<NhomTopping[]>([]);
   const [toppings, setToppings] = useState<Topping[]>([]);
@@ -78,32 +89,20 @@ function RestaurantTopping() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const getRestaurantId = async () => {
-    const user = (await getCurrentUser()) as CurrentUser;
-    const maNhaHang = user.nhaHang?.maNhaHang;
-
-    if (!maNhaHang) {
-      throw new Error("Không tìm thấy thông tin nhà hàng.");
-    }
-
-    return maNhaHang;
-  };
-
-  const loadToppings = async (groupId: number, showLoading = true) => {
+  const loadToppings = useCallback(async (groupId: number, showLoading = true) => {
     try {
       if (showLoading) setLoadingToppings(true);
       const data = await getToppings(groupId);
       setToppings(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Lỗi tải topping:", err);
       setError(err instanceof Error ? err.message : "Không thể tải topping.");
       setToppings([]);
     } finally {
       if (showLoading) setLoadingToppings(false);
     }
-  };
+  }, []);
 
-  const loadGroups = async (preferredGroupId?: number, showLoading = true) => {
+  const loadGroups = useCallback(async (preferredGroupId?: number, showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       setError("");
@@ -124,27 +123,20 @@ function RestaurantTopping() {
         preferredGroupId !== undefined &&
         nextGroups.some((group) => group.maNhomTopping === preferredGroupId);
 
-      const currentExists =
-        selectedGroupId !== null &&
-        nextGroups.some((group) => group.maNhomTopping === selectedGroupId);
-
       const nextSelected = preferredExists
         ? preferredGroupId!
-        : currentExists
-          ? selectedGroupId!
-          : nextGroups[0].maNhomTopping;
+        : nextGroups[0].maNhomTopping;
 
       setSelectedGroupId(nextSelected);
       await loadToppings(nextSelected);
     } catch (err) {
-      console.error("Lỗi tải nhóm topping:", err);
       setError(
         err instanceof Error ? err.message : "Không thể tải nhóm topping.",
       );
     } finally {
       if (showLoading) setLoading(false);
     }
-  };
+  }, [loadToppings]);
 
   useEffect(() => {
     const initialLoadTimer = window.setTimeout(() => {
@@ -152,7 +144,7 @@ function RestaurantTopping() {
     }, 0);
 
     return () => window.clearTimeout(initialLoadTimer);
-  }, []);
+  }, [loadGroups]);
 
   const showMessage = (message: string) => {
     setSuccess(message);
@@ -224,7 +216,7 @@ function RestaurantTopping() {
       if (editingGroupId === null) {
         await createNhomTopping(payload);
         showMessage("Đã thêm nhóm topping.");
-        await loadGroups(undefined, false);
+        await loadGroups(selectedGroupId ?? undefined, false);
       } else {
         const updatedId = editingGroupId;
         await updateNhomTopping(updatedId, payload);
@@ -236,7 +228,6 @@ function RestaurantTopping() {
       setEditingGroupId(null);
       setGroupForm(EMPTY_GROUP);
     } catch (err) {
-      console.error("Lỗi lưu nhóm topping:", err);
       setError(
         err instanceof Error ? err.message : "Không thể lưu nhóm topping.",
       );
@@ -265,9 +256,8 @@ function RestaurantTopping() {
       }
 
       showMessage("Đã xóa nhóm topping.");
-      await loadGroups(undefined, false);
+      await loadGroups(selectedGroupId ?? undefined, false);
     } catch (err) {
-      console.error("Lỗi xóa nhóm topping:", err);
       setError(
         err instanceof Error ? err.message : "Không thể xóa nhóm topping.",
       );
@@ -348,7 +338,6 @@ function RestaurantTopping() {
       setToppingForm(EMPTY_TOPPING);
       await loadToppings(selectedGroupId, false);
     } catch (err) {
-      console.error("Lỗi lưu topping:", err);
       setError(err instanceof Error ? err.message : "Không thể lưu topping.");
     } finally {
       setSaving(false);
@@ -369,7 +358,6 @@ function RestaurantTopping() {
 
       await loadToppings(selectedGroupId, false);
     } catch (err) {
-      console.error("Lỗi đổi trạng thái topping:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -404,7 +392,6 @@ function RestaurantTopping() {
       showMessage("Đã xóa topping.");
       await loadToppings(selectedGroupId, false);
     } catch (err) {
-      console.error("Lỗi xóa topping:", err);
       setError(err instanceof Error ? err.message : "Không thể xóa topping.");
     } finally {
       setBusyToppingId(null);

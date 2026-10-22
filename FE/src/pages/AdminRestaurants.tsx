@@ -13,6 +13,7 @@ import {
 import { getPendingRestaurants } from "../services/adminService";
 import type { PendingRestaurant } from "../services/adminService";
 import Pagination from "../components/Pagination";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 function AdminRestaurants() {
     const PAGE_SIZE = 10;
@@ -86,6 +87,13 @@ function AdminRestaurants() {
             cancelled = true;
         };
     }, [keyword, pageNumber]);
+
+    const refreshRealtime = useCallback(
+        () => loadRestaurants(false),
+        [loadRestaurants],
+    );
+
+    useRealtimeRefresh(["nhaHang", "hopDong"], refreshRealtime);
 
     return (
         <div className="admin-restaurants-pro">

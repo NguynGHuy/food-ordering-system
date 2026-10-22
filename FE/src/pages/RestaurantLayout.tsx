@@ -16,7 +16,8 @@ import {
   UtensilsCrossed,
   X,
   FileText,
-  Wallet
+  Wallet,
+  Landmark
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getCurrentUser } from "../services/userService";
@@ -113,6 +114,11 @@ const NAV_GROUPS: {
         to: "/quan/doi-soat",
         label: "Đối soát",
         icon: Wallet,
+      },
+      {
+        to: "/quan/vi",
+        label: "Ví nhà hàng",
+        icon: Landmark,
       },
       {
         to: "/quan/thong-bao",

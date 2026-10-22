@@ -25,6 +25,18 @@ public interface IRealtimeNotificationService
         int maTaiKhoan,
         object duLieu
     );
+
+    Task GuiDuLieuThayDoiAsync(
+        int maTaiKhoan,
+        IEnumerable<string> phamVi,
+        object? duLieu = null
+    );
+
+    Task GuiDuLieuThayDoiTheoVaiTroAsync(
+        string vaiTro,
+        IEnumerable<string> phamVi,
+        object? duLieu = null
+    );
 }
 
 public class RealtimeNotificationService
@@ -32,12 +44,15 @@ public class RealtimeNotificationService
 {
     private readonly IHubContext<NotificationHub>
         _hubContext;
+    private readonly ILogger<RealtimeNotificationService> _logger;
 
     public RealtimeNotificationService(
-        IHubContext<NotificationHub> hubContext
+        IHubContext<NotificationHub> hubContext,
+        ILogger<RealtimeNotificationService> logger
     )
     {
         _hubContext = hubContext;
+        _logger = logger;
     }
 
     public Task GuiThongBaoAsync(
@@ -109,17 +124,76 @@ public class RealtimeNotificationService
         );
     }
 
+    public Task GuiDuLieuThayDoiAsync(
+        int maTaiKhoan,
+        IEnumerable<string> phamVi,
+        object? duLieu = null)
+    {
+        return GuiAsync(
+            _hubContext.Clients.User(maTaiKhoan.ToString()),
+            "DuLieuThayDoi",
+            TaoPayload(phamVi, duLieu));
+    }
+
+    public Task GuiDuLieuThayDoiTheoVaiTroAsync(
+        string vaiTro,
+        IEnumerable<string> phamVi,
+        object? duLieu = null)
+    {
+        return GuiAsync(
+            _hubContext.Clients.Group(NotificationHub.GetRoleGroupName(vaiTro)),
+            "DuLieuThayDoi",
+            TaoPayload(phamVi, duLieu));
+    }
+
+    private static object TaoPayload(
+        IEnumerable<string> phamVi,
+        object? duLieu)
+    {
+        var scopes = phamVi
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        return new
+        {
+            phamVi = scopes,
+            duLieu,
+            thoiGianUtc = DateTime.UtcNow
+        };
+    }
+
     private Task GuiAsync(
         int maTaiKhoan,
         string tenSuKien,
         object duLieu
     )
     {
-        return _hubContext.Clients
-            .User(maTaiKhoan.ToString())
-            .SendAsync(
-                tenSuKien,
-                duLieu
-            );
+        return GuiAsync(
+            _hubContext.Clients.User(maTaiKhoan.ToString()),
+            tenSuKien,
+            duLieu);
+    }
+
+    private async Task GuiAsync(
+        IClientProxy client,
+        string tenSuKien,
+        object duLieu)
+    {
+        try
+        {
+            await client.SendAsync(tenSuKien, duLieu);
+        }
+        catch (Exception exception)
+        {
+            // Realtime is best-effort. A disconnected browser or a temporary
+            // backplane failure must never roll back an already committed order,
+            // wallet transaction, reconciliation period, or contract update.
+            _logger.LogWarning(
+                exception,
+                "Khong gui duoc su kien SignalR {TenSuKien}.",
+                tenSuKien);
+        }
     }
 }

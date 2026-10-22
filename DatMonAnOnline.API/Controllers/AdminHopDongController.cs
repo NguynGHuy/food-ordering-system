@@ -16,13 +16,16 @@ public class AdminHopDongController : ControllerBase
 {
     private readonly DatMonAnOnlineContext _context;
     private readonly IWebHostEnvironment _environment;
+    private readonly IRealtimeNotificationService _realtime;
 
     public AdminHopDongController(
         DatMonAnOnlineContext context,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IRealtimeNotificationService realtime)
     {
         _context = context;
         _environment = environment;
+        _realtime = realtime;
     }
 
     [HttpGet("nha-hang/{id:int}/hop-dong")]
@@ -284,7 +287,7 @@ public class AdminHopDongController : ControllerBase
         hopDong.ThoiGianChamDut = thoiGian;
 
         // Giữ kết quả duyệt và các đơn hàng cũ.
-        _context.Thongbaos.Add(new Thongbao
+        var thongBao = new Thongbao
         {
             MaTaiKhoan = nhaHang.MaTaiKhoan,
             TieuDe = "Hợp đồng nhà hàng đã bị chấm dứt",
@@ -295,7 +298,8 @@ public class AdminHopDongController : ControllerBase
             DuongDan = "/quan/hop-dong",
             DaDoc = false,
             NgayTao = thoiGian
-        });
+        };
+        _context.Thongbaos.Add(thongBao);
 
         await _context.SaveChangesAsync();
 
@@ -313,6 +317,17 @@ public class AdminHopDongController : ControllerBase
             });
 
         await transaction.CommitAsync();
+
+        await Task.WhenAll(
+            _realtime.GuiThongBaoAsync(nhaHang.MaTaiKhoan, thongBao),
+            _realtime.GuiDuLieuThayDoiAsync(
+                nhaHang.MaTaiKhoan,
+                new[] { "hopDong", "nhaHang" },
+                new { hopDong.MaHopDong, hanhDong = "ChamDut" }),
+            _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "hopDong", "nhaHang", "tongQuan" },
+                new { hopDong.MaHopDong, hanhDong = "ChamDut" }));
 
         return result;
     }

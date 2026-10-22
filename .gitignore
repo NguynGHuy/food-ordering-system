@@ -326,6 +326,9 @@ node_modules/
 DatMonAnOnline.API/wwwroot/uploads/avatars/*
 !DatMonAnOnline.API/wwwroot/uploads/avatars/.gitkeep
 
+# Private legal documents uploaded by restaurant owners
+DatMonAnOnline.API/App_Data/
+
 # Visual Studio 6 build log
 *.plg
 
@@ -438,3 +441,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Local verification artifacts and temporary database backups
+.build-check/

@@ -78,6 +78,7 @@ interface GioHangDong {
 interface GioHang {
   maNhaHang: number | null;
   chiTiet: GioHangDong[];
+  canLamMoi?: boolean;
 }
 
 interface DonTamDaTao {
@@ -219,6 +220,9 @@ function Checkout() {
   const [tenNhaHang, setTenNhaHang] =
     useState("");
 
+  const [cartWasRefreshed, setCartWasRefreshed] =
+    useState(false);
+
   const [
     phuongThucList,
     setPhuongThucList,
@@ -267,14 +271,14 @@ function Checkout() {
           getCart(
             maGioHang,
           ) as Promise<GioHang>,
-          getCustomerProfile() as Promise<{ diemTichLuy: number }>,
+          getCustomerProfile() as Promise<{ soDuVi: number }>,
         ]);
 
         if (cancelled) return;
 
         setAddresses(addressData);
         setPhuongThucList(paymentData);
-        setSoDuVi(Number(profile.diemTichLuy ?? 0));
+        setSoDuVi(Number(profile.soDuVi ?? 0));
 
         const defaultAddress =
           addressData.find(
@@ -326,6 +330,8 @@ function Checkout() {
         setCheckoutData(
           soTien(money),
         );
+
+        setCartWasRefreshed(Boolean(cart.canLamMoi));
 
         const defaultPayment =
           paymentData.find(
@@ -418,34 +424,14 @@ function Checkout() {
     };
   }, [promoBusy, showVoucherPicker]);
 
-  useEffect(() => {
-    if (!Number.isInteger(maGioHang) || maGioHang <= 0 || !localStorage.getItem("token")) {
-      return;
-    }
+  const selectedPayment = phuongThucList.find(
+    (item) => item.maPhuongThuc === selectedPaymentId,
+  );
 
-    const interval = window.setInterval(() => {
-      void reserveCartForCheckout(maGioHang).catch(() => {
-        // Lần thao tác kế tiếp sẽ hiển thị lỗi chính xác nếu giỏ không còn hợp lệ.
-      });
-    }, 5 * 60 * 1000);
-
-    return () => window.clearInterval(interval);
-  }, [maGioHang]);
-
-  useEffect(() => {
-    if (selectedPaymentId == null || !checkoutData) return;
-
-    const selected = phuongThucList.find(
-      (item) => item.maPhuongThuc === selectedPaymentId,
-    );
-
-    if (
-      selected?.tenPhuongThuc === "FoodPay" &&
-      soDuVi < Number(checkoutData.thanhTien)
-    ) {
-      setSelectedPaymentId(null);
-    }
-  }, [selectedPaymentId, checkoutData, soDuVi, phuongThucList]);
+  const isFoodPayBalanceInsufficient =
+    selectedPayment?.tenPhuongThuc === "FoodPay" &&
+    checkoutData !== null &&
+    soDuVi < Number(checkoutData.thanhTien);
 
   const applyPromotionCode =
     async (code: string) => {
@@ -606,6 +592,11 @@ function Checkout() {
         return;
       }
 
+      if (isFoodPayBalanceInsufficient) {
+        alert("Số dư ví FoodPay không đủ để thanh toán đơn hàng này.");
+        return;
+      }
+
       setShowBill(true);
       return;
     }
@@ -623,6 +614,11 @@ function Checkout() {
         "Vui lòng chọn phương thức thanh toán!",
       );
 
+      return;
+    }
+
+    if (isFoodPayBalanceInsufficient) {
+      alert("Số dư ví FoodPay không đủ để thanh toán đơn hàng này.");
       return;
     }
 
@@ -676,6 +672,11 @@ function Checkout() {
       selectedAddressId === null ||
       restaurantId === null
     ) {
+      return;
+    }
+
+    if (isFoodPayBalanceInsufficient) {
+      alert("Số dư ví FoodPay không đủ để thanh toán đơn hàng này.");
       return;
     }
 
@@ -918,6 +919,19 @@ function Checkout() {
             Sửa thông tin
           </button>
         </header>
+
+        {cartWasRefreshed && (
+          <div className="checkout-retry-notice" role="status">
+            <CheckCircle2 size={18} />
+            <div>
+              <strong>Giỏ hàng đã được kiểm tra lại</strong>
+              <p>
+                Hệ thống đã cập nhật tình trạng món, giá và ưu đãi trước khi
+                bạn xác nhận đơn.
+              </p>
+            </div>
+          </div>
+        )}
 
         {donDaTao && (
           <div className="checkout-review-created">
@@ -1401,6 +1415,19 @@ function Checkout() {
           </p>
         </header>
 
+        {cartWasRefreshed && (
+          <div className="checkout-retry-notice" role="status">
+            <CheckCircle2 size={18} />
+            <div>
+              <strong>Giỏ hàng đã được kiểm tra lại</strong>
+              <p>
+                Hệ thống đã cập nhật tình trạng món, giá và ưu đãi trước khi
+                bạn xác nhận đơn.
+              </p>
+            </div>
+          </div>
+        )}
+
         {donDaTao && (
           <div className="checkout-retry-notice">
             <CheckCircle2
@@ -1872,7 +1899,8 @@ function Checkout() {
                 promoBusy ||
                 addresses.length === 0 ||
                 selectedPaymentId ===
-                  null
+                  null ||
+                isFoodPayBalanceInsufficient
               }
               onClick={() =>
                 void handleConfirm()

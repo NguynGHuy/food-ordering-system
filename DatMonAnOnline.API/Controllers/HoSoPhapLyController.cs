@@ -248,6 +248,21 @@ public class HoSoPhapLyController : ControllerBase
             });
         }
 
+        if (extension != ".pdf")
+        {
+            var (safeImage, imageError) = DatMonAnOnline.API.Common.SafeImageProcessor
+                .DecodeAndSanitize(
+                    noiDungTep,
+                    extension,
+                    HttpContext.RequestAborted);
+
+            if (safeImage == null)
+                return BadRequest(new { message = imageError });
+
+            noiDungTep = safeImage.Content;
+            extension = safeImage.Extension;
+        }
+
         if (hoSo == null)
         {
             hoSo = new Hosophaplynhahang

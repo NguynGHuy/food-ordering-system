@@ -1,12 +1,13 @@
 using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Options;
 using DatMonAnOnline.API.Security;
 using DatMonAnOnline.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -20,25 +21,26 @@ namespace DatMonAnOnline.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly DatMonAnOnlineContext _context;
-        private readonly IMemoryCache _cache;
         private readonly IWebHostEnvironment _environment;
         private readonly IPasswordResetEmailQueue _passwordResetEmailQueue;
-        private const string JwtSecret = "DayLaMotChuoiBaoMatRatDaiChoJwtToken123456";
+        private readonly SharedAuthRateLimiter _sharedRateLimiter;
+        private readonly JwtOptions _jwtOptions;
         private static readonly TimeSpan PasswordResetLifetime = TimeSpan.FromMinutes(10);
         private static readonly TimeSpan LoginLockLifetime = TimeSpan.FromMinutes(15);
         private const int MaxFailedLoginAttempts = 5;
-        private static readonly object LoginAttemptSync = new();
 
         public AuthController(
             DatMonAnOnlineContext context,
-            IMemoryCache cache,
             IWebHostEnvironment environment,
-            IPasswordResetEmailQueue passwordResetEmailQueue)
+            IPasswordResetEmailQueue passwordResetEmailQueue,
+            SharedAuthRateLimiter sharedRateLimiter,
+            JwtOptions jwtOptions)
         {
             _context = context;
-            _cache = cache;
             _environment = environment;
             _passwordResetEmailQueue = passwordResetEmailQueue;
+            _sharedRateLimiter = sharedRateLimiter;
+            _jwtOptions = jwtOptions;
         }
 
         public class RegisterKhachHangDto
@@ -89,16 +91,6 @@ namespace DatMonAnOnline.API.Controllers
             [Required, MinLength(6), MaxLength(100)] public string MatKhauMoi { get; set; } = string.Empty;
         }
 
-        private sealed class PasswordResetEntry
-        {
-            public int MaTaiKhoan { get; init; }
-            public string MaXacNhanHash { get; init; } = string.Empty;
-            public string MatKhauLucTaoYeuCau { get; init; } = string.Empty;
-            public DateTime HetHanUtc { get; init; }
-            public int SoLanThuSai { get; set; }
-            public string EmailRequestCacheKey { get; init; } = string.Empty;
-        }
-
         private sealed class PasswordResetReference
         {
             public string MaYeuCau { get; init; } = string.Empty;
@@ -106,16 +98,17 @@ namespace DatMonAnOnline.API.Controllers
             public DateTime HetHanUtc { get; init; }
         }
 
-        private sealed class LoginAttemptEntry
-        {
-            public int SoLanThatBai { get; set; }
-            public DateTime? KhoaDenUtc { get; set; }
-        }
-
         [HttpPost("register")]
         [AllowAnonymous]
+        [EnableRateLimiting(AuthRateLimitPolicies.RegisterNhaHang)]
         public async Task<IActionResult> RegisterKhachHang(RegisterKhachHangDto request)
         {
+            var rateLimited = await EnforceSharedRateLimitAsync(
+                AuthRateLimitPolicies.RegisterNhaHang,
+                5,
+                TimeSpan.FromMinutes(15));
+            if (rateLimited != null) return rateLimited;
+
             var email = request.Email.Trim().ToLowerInvariant();
             var phone = Normalize(request.SoDienThoai);
 
@@ -151,11 +144,19 @@ namespace DatMonAnOnline.API.Controllers
                     MaTaiKhoan = taiKhoan.MaTaiKhoan,
                     HoTen = request.HoTen.Trim(),
                     NgaySinh = request.NgaySinh,
-                    GioiTinh = Normalize(request.GioiTinh),
-                    DiemTichLuy = 0
+                    GioiTinh = Normalize(request.GioiTinh)
                 };
 
                 _context.Khachhangs.Add(khachHang);
+                _context.Vis.Add(new Vi
+                {
+                    MaTaiKhoan = taiKhoan.MaTaiKhoan,
+                    SoDu = 0,
+                    DonViTienTe = "VND",
+                    TrangThai = "HoatDong",
+                    NgayTao = DateTime.Now,
+                    NgayCapNhat = DateTime.Now
+                });
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -177,6 +178,12 @@ namespace DatMonAnOnline.API.Controllers
         [EnableRateLimiting(AuthRateLimitPolicies.RegisterNhaHang)]
         public async Task<IActionResult> RegisterNhaHang(RegisterNhaHangDto request)
         {
+            var rateLimited = await EnforceSharedRateLimitAsync(
+                AuthRateLimitPolicies.RegisterNhaHang,
+                5,
+                TimeSpan.FromMinutes(15));
+            if (rateLimited != null) return rateLimited;
+
             var email = request.Email.Trim().ToLowerInvariant();
             var phone = Normalize(request.SoDienThoai);
 
@@ -229,6 +236,15 @@ namespace DatMonAnOnline.API.Controllers
                 };
 
                 _context.Nhahangs.Add(nhaHang);
+                _context.Vis.Add(new Vi
+                {
+                    MaTaiKhoan = taiKhoan.MaTaiKhoan,
+                    SoDu = 0,
+                    DonViTienTe = "VND",
+                    TrangThai = "HoatDong",
+                    NgayTao = DateTime.Now,
+                    NgayCapNhat = DateTime.Now
+                });
                 await _context.SaveChangesAsync();
 
                 _context.Hosophaplynhahangs.Add(new Hosophaplynhahang
@@ -261,9 +277,16 @@ namespace DatMonAnOnline.API.Controllers
         [EnableRateLimiting(AuthRateLimitPolicies.Login)]
         public async Task<IActionResult> Login(LoginDto request)
         {
+            var rateLimited = await EnforceSharedRateLimitAsync(
+                AuthRateLimitPolicies.Login,
+                10,
+                TimeSpan.FromMinutes(1));
+            if (rateLimited != null) return rateLimited;
+
             var email = request.Email.Trim().ToLowerInvariant();
 
-            if (TryGetLoginLock(email, out var retryAfter))
+            var (isLocked, retryAfter) = await TryGetLoginLockAsync(email);
+            if (isLocked)
                 return LoginLocked(retryAfter);
 
             var taiKhoan = await _context.Taikhoans
@@ -272,7 +295,8 @@ namespace DatMonAnOnline.API.Controllers
 
             if (taiKhoan == null || !VerifyPassword(request.MatKhau, taiKhoan.MatKhau))
             {
-                if (RegisterFailedLogin(email, out retryAfter))
+                (isLocked, retryAfter) = await RegisterFailedLoginAsync(email);
+                if (isLocked)
                     return LoginLocked(retryAfter);
 
                 return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
@@ -281,7 +305,7 @@ namespace DatMonAnOnline.API.Controllers
             if (taiKhoan.TrangThai != true)
                 return Unauthorized(new { message = "Tài khoản đã bị khóa." });
 
-            ClearFailedLogins(email);
+            await ClearFailedLoginsAsync(email);
 
             var role = taiKhoan.MaRoleNavigation?.TenRole;
             if (string.IsNullOrWhiteSpace(role))
@@ -295,9 +319,11 @@ namespace DatMonAnOnline.API.Controllers
                 new Claim(PasswordTokenVersion.ClaimType, PasswordTokenVersion.Create(taiKhoan.MatKhau))
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(1),
                 signingCredentials: creds);
@@ -324,6 +350,7 @@ namespace DatMonAnOnline.API.Controllers
                 .Include(x => x.MaRoleNavigation)
                 .Include(x => x.Khachhang)
                 .Include(x => x.Nhahang)
+                .Include(x => x.Vi)
                 .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan.Value);
 
             if (taiKhoan == null)
@@ -344,8 +371,14 @@ namespace DatMonAnOnline.API.Controllers
                     maKhachHang = taiKhoan.Khachhang.MaKhachHang,
                     hoTen = taiKhoan.Khachhang.HoTen,
                     ngaySinh = taiKhoan.Khachhang.NgaySinh,
-                    gioiTinh = taiKhoan.Khachhang.GioiTinh,
-                    diemTichLuy = taiKhoan.Khachhang.DiemTichLuy
+                    gioiTinh = taiKhoan.Khachhang.GioiTinh
+                },
+                vi = taiKhoan.Vi == null ? null : new
+                {
+                    maVi = taiKhoan.Vi.MaVi,
+                    soDu = taiKhoan.Vi.SoDu,
+                    donViTienTe = taiKhoan.Vi.DonViTienTe,
+                    trangThai = taiKhoan.Vi.TrangThai
                 },
                 nhaHang = taiKhoan.Nhahang == null ? null : new
                 {
@@ -395,31 +428,78 @@ namespace DatMonAnOnline.API.Controllers
         [EnableRateLimiting(AuthRateLimitPolicies.RequestPasswordReset)]
         public async Task<IActionResult> QuenMatKhau(QuenMatKhauDto request)
         {
-            var email = request.Email.Trim().ToLowerInvariant();
-            var emailRequestCacheKey = GetPasswordResetEmailCacheKey(email);
+            var rateLimited = await EnforceSharedRateLimitAsync(
+                AuthRateLimitPolicies.RequestPasswordReset,
+                3,
+                TimeSpan.FromMinutes(15));
+            if (rateLimited != null) return rateLimited;
 
-            if (_cache.TryGetValue(emailRequestCacheKey, out PasswordResetReference? existingRequest) &&
-                existingRequest != null && existingRequest.HetHanUtc > DateTime.UtcNow)
-            {
-                return PasswordResetRequested(existingRequest);
-            }
+            var email = request.Email.Trim().ToLowerInvariant();
+            var emailHash = HashCacheKey(email);
+            var now = DateTime.UtcNow;
 
             var taiKhoan = await _context.Taikhoans
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Email == email && x.TrangThai == true);
+                .FirstOrDefaultAsync(
+                    x => x.Email == email && x.TrangThai == true,
+                    HttpContext.RequestAborted);
 
-            // Luôn tạo một yêu cầu, kể cả email không tồn tại, để tránh lộ tài khoản.
+            // Luôn tạo dữ liệu ứng viên, kể cả email không tồn tại, để tránh lộ tài khoản.
             var maYeuCau = Guid.NewGuid().ToString("N");
             var maXacNhan = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-            var hetHanUtc = DateTime.UtcNow.Add(PasswordResetLifetime);
-            var entry = new PasswordResetEntry
+            var hetHanUtc = now.Add(PasswordResetLifetime);
+            var maXacNhanHash = HashResetCode(maYeuCau, maXacNhan);
+            var matKhauLucTaoYeuCau = taiKhoan?.MatKhau ?? string.Empty;
+            int? maTaiKhoanDatLai = taiKhoan?.MaTaiKhoan;
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
+                HttpContext.RequestAborted);
+
+            // INSERT IGNORE tạo đúng một dòng cho mỗi email. Hai API instance chạy đồng thời
+            // sẽ cùng khóa dòng này, thay vì cùng thấy "chưa có" rồi tạo trùng.
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $@"INSERT IGNORE INTO passwordresetrequest
+                   (EmailHash, MaYeuCau, MaTaiKhoan, MaXacNhanHash,
+                    MatKhauLucTaoYeuCau, SoLanThuSai, HetHanUtc, NgayTaoUtc)
+                   VALUES
+                   ({emailHash}, {maYeuCau}, {maTaiKhoanDatLai},
+                    {maXacNhanHash}, {matKhauLucTaoYeuCau}, 0, {hetHanUtc}, {now})",
+                HttpContext.RequestAborted);
+
+            var existingRequest = await _context.Passwordresetrequests
+                .FromSqlInterpolated(
+                    $@"SELECT * FROM passwordresetrequest
+                       WHERE EmailHash = {emailHash}
+                       FOR UPDATE")
+                .SingleOrDefaultAsync(HttpContext.RequestAborted);
+
+            if (existingRequest == null)
+                throw new InvalidOperationException("Không thể tạo yêu cầu đặt lại mật khẩu.");
+
+            if (existingRequest.MaYeuCau != maYeuCau && existingRequest.HetHanUtc > now)
             {
-                MaTaiKhoan = taiKhoan?.MaTaiKhoan ?? 0,
-                MaXacNhanHash = HashResetCode(maYeuCau, maXacNhan),
-                MatKhauLucTaoYeuCau = taiKhoan?.MatKhau ?? string.Empty,
-                HetHanUtc = hetHanUtc,
-                EmailRequestCacheKey = emailRequestCacheKey
-            };
+                await transaction.CommitAsync(HttpContext.RequestAborted);
+                return PasswordResetRequested(new PasswordResetReference
+                {
+                    MaYeuCau = existingRequest.MaYeuCau,
+                    HetHanUtc = existingRequest.HetHanUtc
+                });
+            }
+
+            if (existingRequest.MaYeuCau != maYeuCau)
+            {
+                existingRequest.MaYeuCau = maYeuCau;
+                existingRequest.MaTaiKhoan = taiKhoan?.MaTaiKhoan;
+                existingRequest.MaXacNhanHash = maXacNhanHash;
+                existingRequest.MatKhauLucTaoYeuCau = matKhauLucTaoYeuCau;
+                existingRequest.SoLanThuSai = 0;
+                existingRequest.HetHanUtc = hetHanUtc;
+                existingRequest.NgayTaoUtc = now;
+            }
+
+            await _context.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
 
             var requestReference = new PasswordResetReference
             {
@@ -427,22 +507,6 @@ namespace DatMonAnOnline.API.Controllers
                 MaXacNhanThuNghiem = _environment.IsDevelopment() ? maXacNhan : null,
                 HetHanUtc = hetHanUtc
             };
-
-            _cache.Set(
-                GetPasswordResetCacheKey(maYeuCau),
-                entry,
-                new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpiration = new DateTimeOffset(hetHanUtc)
-                });
-
-            _cache.Set(
-                emailRequestCacheKey,
-                requestReference,
-                new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpiration = new DateTimeOffset(hetHanUtc)
-                });
 
             if (taiKhoan != null && !_environment.IsDevelopment())
             {
@@ -453,7 +517,9 @@ namespace DatMonAnOnline.API.Controllers
 
                 if (!queued)
                 {
-                    RemovePasswordReset(GetPasswordResetCacheKey(maYeuCau), entry);
+                    await _context.Passwordresetrequests
+                        .Where(x => x.MaYeuCau == maYeuCau)
+                        .ExecuteDeleteAsync(HttpContext.RequestAborted);
                     return StatusCode(StatusCodes.Status503ServiceUnavailable, new
                     {
                         message = "Dịch vụ gửi email đang tạm thời bận. Vui lòng thử lại sau."
@@ -469,14 +535,31 @@ namespace DatMonAnOnline.API.Controllers
         [EnableRateLimiting(AuthRateLimitPolicies.ConfirmPasswordReset)]
         public async Task<IActionResult> DatLaiMatKhau(DatLaiMatKhauDto request)
         {
-            var cacheKey = GetPasswordResetCacheKey(request.MaYeuCau);
+            var rateLimited = await EnforceSharedRateLimitAsync(
+                AuthRateLimitPolicies.ConfirmPasswordReset,
+                10,
+                TimeSpan.FromMinutes(10));
+            if (rateLimited != null) return rateLimited;
 
-            if (!_cache.TryGetValue(cacheKey, out PasswordResetEntry? entry) || entry == null)
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                HttpContext.RequestAborted);
+
+            var entry = await _context.Passwordresetrequests
+                .FromSqlInterpolated(
+                    $@"SELECT * FROM passwordresetrequest
+                       WHERE MaYeuCau = {request.MaYeuCau}
+                       FOR UPDATE")
+                .SingleOrDefaultAsync(HttpContext.RequestAborted);
+
+            if (entry == null)
                 return BadRequest(new { message = "Yêu cầu đặt lại mật khẩu đã hết hạn hoặc không hợp lệ." });
 
             if (entry.HetHanUtc <= DateTime.UtcNow)
             {
-                RemovePasswordReset(cacheKey, entry);
+                _context.Passwordresetrequests.Remove(entry);
+                await _context.SaveChangesAsync(HttpContext.RequestAborted);
+                await transaction.CommitAsync(HttpContext.RequestAborted);
                 return BadRequest(new { message = "Mã xác nhận đã hết hạn. Vui lòng yêu cầu mã mới." });
             }
 
@@ -486,17 +569,14 @@ namespace DatMonAnOnline.API.Controllers
 
                 if (entry.SoLanThuSai >= 5)
                 {
-                    RemovePasswordReset(cacheKey, entry);
+                    _context.Passwordresetrequests.Remove(entry);
+                    await _context.SaveChangesAsync(HttpContext.RequestAborted);
+                    await transaction.CommitAsync(HttpContext.RequestAborted);
                     return BadRequest(new { message = "Bạn đã nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới." });
                 }
 
-                _cache.Set(
-                    cacheKey,
-                    entry,
-                    new MemoryCacheEntryOptions
-                    {
-                        AbsoluteExpiration = new DateTimeOffset(entry.HetHanUtc)
-                    });
+                await _context.SaveChangesAsync(HttpContext.RequestAborted);
+                await transaction.CommitAsync(HttpContext.RequestAborted);
 
                 return BadRequest(new
                 {
@@ -504,13 +584,17 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
-            var taiKhoan = entry.MaTaiKhoan > 0
-                ? await _context.Taikhoans.FirstOrDefaultAsync(x => x.MaTaiKhoan == entry.MaTaiKhoan)
+            var taiKhoan = entry.MaTaiKhoan.HasValue
+                ? await _context.Taikhoans.FirstOrDefaultAsync(
+                    x => x.MaTaiKhoan == entry.MaTaiKhoan.Value,
+                    HttpContext.RequestAborted)
                 : null;
 
             if (taiKhoan == null || taiKhoan.MatKhau != entry.MatKhauLucTaoYeuCau)
             {
-                RemovePasswordReset(cacheKey, entry);
+                _context.Passwordresetrequests.Remove(entry);
+                await _context.SaveChangesAsync(HttpContext.RequestAborted);
+                await transaction.CommitAsync(HttpContext.RequestAborted);
                 return BadRequest(new { message = "Yêu cầu đặt lại mật khẩu không còn hợp lệ." });
             }
 
@@ -518,8 +602,9 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "Mật khẩu mới phải khác mật khẩu hiện tại." });
 
             taiKhoan.MatKhau = HashPassword(request.MatKhauMoi);
-            await _context.SaveChangesAsync();
-            RemovePasswordReset(cacheKey, entry);
+            _context.Passwordresetrequests.Remove(entry);
+            await _context.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
 
             return Ok(new
             {
@@ -561,91 +646,116 @@ namespace DatMonAnOnline.API.Controllers
             });
         }
 
-        private bool TryGetLoginLock(string email, out TimeSpan retryAfter)
+        private async Task<(bool IsLocked, TimeSpan RetryAfter)> TryGetLoginLockAsync(string email)
         {
-            lock (LoginAttemptSync)
+            var entry = await _context.Loginattempts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => x.EmailHash == HashCacheKey(email),
+                    HttpContext.RequestAborted);
+
+            var now = DateTime.UtcNow;
+            if (entry?.KhoaDenUtc is DateTime lockedUntil && lockedUntil > now)
+                return (true, lockedUntil - now);
+
+            return (false, TimeSpan.Zero);
+        }
+
+        private async Task<(bool IsLocked, TimeSpan RetryAfter)> RegisterFailedLoginAsync(string email)
+        {
+            var emailHash = HashCacheKey(email);
+            var now = DateTime.UtcNow;
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                HttpContext.RequestAborted);
+
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $@"INSERT IGNORE INTO loginattempt
+                   (EmailHash, SoLanThatBai, CuaSoBatDauUtc, KhoaDenUtc, NgayCapNhatUtc)
+                   VALUES ({emailHash}, 0, {now}, NULL, {now})",
+                HttpContext.RequestAborted);
+
+            var entry = await _context.Loginattempts
+                .FromSqlInterpolated(
+                    $@"SELECT * FROM loginattempt
+                       WHERE EmailHash = {emailHash}
+                       FOR UPDATE")
+                .SingleAsync(HttpContext.RequestAborted);
+
+            if (entry.KhoaDenUtc is DateTime existingLock && existingLock > now)
             {
-                var key = GetLoginAttemptCacheKey(email);
-                if (_cache.TryGetValue(key, out LoginAttemptEntry? entry) &&
-                    entry?.KhoaDenUtc is DateTime lockedUntil &&
-                    lockedUntil > DateTime.UtcNow)
-                {
-                    retryAfter = lockedUntil - DateTime.UtcNow;
-                    return true;
-                }
-
-                retryAfter = TimeSpan.Zero;
-                return false;
+                await transaction.CommitAsync(HttpContext.RequestAborted);
+                return (true, existingLock - now);
             }
-        }
 
-        private bool RegisterFailedLogin(string email, out TimeSpan retryAfter)
-        {
-            lock (LoginAttemptSync)
+            if (entry.CuaSoBatDauUtc.Add(LoginLockLifetime) <= now)
             {
-                var key = GetLoginAttemptCacheKey(email);
-                var entry = _cache.TryGetValue(key, out LoginAttemptEntry? existing) && existing != null
-                    ? existing
-                    : new LoginAttemptEntry();
-
-                entry.SoLanThatBai++;
-                if (entry.SoLanThatBai >= MaxFailedLoginAttempts)
-                    entry.KhoaDenUtc = DateTime.UtcNow.Add(LoginLockLifetime);
-
-                _cache.Set(
-                    key,
-                    entry,
-                    new MemoryCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = LoginLockLifetime
-                    });
-
-                if (entry.KhoaDenUtc is DateTime lockedUntil && lockedUntil > DateTime.UtcNow)
-                {
-                    retryAfter = lockedUntil - DateTime.UtcNow;
-                    return true;
-                }
-
-                retryAfter = TimeSpan.Zero;
-                return false;
+                entry.CuaSoBatDauUtc = now;
+                entry.SoLanThatBai = 0;
+                entry.KhoaDenUtc = null;
             }
+
+            entry.SoLanThatBai++;
+            entry.NgayCapNhatUtc = now;
+
+            if (entry.SoLanThatBai >= MaxFailedLoginAttempts)
+                entry.KhoaDenUtc = now.Add(LoginLockLifetime);
+
+            await _context.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
+
+            if (entry.KhoaDenUtc is DateTime lockedUntil && lockedUntil > now)
+                return (true, lockedUntil - now);
+
+            return (false, TimeSpan.Zero);
         }
 
-        private void ClearFailedLogins(string email)
-        {
-            lock (LoginAttemptSync)
-                _cache.Remove(GetLoginAttemptCacheKey(email));
-        }
+        private Task ClearFailedLoginsAsync(string email)
+            => _context.Loginattempts
+                .Where(x => x.EmailHash == HashCacheKey(email))
+                .ExecuteDeleteAsync(HttpContext.RequestAborted);
 
-        private void RemovePasswordReset(string requestCacheKey, PasswordResetEntry entry)
+        private async Task<IActionResult?> EnforceSharedRateLimitAsync(
+            string policy,
+            int permitLimit,
+            TimeSpan window)
         {
-            _cache.Remove(requestCacheKey);
-            if (!string.IsNullOrWhiteSpace(entry.EmailRequestCacheKey))
-                _cache.Remove(entry.EmailRequestCacheKey);
+            var clientKey = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown-client";
+            var result = await _sharedRateLimiter.TryAcquireAsync(
+                policy,
+                clientKey,
+                permitLimit,
+                window,
+                HttpContext.RequestAborted);
+
+            if (result.Allowed)
+                return null;
+
+            var retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(result.RetryAfter.TotalSeconds));
+            Response.Headers.RetryAfter = retryAfterSeconds.ToString();
+            return StatusCode(StatusCodes.Status429TooManyRequests, new
+            {
+                message = "Bạn thao tác quá nhiều lần. Vui lòng chờ một lúc rồi thử lại.",
+                retryAfterSeconds
+            });
         }
 
         private static string? Normalize(string? value)
             => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-        private static string GetPasswordResetCacheKey(string requestId)
-            => $"password-reset:{requestId}";
-
-        private static string GetPasswordResetEmailCacheKey(string email)
-            => $"password-reset-email:{HashCacheKey(email)}";
-
-        private static string GetLoginAttemptCacheKey(string email)
-            => $"login-attempt:{HashCacheKey(email)}";
-
         private static string HashCacheKey(string value)
             => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
-        private static string HashResetCode(string requestId, string code)
+        private string HashResetCode(string requestId, string code)
         {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{requestId}:{code}"));
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
+            var bytes = hmac.ComputeHash(
+                Encoding.UTF8.GetBytes($"password-reset|{requestId}|{code}"));
             return Convert.ToBase64String(bytes);
         }
 
-        private static bool VerifyResetCode(string requestId, string code, string storedHash)
+        private bool VerifyResetCode(string requestId, string code, string storedHash)
         {
             try
             {

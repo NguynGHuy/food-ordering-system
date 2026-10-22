@@ -17,8 +17,8 @@ import {
   createMonAn,
   deleteMonAn,
   ganTopping,
-  getMonAn,
-  getMonAns,
+  getQuanMonAn,
+  getQuanMonAns,
   goTopping,
   updateMonAn,
   updateTrangThaiMonAn,
@@ -99,7 +99,7 @@ function RestaurantMenu() {
 
       const maNhaHang = await getRestaurantId();
       const [menuData, categoryData, toppingData] = await Promise.all([
-        getMonAns(maNhaHang, {
+        getQuanMonAns({
           pageNumber,
           pageSize: PAGE_SIZE,
           search: searchText.trim() || undefined,
@@ -119,7 +119,6 @@ function RestaurantMenu() {
       setDanhMucs(Array.isArray(categoryData) ? categoryData : []);
       setNhomToppings(Array.isArray(toppingData) ? toppingData : []);
     } catch (err) {
-      console.error("Lỗi tải thực đơn:", err);
       setError(err instanceof Error ? err.message : "Không thể tải thực đơn.");
     } finally {
       if (showLoading) setLoading(false);
@@ -216,7 +215,6 @@ function RestaurantMenu() {
       setForm(EMPTY_FORM);
       await loadData(false);
     } catch (err) {
-      console.error("Lỗi lưu món ăn:", err);
       setError(err instanceof Error ? err.message : "Không thể lưu món ăn.");
     } finally {
       setSaving(false);
@@ -235,7 +233,6 @@ function RestaurantMenu() {
 
       await loadData(false);
     } catch (err) {
-      console.error("Lỗi đổi trạng thái món:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -270,7 +267,6 @@ function RestaurantMenu() {
       showMessage("Đã xóa món ăn.");
       await loadData(false);
     } catch (err) {
-      console.error("Lỗi xóa món:", err);
       setError(err instanceof Error ? err.message : "Không thể xóa món ăn.");
     } finally {
       setBusyItemId(null);
@@ -285,10 +281,9 @@ function RestaurantMenu() {
       setError("");
       setSuccess("");
 
-      const detail = await getMonAn(item.maMonAn);
+      const detail = await getQuanMonAn(item.maMonAn);
       setMonChiTiet(detail);
     } catch (err) {
-      console.error("Lỗi tải topping của món:", err);
       setToppingMonId(null);
       setError(
         err instanceof Error
@@ -327,10 +322,9 @@ function RestaurantMenu() {
         showMessage(`Đã gán nhóm "${group.tenNhom}" vào món.`);
       }
 
-      const detail = await getMonAn(toppingMonId);
+      const detail = await getQuanMonAn(toppingMonId);
       setMonChiTiet(detail);
     } catch (err) {
-      console.error("Lỗi gán nhóm topping:", err);
       setError(
         err instanceof Error ? err.message : "Không thể cập nhật nhóm topping.",
       );

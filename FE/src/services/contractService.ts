@@ -1,5 +1,5 @@
 import { apiFetch } from "./api";
-import { getIdempotencyKey } from "./idempotency";
+import { runIdempotentRequest } from "./idempotency";
 
 export interface ContractContent {
     maNhaHang: number;
@@ -66,16 +66,16 @@ export async function signContract(
     thoiGianKy: string;
 }> {
     const path = "/nha-hang/hop-dong/ky";
-    const key = await getIdempotencyKey(`POST ${path}`, data);
-
-    return apiFetch(path, {
-        method: "POST",
-        headers: {
-            ...authHeaders(),
-            "Idempotency-Key": key,
-        },
-        body: JSON.stringify(data),
-    });
+    return runIdempotentRequest(`POST ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "POST",
+            headers: {
+                ...authHeaders(),
+                "Idempotency-Key": key,
+            },
+            body: JSON.stringify(data),
+        })
+    );
 }
 
 export async function submitContractForReview(
@@ -83,16 +83,16 @@ export async function submitContractForReview(
 ): Promise<{ message: string }> {
     const path = "/nha-hang/hop-dong/gui-xet-duyet";
     const data = { maHopDong };
-    const key = await getIdempotencyKey(`POST ${path}`, data);
-
-    return apiFetch(path, {
-        method: "POST",
-        headers: {
-            ...authHeaders(),
-            "Idempotency-Key": key,
-        },
-        body: JSON.stringify(data),
-    });
+    return runIdempotentRequest(`POST ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "POST",
+            headers: {
+                ...authHeaders(),
+                "Idempotency-Key": key,
+            },
+            body: JSON.stringify(data),
+        })
+    );
 }
 export function startNewContract() {
     return apiFetch("/nha-hang/hop-dong/bat-dau-ky-moi", {

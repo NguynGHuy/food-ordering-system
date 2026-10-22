@@ -97,7 +97,6 @@ export async function getMonAns(
     params: PaginationParams & {
         search?: string;
         maDanhMuc?: number;
-        trangThai?: boolean;
     } = {}
 ): Promise<MenuListResult> {
     return apiFetch(
@@ -119,6 +118,31 @@ export async function getMonAn(
     id: number
 ): Promise<MonAnChiTiet> {
     return apiFetch(`/mon-an/${id}`);
+}
+
+// =====================================================
+// QUẢN LÝ MÓN CỦA QUÁN
+// Role: Quan. Có thể xem cả món đang bán và món đã ẩn.
+// =====================================================
+
+export async function getQuanMonAns(
+    params: PaginationParams & {
+        search?: string;
+        maDanhMuc?: number;
+        trangThai?: boolean;
+    } = {}
+): Promise<MenuListResult> {
+    return apiFetch(`/mon-an/quan${buildQuery(params)}`, {
+        headers: getAuthHeaders(),
+    });
+}
+
+export async function getQuanMonAn(
+    id: number
+): Promise<MonAnChiTiet> {
+    return apiFetch(`/mon-an/quan/${id}`, {
+        headers: getAuthHeaders(),
+    });
 }
 
 // =====================================================

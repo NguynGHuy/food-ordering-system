@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { FolderOpen, Hash, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import {
   createDanhMuc,
@@ -24,6 +24,17 @@ const EMPTY_FORM: CategoryForm = {
   thuTuHienThi: 0,
 };
 
+async function getRestaurantId() {
+  const user = (await getCurrentUser()) as CurrentUser;
+  const maNhaHang = user.nhaHang?.maNhaHang;
+
+  if (!maNhaHang) {
+    throw new Error("Không tìm thấy thông tin nhà hàng.");
+  }
+
+  return maNhaHang;
+}
+
 function RestaurantCategory() {
   const [danhMucs, setDanhMucs] = useState<DanhMuc[]>([]);
   const [form, setForm] = useState<CategoryForm>(EMPTY_FORM);
@@ -35,18 +46,7 @@ function RestaurantCategory() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const getRestaurantId = async () => {
-    const user = (await getCurrentUser()) as CurrentUser;
-    const maNhaHang = user.nhaHang?.maNhaHang;
-
-    if (!maNhaHang) {
-      throw new Error("Không tìm thấy thông tin nhà hàng.");
-    }
-
-    return maNhaHang;
-  };
-
-  const loadDanhMucs = async (showLoading = true) => {
+  const loadDanhMucs = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       setError("");
@@ -58,12 +58,11 @@ function RestaurantCategory() {
         [...data].sort((a, b) => (a.thuTuHienThi ?? 0) - (b.thuTuHienThi ?? 0)),
       );
     } catch (err) {
-      console.error("Lỗi tải danh mục:", err);
       setError(err instanceof Error ? err.message : "Không thể tải danh mục.");
     } finally {
       if (showLoading) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const initialLoadTimer = window.setTimeout(() => {
@@ -71,7 +70,7 @@ function RestaurantCategory() {
     }, 0);
 
     return () => window.clearTimeout(initialLoadTimer);
-  }, []);
+  }, [loadDanhMucs]);
 
   const showMessage = (message: string) => {
     setSuccess(message);
@@ -140,7 +139,6 @@ function RestaurantCategory() {
       setForm(EMPTY_FORM);
       await loadDanhMucs(false);
     } catch (err) {
-      console.error("Lỗi lưu danh mục:", err);
       setError(err instanceof Error ? err.message : "Không thể lưu danh mục.");
     } finally {
       setSaving(false);
@@ -170,7 +168,6 @@ function RestaurantCategory() {
       showMessage("Đã xóa danh mục.");
       await loadDanhMucs(false);
     } catch (err) {
-      console.error("Lỗi xóa danh mục:", err);
       setError(err instanceof Error ? err.message : "Không thể xóa danh mục.");
     } finally {
       setDeletingId(null);

@@ -39,6 +39,7 @@ namespace DatMonAnOnline.API.Controllers
             var khachHang = await _context.Khachhangs
                 .AsNoTracking()
                 .Include(x => x.MaTaiKhoanNavigation)
+                    .ThenInclude(x => x.Vi)
                 .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan.Value);
 
             if (khachHang == null)
@@ -51,7 +52,7 @@ namespace DatMonAnOnline.API.Controllers
                 hoTen = khachHang.HoTen,
                 ngaySinh = khachHang.NgaySinh,
                 gioiTinh = khachHang.GioiTinh,
-                diemTichLuy = khachHang.DiemTichLuy,
+                soDuVi = khachHang.MaTaiKhoanNavigation.Vi?.SoDu ?? 0,
                 email = khachHang.MaTaiKhoanNavigation?.Email,
                 soDienThoai = khachHang.MaTaiKhoanNavigation?.SoDienThoai,
                 anhDaiDien = khachHang.MaTaiKhoanNavigation?.AnhDaiDien
@@ -126,7 +127,7 @@ namespace DatMonAnOnline.API.Controllers
             if (file.Length > 5 * 1024 * 1024)
                 return BadRequest(new { message = "Ảnh đại diện không được lớn hơn 5 MB." });
 
-            var extension = file.ContentType.ToLowerInvariant() switch
+            var requestedExtension = file.ContentType.ToLowerInvariant() switch
             {
                 "image/jpeg" => ".jpg",
                 "image/png" => ".png",
@@ -134,8 +135,24 @@ namespace DatMonAnOnline.API.Controllers
                 _ => null
             };
 
-            if (extension == null || !await HasValidImageSignature(file, extension))
+            if (requestedExtension == null)
                 return BadRequest(new { message = "Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP hợp lệ." });
+
+            byte[] uploadedBytes;
+            await using (var input = file.OpenReadStream())
+            await using (var memory = new MemoryStream())
+            {
+                await input.CopyToAsync(memory, HttpContext.RequestAborted);
+                uploadedBytes = memory.ToArray();
+            }
+
+            var (safeImage, imageError) = Common.SafeImageProcessor.DecodeAndSanitize(
+                uploadedBytes,
+                requestedExtension,
+                HttpContext.RequestAborted);
+
+            if (safeImage == null)
+                return BadRequest(new { message = imageError });
 
             var account = await _context.Taikhoans
                 .FirstOrDefaultAsync(item => item.MaTaiKhoan == maTaiKhoan.Value);
@@ -146,13 +163,19 @@ namespace DatMonAnOnline.API.Controllers
             var uploadDirectory = GetAvatarDirectory();
             Directory.CreateDirectory(uploadDirectory);
 
-            var fileName = $"{maTaiKhoan.Value}_{Guid.NewGuid():N}{extension}";
+            var fileName = $"{maTaiKhoan.Value}_{Guid.NewGuid():N}{safeImage.Extension}";
             var physicalPath = Path.Combine(uploadDirectory, fileName);
             var publicPath = $"/uploads/avatars/{fileName}";
             var oldAvatar = account.AnhDaiDien;
 
-            await using (var output = System.IO.File.Create(physicalPath))
-                await file.CopyToAsync(output, HttpContext.RequestAborted);
+            await using (var output = new FileStream(
+                physicalPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None))
+            {
+                await output.WriteAsync(safeImage.Content, HttpContext.RequestAborted);
+            }
 
             try
             {
@@ -214,24 +237,6 @@ namespace DatMonAnOnline.API.Controllers
 
             if (System.IO.File.Exists(fullPath))
                 System.IO.File.Delete(fullPath);
-        }
-
-        private static async Task<bool> HasValidImageSignature(IFormFile file, string extension)
-        {
-            var header = new byte[12];
-            await using var stream = file.OpenReadStream();
-            var read = await stream.ReadAsync(header.AsMemory(0, header.Length));
-
-            return extension switch
-            {
-                ".jpg" => read >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
-                ".png" => read >= 8 && header[..8].SequenceEqual(
-                    new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
-                ".webp" => read >= 12 &&
-                            header[..4].SequenceEqual("RIFF"u8.ToArray()) &&
-                            header[8..12].SequenceEqual("WEBP"u8.ToArray()),
-                _ => false
-            };
         }
 
         private int? GetMaTaiKhoan()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, Download, FileText, XCircle } from "lucide-react";
 import {
@@ -8,6 +8,7 @@ import {
     rejectRestaurantDocuments,
     terminateContract,
 } from "../services/adminContractService";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 import type {
     AdminContractDetails,
     ContractFileType,
@@ -65,6 +66,7 @@ function AdminRestaurantContract() {
     const [terminationReason, setTerminationReason] = useState("");
     const [terminating, setTerminating] = useState(false);
     const [terminationError, setTerminationError] = useState("");
+    const [realtimeVersion, setRealtimeVersion] = useState(0);
 
     useEffect(() => {
         const maNhaHang = Number(id);
@@ -101,7 +103,13 @@ function AdminRestaurantContract() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, realtimeVersion]);
+
+    const refreshRealtime = useCallback(() => {
+        setRealtimeVersion((previous) => previous + 1);
+    }, []);
+
+    useRealtimeRefresh(["hopDong", "nhaHang", "hoSoPhapLy"], refreshRealtime);
 
     const data = result?.data;
     const contract = data?.hopDong;

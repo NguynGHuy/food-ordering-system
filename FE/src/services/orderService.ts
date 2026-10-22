@@ -1,5 +1,5 @@
 import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from "./api";
-import { getIdempotencyKey } from "./idempotency";
+import { runIdempotentRequest } from "./idempotency";
 
 export interface DatHangRequest {
   maGioHang: number;
@@ -40,15 +40,16 @@ export async function checkPreCheckout(
 export async function placeOrder(data: DatHangRequest): Promise<DatHangResult> {
   const token = localStorage.getItem("token");
   const path = "/don-hang/dat-hang";
-  const key = await getIdempotencyKey(`POST ${path}`, data);
-  return apiFetch(path, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Idempotency-Key": key,
-    },
-    body: JSON.stringify(data),
-  });
+  return runIdempotentRequest(`POST ${path}`, data, (key) =>
+    apiFetch(path, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Idempotency-Key": key,
+      },
+      body: JSON.stringify(data),
+    })
+  );
 }
 
 export interface CustomerOrderListResult<T> extends PagedResult<T> {
@@ -76,15 +77,16 @@ export async function cancelOrder(id: number, lyDoHuy: string) {
   const token = localStorage.getItem("token");
   const path = `/don-hang/${id}/huy`;
   const body = { lyDoHuy };
-  const key = await getIdempotencyKey(`PUT ${path}`, body);
-  return apiFetch(path, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Idempotency-Key": key,
-    },
-    body: JSON.stringify(body),
-  });
+  return runIdempotentRequest(`PUT ${path}`, body, (key) =>
+    apiFetch(path, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Idempotency-Key": key,
+      },
+      body: JSON.stringify(body),
+    })
+  );
 }
 export async function getOrderById(id: number): Promise<OrderDetails> {
   const token = localStorage.getItem("token");

@@ -42,4 +42,6 @@ public partial class Hoantien
     public virtual Taikhoan? MaTaiKhoanYeuCauNavigation { get; set; }
 
     public virtual Thanhtoan Thanhtoan { get; set; } = null!;
+
+    public virtual ICollection<Giaodichvi> Giaodichvis { get; set; } = new List<Giaodichvi>();
 }

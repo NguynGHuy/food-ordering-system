@@ -5,7 +5,7 @@ import {
     type PagedResult,
     type PaginationParams,
 } from "./api";
-import { getIdempotencyKey } from "./idempotency";
+import { runIdempotentRequest } from "./idempotency";
 
 export type ContractFileType = "giay-phep" | "giay-to" | "hop-dong";
 export type DocumentReviewResult = "HopLe" | "CanBoSung";
@@ -109,16 +109,16 @@ export async function approveRestaurantDocuments(
     review: DocumentReviewPayload
 ) {
     const path = `/admin/nha-hang/${maNhaHang}/duyet`;
-    const key = await getIdempotencyKey(`PUT ${path}`, review);
-
-    return apiFetch(path, {
-        method: "PUT",
-        headers: {
-            ...authHeaders(),
-            "Idempotency-Key": key,
-        },
-        body: JSON.stringify(review),
-    });
+    return runIdempotentRequest(`PUT ${path}`, review, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: {
+                ...authHeaders(),
+                "Idempotency-Key": key,
+            },
+            body: JSON.stringify(review),
+        })
+    );
 }
 
 export async function rejectRestaurantDocuments(
@@ -128,16 +128,16 @@ export async function rejectRestaurantDocuments(
 ) {
     const path = `/admin/nha-hang/${maNhaHang}/tu-choi`;
     const data = { ...review, lyDo };
-    const key = await getIdempotencyKey(`PUT ${path}`, data);
-
-    return apiFetch(path, {
-        method: "PUT",
-        headers: {
-            ...authHeaders(),
-            "Idempotency-Key": key,
-        },
-        body: JSON.stringify(data),
-    });
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: {
+                ...authHeaders(),
+                "Idempotency-Key": key,
+            },
+            body: JSON.stringify(data),
+        })
+    );
 }
 
 export async function downloadAdminContractFile(
@@ -192,14 +192,14 @@ export async function terminateContract(
 ) {
     const path = `/admin/hop-dong/${maHopDong}/cham-dut`;
     const data = { lyDo: lyDo.trim() };
-    const key = await getIdempotencyKey(`PUT ${path}`, data);
-
-    return apiFetch(path, {
-        method: "PUT",
-        headers: {
-            ...authHeaders(),
-            "Idempotency-Key": key,
-        },
-        body: JSON.stringify(data),
-    });
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: {
+                ...authHeaders(),
+                "Idempotency-Key": key,
+            },
+            body: JSON.stringify(data),
+        })
+    );
 }

@@ -17,6 +17,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import AddressPage from "./pages/Address";
 import VoucherWallet from "./pages/VoucherWallet";
+import WalletHistory from "./pages/WalletHistory";
 
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -34,10 +35,12 @@ import AdminPromotions from "./pages/AdminPromotions";
 import AdminRestaurantContract from "./pages/AdminRestaurantContract";
 import AdminContracts from "./pages/AdminContracts";
 import AdminDoiSoat from "./pages/AdminDoiSoat";
+import AdminFinance from "./pages/AdminFinance";
 
 import QuanLayout from "./pages/RestaurantLayout";
 import QuanHome from "./pages/RestaurantHome";
 import RestaurantDoiSoat from "./pages/RestaurantDoiSoat";
+import RestaurantWallet from "./pages/RestaurantWallet";
 import QuanRestaurantInfo from "./pages/RestaurantInfo";
 import QuanRestaurantStatus from "./pages/RestaurantStatus";
 import RestaurantOrders from "./pages/RestaurantOrders";
@@ -56,6 +59,7 @@ import RealtimeToast from "./components/RealtimeToast";
 import PageLoader from "./components/PageLoader";
 import Footer from "./components/Footer";
 import RouteScrollManager from "./components/RouteScrollManager";
+import NotFound from "./pages/NotFound";
 
 function AppContent() {
     const location = useLocation();
@@ -148,6 +152,11 @@ function AppContent() {
                 />
 
                 <Route
+                    path="/vi"
+                    element={<WalletHistory />}
+                />
+
+                <Route
                     path="/gio-hang"
                     element={<Cart />}
                 />
@@ -200,6 +209,7 @@ function AppContent() {
 
                     <Route path="hop-dong" element={<RestaurantContract />} />
                     <Route path="doi-soat" element={<RestaurantDoiSoat />} />
+                    <Route path="vi" element={<RestaurantWallet />} />
 
                     <Route
                         path="trang-thai"
@@ -272,6 +282,7 @@ function AppContent() {
 
                     <Route path="hop-dong" element={<AdminContracts />} />
                     <Route path="doi-soat" element={<AdminDoiSoat />} />
+                    <Route path="tai-chinh" element={<AdminFinance />} />
 
                     <Route
                         path="khuyen-mai"
@@ -289,6 +300,8 @@ function AppContent() {
                     />
                     
                 </Route>
+
+                <Route path="*" element={<NotFound />} />
 
             </Routes>
             {showLatestCart && <LatestCartBar />}

@@ -1,222 +1,233 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, Eye, CheckCircle2, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { CheckCircle2, Eye, RefreshCw, X } from "lucide-react";
 import Pagination from "../components/Pagination";
+import ReconciliationBreakdown from "../components/ReconciliationBreakdown";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 import {
-    getQuanDoiSoat,
-    getQuanDoiSoatDetail,
-    confirmDoiSoat,
-    type DoiSoatDetail,
-    type DoiSoatSummary,
+  confirmDoiSoat,
+  getQuanDoiSoat,
+  getQuanDoiSoatDetail,
+  type DoiSoatDetail,
+  type DoiSoatSummary,
 } from "../services/doiSoatService";
 
-function formatMoney(value: number) {
-    return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
+function money(value: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
 }
 
 function getErrorMessage(error: unknown) {
-    return error instanceof Error ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.";
+  return error instanceof Error ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.";
 }
 
 const STATUS_LABEL: Record<string, string> = {
-    MoiTao: "Đang tính toán",
-    ChoXacNhan: "Chờ bạn xác nhận",
-    DaXacNhan: "Chờ thanh toán",
-    DaThanhToan: "Đã nhận tiền",
-    TranhChap: "Đang khiếu nại"
+  MoiTao: "Đang tính toán",
+  ChoXacNhan: "Chờ bạn xác nhận",
+  DaXacNhan: "Chờ Admin thanh toán",
+  DaThanhToan: "Đã hoàn tất",
+  TranhChap: "Đang khiếu nại",
 };
 
 export default function RestaurantDoiSoat() {
-    const [list, setList] = useState<DoiSoatSummary[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [pageNumber, setPageNumber] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
+  const [list, setList] = useState<DoiSoatSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [showDetail, setShowDetail] = useState<number | null>(null);
+  const [detailData, setDetailData] = useState<DoiSoatDetail | null>(null);
+  const [busy, setBusy] = useState(false);
 
-    const [showDetail, setShowDetail] = useState<number | null>(null);
-    const [detailData, setDetailData] = useState<DoiSoatDetail | null>(null);
-    const [busy, setBusy] = useState(false);
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await getQuanDoiSoat({ pageNumber, pageSize: 10 });
+      setList(response.items);
+      setTotalPages(response.totalPages);
+    } catch (caughtError: unknown) {
+      setError(getErrorMessage(caughtError));
+    } finally {
+      setLoading(false);
+    }
+  }, [pageNumber]);
 
-    const loadData = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError("");
-            const res = await getQuanDoiSoat({ pageNumber, pageSize: 10 });
-            setList(res.items);
-            setTotalPages(res.totalPages);
-        } catch (caughtError: unknown) {
-            setError(getErrorMessage(caughtError));
-        } finally {
-            setLoading(false);
-        }
-    }, [pageNumber]);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => void loadData(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadData]);
 
-    useEffect(() => {
-        const timeoutId = window.setTimeout(() => void loadData(), 0);
-        return () => window.clearTimeout(timeoutId);
-    }, [loadData]);
+  const refreshRealtime = useCallback(async () => {
+    await loadData();
+    if (showDetail) {
+      try {
+        setDetailData(await getQuanDoiSoatDetail(showDetail));
+      } catch {
+        // Keep the current modal readable and retry when the user reopens it.
+      }
+    }
+  }, [loadData, showDetail]);
 
-    const handleViewDetail = async (id: number) => {
-        try {
-            setBusy(true);
-            const res = await getQuanDoiSoatDetail(id);
-            setDetailData(res);
-            setShowDetail(id);
-        } catch (caughtError: unknown) {
-            alert(getErrorMessage(caughtError));
-        } finally {
-            setBusy(false);
-        }
-    };
+  useRealtimeRefresh(["doiSoat"], refreshRealtime);
 
-    const handleConfirm = async () => {
-        if(!window.confirm("Bạn đồng ý với số liệu này và yêu cầu Admin thanh toán?")) return;
-        try {
-            setBusy(true);
-            await confirmDoiSoat(showDetail!);
-            alert("Xác nhận thành công! Vui lòng chờ Admin xử lý.");
-            setShowDetail(null);
-            void loadData();
-        } catch (caughtError: unknown) {
-            alert(getErrorMessage(caughtError));
-        } finally {
-            setBusy(false);
-        }
-    };
+  const handleViewDetail = async (id: number) => {
+    try {
+      setBusy(true);
+      const response = await getQuanDoiSoatDetail(id);
+      setDetailData(response);
+      setShowDetail(id);
+    } catch (caughtError: unknown) {
+      alert(getErrorMessage(caughtError));
+    } finally {
+      setBusy(false);
+    }
+  };
 
-    return (
-        <div className="merchant-info-page">
-            <header className="merchant-info-header">
-                <div>
-                    <span className="merchant-info-eyebrow">TÀI CHÍNH</span>
-                    <h1>Đối soát doanh thu</h1>
-                    <p>Kiểm tra số liệu và nhận thanh toán từ hệ thống.</p>
-                </div>
-                <button type="button" className="merchant-info-reset" onClick={() => void loadData()} disabled={loading}>
-                    <RefreshCw size={16} /> Tải lại
-                </button>
-            </header>
+  const closeDetail = () => {
+    setShowDetail(null);
+    setDetailData(null);
+  };
 
-            {error && <p className="merchant-info-error" role="alert" style={{ color: "red", marginBottom: 15 }}>{error}</p>}
-
-            <div className="merchant-info-section">
-                {loading ? <p>Đang tải dữ liệu...</p> : list.length === 0 ? <p>Chưa có kỳ đối soát nào.</p> : (
-                    <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '2px solid #eee' }}>
-                                    <th style={{ padding: 12 }}>Kỳ đối soát</th>
-                                    <th style={{ padding: 12 }}>Số đơn</th>
-                                    <th style={{ padding: 12 }}>Tiền cần thanh toán</th>
-                                    <th style={{ padding: 12 }}>Trạng thái</th>
-                                    <th style={{ padding: 12 }}>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {list.map(item => {
-                                    const absTien = Math.abs(item.soTienCanDoiSoat);
-                                    let textColor = "#16805a"; 
-                                    if (item.soTienCanDoiSoat > 0) textColor = "#ea580c"; 
-                                    else if (item.soTienCanDoiSoat < 0) textColor = "#dc2626";
-
-                                    return (
-                                        <tr key={item.maDoiSoat} style={{ borderBottom: '1px solid #eee' }}>
-                                            <td style={{ padding: 12 }}>
-                                                <strong>#{item.maDoiSoat}</strong>
-                                                <br/><small>{item.tuNgay} ➝ {item.denNgay}</small>
-                                            </td>
-                                            <td style={{ padding: 12 }}>{item.tongSoDon}</td>
-                                            <td style={{ padding: 12 }}>
-                                                <strong style={{ color: textColor, fontSize: 16 }}>
-                                                    {item.soTienCanDoiSoat < 0 ? "-" : ""}{formatMoney(absTien)}
-                                                </strong>
-                                            </td>
-                                            <td style={{ padding: 12 }}>
-                                                <span className={`merchant-info-approval ${item.trangThai === 'ChoXacNhan' ? '' : 'is-approved'}`}>
-                                                    {STATUS_LABEL[item.trangThai] || item.trangThai}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: 12 }}>
-                                                <button className="merchant-info-save" style={{ padding: '6px 12px', minHeight: 'auto' }} onClick={() => void handleViewDetail(item.maDoiSoat)}>
-                                                    <Eye size={14}/> Xem
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-                {totalPages > 1 && <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />}
-            </div>
-
-            {/* MODAL CHI TIẾT */}
-            {showDetail && detailData && (
-                <div className="merchant-config-overlay">
-                    <div className="merchant-config-dialog" style={{ width: 600 }}>
-                        <header className="merchant-config-header">
-                            <div>
-                                <span>BẢNG KÊ CHI TIẾT</span>
-                                <h2>Kỳ đối soát #{detailData.maDoiSoat}</h2>
-                            </div>
-                            <button onClick={() => setShowDetail(null)}><X size={18}/></button>
-                        </header>
-                        <div className="merchant-config-body">
-                            <div style={{ background: '#f8f9fa', padding: 15, borderRadius: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                                <div>
-                                    <p>Tổng tiền hàng: <strong>{formatMoney(detailData.tongTienHang)}</strong></p>
-                                    <p>Quán giảm giá: <strong>-{formatMoney(detailData.tongGiamGiaNhaHang)}</strong></p>
-                                    <p>Phí nền tảng: <strong style={{ color: 'red' }}>-{formatMoney(detailData.tongPhiNenTang)}</strong></p>
-                                </div>
-                                <div style={{ borderLeft: '1px solid #ddd', paddingLeft: 15 }}>
-                                    <p>Doanh thu thuần: <strong>{formatMoney(detailData.tongTienNhaHangNhan)}</strong></p>
-                                    <p>Quán đã thu (COD): <strong style={{ color: 'red' }}>-{formatMoney(detailData.tongTienNhaHangDaThu)}</strong></p>
-                                    <hr style={{ margin: '10px 0', border: '1px solid #fed7aa' }}/>
-
-                                    {(() => {
-                                        const value = detailData.soTienCanDoiSoat;
-                                        const isPositive = value > 0;
-                                        const isNegative = value < 0;
-                                        const absValue = Math.abs(value);
-                                        let text = "Không phát sinh công nợ";
-                                        let color = "#16805a"; 
-                                        
-                                        if (isPositive) {
-                                            text = "Thực nhận từ hệ thống:";
-                                            color = "#ea580c"; 
-                                        } else if (isNegative) {
-                                            text = "Bạn cần thanh toán lại cho hệ thống:";
-                                            color = "#dc2626"; 
-                                        }
-
-                                        return <h3 style={{ marginTop: 10, color }}>{text} {formatMoney(absValue)}</h3>;
-                                    })()}
-                                </div>
-                            </div>
-                            
-                            {detailData.trangThai === "ChoXacNhan" && (
-                                <div style={{ marginTop: 20, textAlign: 'right' }}>
-                                    <button 
-                                        className="merchant-info-save" 
-                                        onClick={() => void handleConfirm()}
-                                        disabled={busy}
-                                        style={{ width: '100%', fontSize: 15, padding: 12 }}
-                                    >
-                                        <CheckCircle2 size={18}/> Xác nhận số liệu đúng
-                                    </button>
-                                </div>
-                            )}
-
-                            {detailData.trangThai === "DaThanhToan" && (
-                                <div style={{ marginTop: 20, padding: 15, background: '#ecfdf5', color: '#047857', borderRadius: 8, textAlign: 'center' }}>
-                                    <strong>Đã nhận thanh toán</strong><br/>
-                                    Mã GD: {detailData.maGiaoDichDoiSoat}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+  const handleConfirm = async () => {
+    if (!showDetail || !detailData) return;
+    const agreed = window.confirm(
+      "Bạn xác nhận đã kiểm tra tiền COD, tiền đã vào ví, phí nền tảng và số tiền còn đối soát?",
     );
+    if (!agreed) return;
+
+    try {
+      setBusy(true);
+      await confirmDoiSoat(showDetail);
+      alert("Đã xác nhận số liệu. Vui lòng chờ Admin chốt kỳ.");
+      closeDetail();
+      await loadData();
+    } catch (caughtError: unknown) {
+      alert(getErrorMessage(caughtError));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="merchant-info-page reconciliation-page">
+      <header className="merchant-info-header">
+        <div>
+          <span className="merchant-info-eyebrow">TÀI CHÍNH</span>
+          <h1>Đối soát doanh thu</h1>
+          <p>Kiểm tra đầy đủ tiền COD, tiền vào ví, các khoản phí và công nợ với hệ thống.</p>
+        </div>
+        <button type="button" className="merchant-info-reset" onClick={() => void loadData()} disabled={loading}>
+          <RefreshCw size={16} /> Tải lại
+        </button>
+      </header>
+
+      <section className="reconciliation-explainer">
+        <strong>Số tiền còn đối soát</strong>
+        <span>=</span>
+        <span>Tiền nhà hàng được hưởng</span>
+        <span>−</span>
+        <span>Tiền bạn đã thu COD và đã nhận vào ví</span>
+      </section>
+
+      {error && <p className="merchant-info-error" role="alert">{error}</p>}
+
+      <section className="merchant-info-section reconciliation-list-panel">
+        {loading ? (
+          <p>Đang tải dữ liệu...</p>
+        ) : list.length === 0 ? (
+          <p>Chưa có kỳ đối soát nào.</p>
+        ) : (
+          <div className="reconciliation-table-scroll">
+            <table className="reconciliation-list-table">
+              <thead>
+                <tr>
+                  <th>Kỳ đối soát</th>
+                  <th>Số đơn</th>
+                  <th>Phí nền tảng</th>
+                  <th>Nhà hàng được hưởng</th>
+                  <th>Đã nhận COD + ví</th>
+                  <th>Còn đối soát</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((item) => (
+                  <tr key={item.maDoiSoat}>
+                    <td>
+                      <strong>#{item.maDoiSoat}</strong>
+                      <small>{item.tuNgay} – {item.denNgay}</small>
+                    </td>
+                    <td>{item.tongSoDon} đơn</td>
+                    <td>{money(item.tongPhiNenTang)}</td>
+                    <td>{money(item.tongTienNhaHangNhan)}</td>
+                    <td>{money(item.tongTienNhaHangDaThu)}</td>
+                    <td>
+                      <strong className={item.soTienCanDoiSoat < 0 ? "finance-negative" : "finance-positive"}>
+                        {item.soTienCanDoiSoat < 0 ? "−" : ""}{money(Math.abs(item.soTienCanDoiSoat))}
+                      </strong>
+                    </td>
+                    <td>
+                      <span className={`merchant-info-approval ${item.trangThai === "ChoXacNhan" ? "" : "is-approved"}`}>
+                        {STATUS_LABEL[item.trangThai] || item.trangThai}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="merchant-info-save reconciliation-view-button" onClick={() => void handleViewDetail(item.maDoiSoat)} disabled={busy}>
+                        <Eye size={14} /> Xem chi tiết
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {totalPages > 1 && (
+          <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
+        )}
+      </section>
+
+      {showDetail && detailData && createPortal((
+        <div className="merchant-config-overlay">
+          <div className="merchant-config-dialog reconciliation-modal">
+            <header className="merchant-config-header">
+              <div>
+                <span>BẢNG KÊ CHI TIẾT</span>
+                <h2>Kỳ đối soát #{detailData.maDoiSoat}</h2>
+              </div>
+              <button type="button" onClick={closeDetail}><X size={18} /></button>
+            </header>
+            <div className="merchant-config-body">
+              <ReconciliationBreakdown detail={detailData} perspective="restaurant" />
+
+              {detailData.trangThai === "ChoXacNhan" && (
+                <div className="reconciliation-confirm-box">
+                  <p>
+                    Chỉ xác nhận sau khi bạn đã kiểm tra từng đơn, tiền COD,
+                    tiền đã cộng vào ví và phí nền tảng.
+                  </p>
+                  <button className="merchant-info-save" onClick={() => void handleConfirm()} disabled={busy}>
+                    <CheckCircle2 size={18} />
+                    {busy ? "Đang xác nhận..." : "Xác nhận số liệu đúng"}
+                  </button>
+                </div>
+              )}
+
+              {detailData.trangThai === "DaThanhToan" && (
+                <div className="reconciliation-paid">
+                  <strong>Đã hoàn tất đối soát</strong>
+                  <span>Mã giao dịch: {detailData.maGiaoDichDoiSoat || "—"}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ), document.body)}
+    </div>
+  );
 }

@@ -184,8 +184,6 @@ function RestaurantDetail() {
           setError("");
         }
       } catch (err) {
-        console.error("Lỗi tải nhà hàng:", err);
-
         if (!cancelled && showLoading) {
           setError(
             err instanceof Error
@@ -235,7 +233,6 @@ function RestaurantDetail() {
             pageSize: MENU_PAGE_SIZE,
             search: searchTerm.trim() || undefined,
             maDanhMuc: selectedCategory || undefined,
-            trangThai: true,
           }),
         ]);
 
@@ -260,8 +257,6 @@ function RestaurantDetail() {
           setMenuPageNumber(menuData.pageNumber);
         }
       } catch (err) {
-        console.error("Lỗi tải thực đơn:", err);
-
         setMenuError(
           err instanceof Error ? err.message : "Không thể tải thực đơn.",
         );
@@ -342,11 +337,8 @@ function RestaurantDetail() {
     try {
       const data = await getRestaurantCart(currentRestaurantId);
       setCart(data);
-      if (data.daHetHan) {
-        alert("Giỏ hàng đã hết hạn sau 5 phút không hoạt động.");
-      }
-    } catch (err) {
-      console.error("Lỗi tải giỏ hàng của quán:", err);
+    } catch {
+      // Giỏ của quán chưa tồn tại hoặc không thể tải; trang vẫn hiển thị thực đơn.
     }
   }, [currentRestaurantId]);
 

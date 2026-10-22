@@ -27,19 +27,35 @@ export function getNotificationConnection(): HubConnection {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.onreconnecting(() => {
-      console.log("SignalR đang kết nối lại...");
-    });
+    connection.onreconnecting(() => undefined);
 
     connection.onreconnected(() => {
       connectedToken = localStorage.getItem("token");
 
-      console.log("SignalR đã kết nối lại.");
+      // SignalR does not replay events missed while the browser was offline.
+      // Trigger one scoped catch-up refresh after reconnect so financial and
+      // order screens cannot remain stale after a network interruption.
+      window.dispatchEvent(
+        new CustomEvent("realtime-data-changed", {
+          detail: {
+            phamVi: [
+              "donHang",
+              "vi",
+              "doiSoat",
+              "taiChinh",
+              "hopDong",
+              "hoSoPhapLy",
+              "nhaHang",
+              "tongQuan",
+            ],
+            duLieu: { hanhDong: "KetNoiLai" },
+          },
+        }),
+      );
     });
 
     connection.onclose(() => {
       connectedToken = null;
-      console.log("SignalR đã ngắt kết nối.");
     });
   }
 
@@ -95,14 +111,10 @@ export async function startNotificationConnection(): Promise<HubConnection | nul
     .start()
     .then(() => {
       connectedToken = token;
-      console.log("SignalR đã kết nối.");
       return hub;
     })
-    .catch((error) => {
+    .catch(() => {
       connectedToken = null;
-
-      console.error("Không thể kết nối SignalR:", error);
-
       return null;
     })
     .finally(() => {
@@ -131,8 +143,8 @@ export async function stopNotificationConnection(): Promise<void> {
       if (hub && hub.state !== HubConnectionState.Disconnected) {
         await hub.stop();
       }
-    } catch (error) {
-      console.error("Không thể ngắt kết nối SignalR:", error);
+    } catch {
+      // Kết nối đã ở trạng thái đóng hoặc đang bị trình duyệt hủy.
     } finally {
       connectedToken = null;
       startingToken = null;

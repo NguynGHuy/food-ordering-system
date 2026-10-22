@@ -51,6 +51,8 @@ function RealtimeToast() {
     );
 
     useEffect(() => {
+        const timers = timersRef.current;
+
         const handleNotification = (
             event: Event
         ) => {
@@ -121,12 +123,12 @@ function RealtimeToast() {
                 handleNotification
             );
 
-            timersRef.current.forEach(
+            timers.forEach(
                 (timer) =>
                     window.clearTimeout(timer)
             );
 
-            timersRef.current.clear();
+            timers.clear();
         };
     }, [dismissToast]);
 
@@ -163,11 +165,8 @@ function RealtimeToast() {
                         notification.maThongBao
                 )?.duongDan ?? null;
         }
-    } catch (error) {
-        console.error(
-            "Không thể xử lý thông báo:",
-            error
-        );
+    } catch {
+        // Thông báo vẫn được đóng; người dùng có thể mở lại từ trang thông báo.
     }
 
     dismissToast(notification.maThongBao);

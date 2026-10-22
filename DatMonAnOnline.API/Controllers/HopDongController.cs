@@ -17,13 +17,16 @@ public class HopDongController : ControllerBase
 {
     private readonly DatMonAnOnlineContext _context;
     private readonly IWebHostEnvironment _environment;
+    private readonly IRealtimeNotificationService _realtime;
 
     public HopDongController(
         DatMonAnOnlineContext context,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IRealtimeNotificationService realtime)
     {
         _context = context;
         _environment = environment;
+        _realtime = realtime;
     }
 
     public sealed class GuiXetDuyetRequest
@@ -368,9 +371,15 @@ public class HopDongController : ControllerBase
             var result = await IdempotencyStore.SaveSuccessAsync(
                 _context,
                 idem,
-                response);
+                response,
+                StatusCodes.Status201Created);
 
             await transaction.CommitAsync();
+
+            await _realtime.GuiDuLieuThayDoiAsync(
+                maTaiKhoan,
+                new[] { "hopDong" },
+                new { hopDong.MaHopDong, hanhDong = "Ky" });
 
             return result;
         }
@@ -554,6 +563,16 @@ public class HopDongController : ControllerBase
 
         await transaction.CommitAsync();
 
+        await Task.WhenAll(
+            _realtime.GuiDuLieuThayDoiAsync(
+                maTaiKhoan,
+                new[] { "hopDong", "nhaHang" },
+                new { hopDong.MaHopDong, hanhDong = "GuiXetDuyet" }),
+            _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "hopDong", "nhaHang", "tongQuan" },
+                new { hopDong.MaHopDong, nhaHang.MaNhaHang, hanhDong = "GuiXetDuyet" }));
+
         return result;
     }
 
@@ -667,6 +686,16 @@ public class HopDongController : ControllerBase
 
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
+
+        await Task.WhenAll(
+            _realtime.GuiDuLieuThayDoiAsync(
+                maTaiKhoan,
+                new[] { "hopDong", "nhaHang" },
+                new { nhaHang.MaNhaHang, hanhDong = "BatDauKyMoi" }),
+            _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "hopDong", "nhaHang", "tongQuan" },
+                new { nhaHang.MaNhaHang, hanhDong = "BatDauKyMoi" }));
 
         return Ok(new
         {

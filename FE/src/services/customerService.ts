@@ -6,7 +6,7 @@ export interface CustomerProfile {
     hoTen: string;
     ngaySinh: string | null;
     gioiTinh: string | null;
-    diemTichLuy: number;
+    soDuVi: number;
     email: string | null;
     soDienThoai: string | null;
     anhDaiDien: string | null;

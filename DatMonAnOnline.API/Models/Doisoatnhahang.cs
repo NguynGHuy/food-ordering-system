@@ -49,6 +49,8 @@ public partial class Doisoatnhahang
 
     public virtual ICollection<Chitietdoisoat> Chitietdoisoats { get; set; } = new List<Chitietdoisoat>();
 
+    public virtual ICollection<Giaodichvi> Giaodichvis { get; set; } = new List<Giaodichvi>();
+
     public virtual Nhahang MaNhaHangNavigation { get; set; } = null!;
 
     public virtual Taikhoan? MaTaiKhoanDuyetNavigation { get; set; }

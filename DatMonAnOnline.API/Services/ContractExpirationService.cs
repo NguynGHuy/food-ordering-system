@@ -57,6 +57,8 @@ public sealed class ContractExpirationService : BackgroundService
 
         var context = scope.ServiceProvider
             .GetRequiredService<DatMonAnOnlineContext>();
+        var realtime = scope.ServiceProvider
+            .GetRequiredService<IRealtimeNotificationService>();
 
         var homNay = DateOnly.FromDateTime(DateTime.Now);
 
@@ -100,13 +102,14 @@ public sealed class ContractExpirationService : BackgroundService
                 .ToListAsync(cancellationToken);
 
             var thoiGian = DateTime.Now;
+            var notifications = new List<Thongbao>();
 
             foreach (var hopDong in hopDongs)
             {
                 hopDong.TrangThai = "HetHan";
                 hopDong.NgayCapNhat = thoiGian;
 
-                context.Thongbaos.Add(new Thongbao
+                var notification = new Thongbao
                 {
                     MaTaiKhoan = nhaHang.MaTaiKhoan,
                     TieuDe = "Hợp đồng nhà hàng đã hết hạn",
@@ -118,11 +121,29 @@ public sealed class ContractExpirationService : BackgroundService
                     DuongDan = "/quan/hop-dong",
                     DaDoc = false,
                     NgayTao = thoiGian
-                });
+                };
+                context.Thongbaos.Add(notification);
+                notifications.Add(notification);
             }
 
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            var notificationTasks = notifications
+                .Select(notification => realtime.GuiThongBaoAsync(
+                    nhaHang.MaTaiKhoan,
+                    notification));
+
+            await Task.WhenAll(notificationTasks.Append(
+                realtime.GuiDuLieuThayDoiAsync(
+                    nhaHang.MaTaiKhoan,
+                    new[] { "hopDong", "nhaHang" },
+                    new { nhaHang.MaNhaHang, hanhDong = "HetHan" })));
+
+            await realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "hopDong", "nhaHang", "tongQuan" },
+                new { nhaHang.MaNhaHang, hanhDong = "HetHan" });
 
             context.ChangeTracker.Clear();
         }

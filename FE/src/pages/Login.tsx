@@ -70,7 +70,6 @@ function Login() {
         try {
           await syncGuestCartsToAccount();
         } catch (syncError) {
-          console.error("Không thể đồng bộ giỏ khách sau khi đăng nhập:", syncError);
           throw new Error(
             syncError instanceof Error
               ? `Chưa thể đồng bộ giỏ hàng: ${syncError.message}`

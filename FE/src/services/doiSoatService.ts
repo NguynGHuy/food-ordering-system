@@ -1,5 +1,5 @@
 import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from "./api";
-import { getIdempotencyKey } from "./idempotency";
+import { runIdempotentRequest } from "./idempotency";
 
 export interface DoiSoatSummary {
     maDoiSoat: number;
@@ -8,18 +8,52 @@ export interface DoiSoatSummary {
     tuNgay: string;
     denNgay: string;
     tongSoDon: number;
-    soTienCanDoiSoat: number;
-    trangThai: string;
-}
-
-export interface DoiSoatDetail extends DoiSoatSummary {
     tongTienHang: number;
     tongGiamGiaNhaHang: number;
     tongGiamGiaHeThong: number;
+    tongPhiShip: number;
     tongPhiNenTang: number;
     tongTienNhaHangNhan: number;
     tongTienNhaHangDaThu: number;
+    soTienCanDoiSoat: number;
+    trangThai: string;
+    ngayTao: string;
+}
+
+export interface DoiSoatDetail extends DoiSoatSummary {
+    tongTienHoan: number;
     maGiaoDichDoiSoat?: string | null;
+    ghiChu?: string | null;
+    ngayXacNhan?: string | null;
+    ngayThanhToan?: string | null;
+    chiTiet: DoiSoatOrderDetail[];
+}
+
+export interface DoiSoatOrderDetail {
+    maDonHang: number;
+    maDonHangHienThi: string;
+    thoiGianGiaoThucTe: string | null;
+    tongTienHang: number;
+    giamGiaNhaHang: number;
+    giamGiaHeThong: number;
+    phiShip: number;
+    tyLePhiNenTang: number;
+    phiNenTang: number;
+    soTienHoan: number;
+    soTienNhaHangNhan: number;
+    tienNhaHangDaThu: number;
+    soTienCanDoiSoat: number;
+    tienDaCongVaoVi: number;
+    tienThuCod: number;
+    phuongThucThanhToan: string | null;
+    thanhTien: number;
+}
+
+export interface DoiSoatRestaurantOption {
+    maNhaHang: number;
+    tenNhaHang: string;
+    diaChiQuan: string;
+    taiKhoanDangHoatDong: boolean;
 }
 
 function authHeaders() {
@@ -30,29 +64,42 @@ export function getAdminDoiSoat(params: PaginationParams & { maNhaHang?: number 
     return apiFetch(`/admin/doi-soat${buildQuery(params)}`, { headers: authHeaders() }) as Promise<PagedResult<DoiSoatSummary>>;
 }
 
+export function getDoiSoatRestaurantOptions(search = "") {
+    return apiFetch(`/admin/doi-soat/nha-hang-lua-chon${buildQuery({ search })}`, {
+        headers: authHeaders(),
+        cache: "no-store"
+    }) as Promise<DoiSoatRestaurantOption[]>;
+}
+
 export async function createDoiSoat(data: { maNhaHang: number; tuNgay: string; denNgay: string }) {
     const path = "/admin/doi-soat/tao-ky";
-    const key = await getIdempotencyKey(`POST ${path}`, data);
-    return apiFetch(path, {
-        method: "POST", 
-        headers: { ...authHeaders(), "Idempotency-Key": key }, 
-        body: JSON.stringify(data)
-    });
+    return runIdempotentRequest(`POST ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "POST",
+            headers: { ...authHeaders(), "Idempotency-Key": key },
+            body: JSON.stringify(data)
+        })
+    );
 }
 
 export function getAdminDoiSoatDetail(id: number) {
     return apiFetch(`/admin/doi-soat/${id}`, { headers: authHeaders() }) as Promise<DoiSoatDetail>;
 }
 
-export async function payDoiSoat(id: number, maGiaoDich: string) {
+export async function payDoiSoat(
+    id: number,
+    maGiaoDich: string,
+    hinhThucThanhToan: "ChuyenKhoan" | "ViNhaHang" = "ChuyenKhoan"
+) {
     const path = `/admin/doi-soat/${id}/thanh-toan`;
-    const data = { maGiaoDich: maGiaoDich.trim() };
-    const key = await getIdempotencyKey(`PUT ${path}`, data);
-    return apiFetch(path, {
-        method: "PUT", 
-        headers: { ...authHeaders(), "Idempotency-Key": key }, 
-        body: JSON.stringify(data)
-    });
+    const data = { maGiaoDich: maGiaoDich.trim() || null, hinhThucThanhToan };
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: { ...authHeaders(), "Idempotency-Key": key },
+            body: JSON.stringify(data)
+        })
+    );
 }
 
 export function getQuanDoiSoat(params: PaginationParams = {}) {
@@ -65,9 +112,11 @@ export function getQuanDoiSoatDetail(id: number) {
 
 export async function confirmDoiSoat(id: number) {
     const path = `/nha-hang/doi-soat/${id}/xac-nhan`;
-    const key = await getIdempotencyKey(`PUT ${path}`, { id });
-    return apiFetch(path, {
-        method: "PUT", 
-        headers: { ...authHeaders(), "Idempotency-Key": key }
-    });
+    const data = { id };
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: { ...authHeaders(), "Idempotency-Key": key }
+        })
+    );
 }

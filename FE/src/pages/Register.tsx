@@ -107,7 +107,7 @@ function Register() {
     try {
       setLoading(true);
 
-      const data = await register({
+      await register({
         email: email.trim(),
         matKhau,
         soDienThoai: soDienThoai.trim(),
@@ -116,14 +116,10 @@ function Register() {
         gioiTinh,
       });
 
-      console.log("Đăng ký thành công:", data);
-
       alert("Đăng ký tài khoản thành công!");
 
       navigate("/dang-nhap");
     } catch (error) {
-      console.error("REGISTER ERROR:", error);
-
       if (error instanceof Error) {
         setError(error.message);
       } else {

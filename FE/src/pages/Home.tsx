@@ -63,17 +63,14 @@ function Home() {
         });
         if (cancelled) return;
 
-        console.log("Danh sách nhà hàng:", data);
-
         // Sắp xếp theo đánh giá cao → thấp
         // rồi lấy tối đa 6 nhà hàng
         const featuredRestaurants = data.items;
 
         setRestaurants(featuredRestaurants);
         setError("");
-      } catch (error) {
+      } catch {
         if (cancelled) return;
-        console.error(error);
         setError("Không thể tải danh sách nhà hàng.");
       } finally {
         if (!cancelled) setLoading(false);

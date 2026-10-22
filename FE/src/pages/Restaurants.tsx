@@ -79,15 +79,13 @@ function Restaurants() {
         });
         if (cancelled) return;
 
-        console.log("Danh sách nhà hàng:", data);
         setRestaurants(data.items);
         setTotalItems(data.totalItems);
         setTotalPages(data.totalPages);
         if (data.pageNumber !== pageNumber) setPageNumber(data.pageNumber);
         setError("");
-      } catch (error) {
+      } catch {
         if (cancelled) return;
-        console.error(error);
         setError("Không thể tải danh sách nhà hàng.");
       } finally {
         if (!cancelled) setLoading(false);

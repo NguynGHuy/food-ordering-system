@@ -80,4 +80,6 @@ public partial class Donhang
     public virtual Trangthaidonhang MaTrangThaiNavigation { get; set; } = null!;
 
     public virtual ICollection<Thanhtoan> Thanhtoans { get; set; } = new List<Thanhtoan>();
+
+    public virtual ICollection<Giaodichvi> Giaodichvis { get; set; } = new List<Giaodichvi>();
 }

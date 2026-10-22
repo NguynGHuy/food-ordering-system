@@ -1,3 +1,13 @@
+-- FOODIE - SINGLE DATABASE INSTALLER
+-- WARNING: Running this file deletes the existing DatMonAnOnline database.
+-- This is the only SQL file required to initialize the project.
+
+DROP DATABASE IF EXISTS `DatMonAnOnline`;
+CREATE DATABASE `DatMonAnOnline`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE `DatMonAnOnline`;
+
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: datmonanonline
@@ -343,8 +353,10 @@ CREATE TABLE `doisoatnhahang` (
   `NgayThanhToan` datetime DEFAULT NULL,
   PRIMARY KEY (`MaDoiSoat`),
   UNIQUE KEY `UQ_DoiSoat_Ky` (`MaNhaHang`,`TuNgay`,`DenNgay`),
+  UNIQUE KEY `UQ_DoiSoat_MaGiaoDich` (`MaGiaoDichDoiSoat`),
   UNIQUE KEY `UQ_DoiSoat_Ma_NhaHang` (`MaDoiSoat`,`MaNhaHang`),
   KEY `IX_DoiSoat_NhaHang_TrangThai` (`MaNhaHang`,`TrangThai`),
+  KEY `IX_DoiSoat_NhaHang_MaDoiSoat` (`MaNhaHang`,`MaDoiSoat`),
   KEY `FK_DoiSoat_NguoiDuyet` (`MaTaiKhoanDuyet`),
   CONSTRAINT `FK_DoiSoat_NguoiDuyet` FOREIGN KEY (`MaTaiKhoanDuyet`) REFERENCES `taikhoan` (`MaTaiKhoan`),
   CONSTRAINT `FK_DoiSoat_NhaHang` FOREIGN KEY (`MaNhaHang`) REFERENCES `nhahang` (`MaNhaHang`),
@@ -405,6 +417,7 @@ CREATE TABLE `donhang` (
   KEY `FK_DonHang_TrangThai` (`MaTrangThai`),
   KEY `FK_DonHang_KhuyenMai` (`MaKhuyenMai`),
   KEY `IX_DonHang_HopDong_NhaHang` (`MaHopDong`,`MaNhaHang`),
+  KEY `IX_DonHang_DoiSoat` (`MaNhaHang`,`MaTrangThai`,`ThoiGianGiaoThucTe`,`MaDonHang`),
   CONSTRAINT `FK_DonHang_DiaChi` FOREIGN KEY (`MaDiaChi`) REFERENCES `diachi` (`MaDiaChi`) ON DELETE SET NULL,
   CONSTRAINT `FK_DonHang_HopDong_NhaHang` FOREIGN KEY (`MaHopDong`, `MaNhaHang`) REFERENCES `hopdongnhahang` (`MaHopDong`, `MaNhaHang`),
   CONSTRAINT `FK_DonHang_KhachHang` FOREIGN KEY (`MaKhachHang`) REFERENCES `khachhang` (`MaKhachHang`),
@@ -437,9 +450,11 @@ CREATE TABLE `giohang` (
   `MaGioHang` int NOT NULL AUTO_INCREMENT,
   `MaKhachHang` int NOT NULL,
   `NgayCapNhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `GiuCheckoutDenUtc` datetime(6) DEFAULT NULL,
   `MaNhaHang` int NOT NULL,
   PRIMARY KEY (`MaGioHang`),
   UNIQUE KEY `UQ_GioHang_KhachHang_NhaHang` (`MaKhachHang`,`MaNhaHang`),
+  KEY `IX_GioHang_GiuCheckoutDenUtc` (`GiuCheckoutDenUtc`),
   KEY `FK_GioHang_NhaHang` (`MaNhaHang`),
   CONSTRAINT `FK_GioHang_KhachHang` FOREIGN KEY (`MaKhachHang`) REFERENCES `khachhang` (`MaKhachHang`),
   CONSTRAINT `FK_GioHang_NhaHang` FOREIGN KEY (`MaNhaHang`) REFERENCES `nhahang` (`MaNhaHang`)
@@ -452,7 +467,7 @@ CREATE TABLE `giohang` (
 
 LOCK TABLES `giohang` WRITE;
 /*!40000 ALTER TABLE `giohang` DISABLE KEYS */;
-INSERT INTO `giohang` VALUES (5,4,'2026-10-06 21:40:07',1),(6,4,'2026-10-12 00:15:38',3);
+INSERT INTO `giohang` VALUES (5,4,'2026-10-06 21:40:07',NULL,1),(6,4,'2026-10-12 00:15:38',NULL,3);
 /*!40000 ALTER TABLE `giohang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -471,7 +486,7 @@ CREATE TABLE `hoantien` (
   `MaTaiKhoanXuLy` int DEFAULT NULL,
   `SoTienHoan` decimal(18,0) NOT NULL,
   `LyDoHoan` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `KenhHoanTien` enum('MoMo','ZaloPay','VNPay','ChuyenKhoan','ThuCong') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `KenhHoanTien` enum('MoMo','ZaloPay','VNPay','ChuyenKhoan','ThuCong','FoodPay') COLLATE utf8mb4_unicode_ci NOT NULL,
   `TrangThai` enum('ChoXuLy','DangXuLy','ThanhCong','ThatBai') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ChoXuLy',
   `MaYeuCauHoan` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `MaGiaoDichHoan` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -521,28 +536,37 @@ CREATE TABLE `hopdongnhahang` (
   `ChucVuNguoiDaiDien` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `SoGiayToNguoiDaiDien` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `MaSoThue` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `TenPhapLy` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `DiaChiPhapLy` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `SoGiayPhepKinhDoanh` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `FileGiayPhepKinhDoanh` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `FileGiayToNguoiDaiDien` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `FileHopDong` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `NoiDungHopDong` longtext COLLATE utf8mb4_unicode_ci,
   `PhienBanDieuKhoan` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '1.0',
   `TyLePhiNenTang` decimal(5,2) NOT NULL DEFAULT '5.00',
   `NgayBatDau` date NOT NULL,
   `NgayKetThuc` date NOT NULL,
   `ThoiGianKy` datetime DEFAULT NULL,
-  `TrangThai` enum('Nhap','ChoKy','ChoDuyet','HieuLuc','HetHan','TuChoi','ChamDut') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Nhap',
+  `ThoiGianDongYDieuKhoan` datetime DEFAULT NULL,
+  `ThoiGianGuiDuyet` datetime DEFAULT NULL,
+  `TrangThai` enum('Nhap','ChoKy','DaKy','ChoDuyet','HieuLuc','HetHan','TuChoi','ChamDut') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Nhap',
   `MaTaiKhoanDuyet` int DEFAULT NULL,
   `ThoiGianDuyet` datetime DEFAULT NULL,
   `LyDoTuChoi` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `LyDoChamDut` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `NgayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `NgayCapNhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `MaTaiKhoanChamDut` int DEFAULT NULL,
+  `ThoiGianChamDut` datetime DEFAULT NULL,
   PRIMARY KEY (`MaHopDong`),
   UNIQUE KEY `UQ_HopDong_SoHopDong` (`SoHopDong`),
   UNIQUE KEY `UQ_HopDong_Ma_NhaHang` (`MaHopDong`,`MaNhaHang`),
   KEY `IX_HopDong_NhaHang_TrangThai` (`MaNhaHang`,`TrangThai`),
   KEY `IX_HopDong_NgayKetThuc` (`NgayKetThuc`),
   KEY `FK_HopDongNhaHang_NguoiDuyet` (`MaTaiKhoanDuyet`),
+  KEY `FK_HopDong_TaiKhoanChamDut` (`MaTaiKhoanChamDut`),
+  CONSTRAINT `FK_HopDong_TaiKhoanChamDut` FOREIGN KEY (`MaTaiKhoanChamDut`) REFERENCES `taikhoan` (`MaTaiKhoan`),
   CONSTRAINT `FK_HopDongNhaHang_NguoiDuyet` FOREIGN KEY (`MaTaiKhoanDuyet`) REFERENCES `taikhoan` (`MaTaiKhoan`),
   CONSTRAINT `FK_HopDongNhaHang_NhaHang` FOREIGN KEY (`MaNhaHang`) REFERENCES `nhahang` (`MaNhaHang`),
   CONSTRAINT `CK_HopDong_HieuLuc` CHECK (((`TrangThai` <> _utf8mb4'HieuLuc') or ((`ThoiGianKy` is not null) and (`ThoiGianDuyet` is not null) and (`MaTaiKhoanDuyet` is not null) and (`FileHopDong` is not null)))),
@@ -561,6 +585,71 @@ LOCK TABLES `hopdongnhahang` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `hosophaplynhahang`
+--
+
+DROP TABLE IF EXISTS `hosophaplynhahang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `hosophaplynhahang` (
+  `MaNhaHang` int NOT NULL,
+  `NguoiDaiDien` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ChucVuNguoiDaiDien` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `SoGiayToNguoiDaiDien` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `TenPhapLy` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `MaSoThue` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `DiaChiPhapLy` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `SoGiayPhepKinhDoanh` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `FileGiayPhepKinhDoanh` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `FileGiayToNguoiDaiDien` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `NgayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaNhaHang`),
+  CONSTRAINT `FK_HoSoPhapLy_NhaHang` FOREIGN KEY (`MaNhaHang`) REFERENCES `nhahang` (`MaNhaHang`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `hosophaplynhahang`
+--
+
+LOCK TABLES `hosophaplynhahang` WRITE;
+/*!40000 ALTER TABLE `hosophaplynhahang` DISABLE KEYS */;
+/*!40000 ALTER TABLE `hosophaplynhahang` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `idempotencyrequest`
+--
+
+DROP TABLE IF EXISTS `idempotencyrequest`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `idempotencyrequest` (
+  `MaRequest` bigint NOT NULL AUTO_INCREMENT,
+  `ScopeHash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `IdempotencyKey` char(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `RequestHash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `ResponseJson` longtext NOT NULL,
+  `StatusCode` smallint unsigned NOT NULL DEFAULT '200',
+  `NgayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ExpiresAt` datetime NOT NULL,
+  PRIMARY KEY (`MaRequest`),
+  UNIQUE KEY `UQ_Idempotency_Scope_Key` (`ScopeHash`,`IdempotencyKey`),
+  KEY `IX_Idempotency_ExpiresAt` (`ExpiresAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `idempotencyrequest`
+--
+
+LOCK TABLES `idempotencyrequest` WRITE;
+/*!40000 ALTER TABLE `idempotencyrequest` DISABLE KEYS */;
+/*!40000 ALTER TABLE `idempotencyrequest` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `khachhang`
 --
 
@@ -573,7 +662,6 @@ CREATE TABLE `khachhang` (
   `HoTen` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `NgaySinh` date DEFAULT NULL,
   `GioiTinh` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `DiemTichLuy` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`MaKhachHang`),
   UNIQUE KEY `MaTaiKhoan` (`MaTaiKhoan`),
   CONSTRAINT `FK_KhachHang_TaiKhoan` FOREIGN KEY (`MaTaiKhoan`) REFERENCES `taikhoan` (`MaTaiKhoan`)
@@ -586,7 +674,7 @@ CREATE TABLE `khachhang` (
 
 LOCK TABLES `khachhang` WRITE;
 /*!40000 ALTER TABLE `khachhang` DISABLE KEYS */;
-INSERT INTO `khachhang` VALUES (1,4,'Nguyễn Văn Khách','2000-01-01','Nam',150),(2,5,'Trần Thị Hàng','2002-05-15','Nữ',0),(3,6,'Nguyễn Minh Danh','2025-03-12','Nam',0),(4,9,'Nguyễn Văn A','2001-11-09','Nam',0),(5,34,'Nguyễn Huy','2001-11-05','Nam',0);
+INSERT INTO `khachhang` VALUES (1,4,'Nguyễn Văn Khách','2000-01-01','Nam'),(2,5,'Trần Thị Hàng','2002-05-15','Nữ'),(3,6,'Nguyễn Minh Danh','2025-03-12','Nam'),(4,9,'Nguyễn Văn A','2001-11-09','Nam'),(5,34,'Nguyễn Huy','2001-11-05','Nam');
 /*!40000 ALTER TABLE `khachhang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -769,7 +857,7 @@ CREATE TABLE `nhahang` (
   `AnhBia` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `GioMoCua` time DEFAULT NULL,
   `GioDongCua` time DEFAULT NULL,
-  `TrangThaiDuyet` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ChoDuyet',
+  `TrangThaiDuyet` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ChuaHoanTat',
   `TrangThaiHoatDong` enum('MoCua','DongCua','TamNgung') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MoCua',
   `CheDoHoatDong` enum('TuDong','MoThuCong','TamNgung') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'TuDong',
   `DanhGiaTrungBinh` float NOT NULL DEFAULT '0',
@@ -832,7 +920,7 @@ CREATE TABLE `phuongthucthanhtoan` (
   `TrangThai` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`MaPhuongThuc`),
   UNIQUE KEY `TenPhuongThuc` (`TenPhuongThuc`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -841,7 +929,7 @@ CREATE TABLE `phuongthucthanhtoan` (
 
 LOCK TABLES `phuongthucthanhtoan` WRITE;
 /*!40000 ALTER TABLE `phuongthucthanhtoan` DISABLE KEYS */;
-INSERT INTO `phuongthucthanhtoan` VALUES (1,'COD',1),(2,'Momo',1),(3,'VNPay',1),(4,'ZaloPay',1);
+INSERT INTO `phuongthucthanhtoan` VALUES (1,'COD',1),(2,'Momo',1),(3,'VNPay',1),(4,'ZaloPay',1),(5,'FoodPay',1);
 /*!40000 ALTER TABLE `phuongthucthanhtoan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -907,6 +995,185 @@ INSERT INTO `taikhoan` VALUES (1,'admin@hethong.com','hashed_pass_123','09000000
 UNLOCK TABLES;
 
 --
+-- Shared authentication state (survives restart and works across API instances)
+--
+
+DROP TABLE IF EXISTS `authratelimit`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = ascii */;
+CREATE TABLE `authratelimit` (
+  `PartitionHash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `Policy` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `WindowStartUtc` datetime(6) NOT NULL,
+  `RequestCount` int NOT NULL DEFAULT '0',
+  `ExpiresAtUtc` datetime(6) NOT NULL,
+  PRIMARY KEY (`PartitionHash`),
+  KEY `IX_AuthRateLimit_ExpiresAtUtc` (`ExpiresAtUtc`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+DROP TABLE IF EXISTS `loginattempt`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = ascii */;
+CREATE TABLE `loginattempt` (
+  `EmailHash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `SoLanThatBai` int NOT NULL DEFAULT '0',
+  `CuaSoBatDauUtc` datetime(6) NOT NULL,
+  `KhoaDenUtc` datetime(6) DEFAULT NULL,
+  `NgayCapNhatUtc` datetime(6) NOT NULL,
+  PRIMARY KEY (`EmailHash`),
+  KEY `IX_LoginAttempt_NgayCapNhatUtc` (`NgayCapNhatUtc`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+DROP TABLE IF EXISTS `passwordresetrequest`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = ascii */;
+CREATE TABLE `passwordresetrequest` (
+  `EmailHash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `MaYeuCau` char(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `MaTaiKhoan` int DEFAULT NULL,
+  `MaXacNhanHash` varchar(88) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `MatKhauLucTaoYeuCau` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `SoLanThuSai` int NOT NULL DEFAULT '0',
+  `HetHanUtc` datetime(6) NOT NULL,
+  `NgayTaoUtc` datetime(6) NOT NULL,
+  PRIMARY KEY (`EmailHash`),
+  UNIQUE KEY `UQ_PasswordReset_MaYeuCau` (`MaYeuCau`),
+  KEY `IX_PasswordReset_HetHanUtc` (`HetHanUtc`),
+  KEY `FK_PasswordReset_TaiKhoan` (`MaTaiKhoan`),
+  CONSTRAINT `FK_PasswordReset_TaiKhoan` FOREIGN KEY (`MaTaiKhoan`) REFERENCES `taikhoan` (`MaTaiKhoan`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `thamdinhhosonhahang`
+--
+
+DROP TABLE IF EXISTS `thamdinhhosonhahang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `thamdinhhosonhahang` (
+  `MaThamDinh` int NOT NULL AUTO_INCREMENT,
+  `MaHopDong` int NOT NULL,
+  `MaTaiKhoanAdmin` int NOT NULL,
+  `KetQuaGiayPhep` enum('HopLe','CanBoSung') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `KetQuaGiayToDaiDien` enum('HopLe','CanBoSung') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `KetQuaHopDong` enum('HopLe','CanBoSung') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `KetQua` enum('DaDuyet','TuChoi') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `GhiChu` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ThoiGian` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaThamDinh`),
+  UNIQUE KEY `UQ_ThamDinhHoSo_HopDong` (`MaHopDong`),
+  KEY `FK_ThamDinhHoSo_Admin` (`MaTaiKhoanAdmin`),
+  CONSTRAINT `FK_ThamDinhHoSo_Admin` FOREIGN KEY (`MaTaiKhoanAdmin`) REFERENCES `taikhoan` (`MaTaiKhoan`),
+  CONSTRAINT `FK_ThamDinhHoSo_HopDong` FOREIGN KEY (`MaHopDong`) REFERENCES `hopdongnhahang` (`MaHopDong`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `thamdinhhosonhahang`
+--
+
+LOCK TABLES `thamdinhhosonhahang` WRITE;
+/*!40000 ALTER TABLE `thamdinhhosonhahang` DISABLE KEYS */;
+/*!40000 ALTER TABLE `thamdinhhosonhahang` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `vi`
+--
+
+DROP TABLE IF EXISTS `vi`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vi` (
+  `MaVi` int NOT NULL AUTO_INCREMENT,
+  `MaTaiKhoan` int NOT NULL,
+  `SoDu` decimal(18,0) NOT NULL DEFAULT '0',
+  `DonViTienTe` char(3) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL DEFAULT 'VND',
+  `TrangThai` enum('HoatDong','TamKhoa','Dong') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'HoatDong',
+  `NgayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaVi`),
+  UNIQUE KEY `UQ_Vi_TaiKhoan` (`MaTaiKhoan`),
+  CONSTRAINT `FK_Vi_TaiKhoan` FOREIGN KEY (`MaTaiKhoan`) REFERENCES `taikhoan` (`MaTaiKhoan`),
+  CONSTRAINT `CK_Vi_SoDu` CHECK (`SoDu` >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vi`
+--
+
+LOCK TABLES `vi` WRITE, `taikhoan` READ;
+/*!40000 ALTER TABLE `vi` DISABLE KEYS */;
+INSERT INTO `vi` (`MaTaiKhoan`, `SoDu`)
+SELECT `MaTaiKhoan`, CASE WHEN `MaTaiKhoan` = 4 THEN 150 ELSE 0 END
+FROM `taikhoan`
+WHERE `MaRole` IN (2, 3)
+ORDER BY `MaTaiKhoan`;
+/*!40000 ALTER TABLE `vi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `giaodichvi`
+--
+
+DROP TABLE IF EXISTS `giaodichvi`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `giaodichvi` (
+  `MaGiaoDichVi` bigint NOT NULL AUTO_INCREMENT,
+  `MaVi` int NOT NULL,
+  `MaDonHang` int DEFAULT NULL,
+  `MaHoanTien` int DEFAULT NULL,
+  `MaDoiSoat` int DEFAULT NULL,
+  `LoaiGiaoDich` enum('NapTien','ThanhToan','HoanTien','ThuNhapDonHang','NhanDoiSoat','RutTien','ChuyenTien','DieuChinh','KhoiTao') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `LoaiBienDong` enum('Cong','Tru') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `SoTien` decimal(18,0) NOT NULL,
+  `SoDuTruoc` decimal(18,0) NOT NULL,
+  `SoDuSau` decimal(18,0) NOT NULL,
+  `TrangThai` enum('ChoXuLy','ThanhCong','ThatBai') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ThanhCong',
+  `MaThamChieu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `NoiDung` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `NgayTao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaGiaoDichVi`),
+  UNIQUE KEY `UQ_GiaoDichVi_MaThamChieu` (`MaThamChieu`),
+  KEY `IX_GiaoDichVi_Vi_NgayTao` (`MaVi`,`NgayTao`),
+  KEY `IX_GiaoDichVi_DonHang` (`MaDonHang`),
+  KEY `IX_GiaoDichVi_DonHang_Loai_TrangThai` (`MaDonHang`,`LoaiGiaoDich`,`TrangThai`),
+  KEY `IX_GiaoDichVi_HoanTien` (`MaHoanTien`),
+  KEY `IX_GiaoDichVi_DoiSoat` (`MaDoiSoat`),
+  CONSTRAINT `FK_GiaoDichVi_Vi` FOREIGN KEY (`MaVi`) REFERENCES `vi` (`MaVi`),
+  CONSTRAINT `FK_GiaoDichVi_DonHang` FOREIGN KEY (`MaDonHang`) REFERENCES `donhang` (`MaDonHang`),
+  CONSTRAINT `FK_GiaoDichVi_HoanTien` FOREIGN KEY (`MaHoanTien`) REFERENCES `hoantien` (`MaHoanTien`),
+  CONSTRAINT `FK_GiaoDichVi_DoiSoat` FOREIGN KEY (`MaDoiSoat`) REFERENCES `doisoatnhahang` (`MaDoiSoat`),
+  CONSTRAINT `CK_GiaoDichVi_SoTien` CHECK (`SoTien` > 0),
+  CONSTRAINT `CK_GiaoDichVi_SoDu` CHECK (`SoDuTruoc` >= 0 AND `SoDuSau` >= 0),
+  CONSTRAINT `CK_GiaoDichVi_CanDoi` CHECK (
+    (`LoaiBienDong` = 'Cong' AND `SoDuSau` = `SoDuTruoc` + `SoTien`)
+    OR (`LoaiBienDong` = 'Tru' AND `SoDuSau` = `SoDuTruoc` - `SoTien`)
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `giaodichvi`
+--
+
+LOCK TABLES `giaodichvi` WRITE, `vi` READ;
+/*!40000 ALTER TABLE `giaodichvi` DISABLE KEYS */;
+INSERT INTO `giaodichvi`
+  (`MaVi`, `LoaiGiaoDich`, `LoaiBienDong`, `SoTien`, `SoDuTruoc`, `SoDuSau`, `TrangThai`, `MaThamChieu`, `NoiDung`)
+SELECT `MaVi`, 'KhoiTao', 'Cong', `SoDu`, 0, `SoDu`, 'ThanhCong',
+       CONCAT('MIGRATE-BALANCE:', `MaVi`), 'Số dư ban đầu'
+FROM `vi`
+WHERE `SoDu` > 0;
+/*!40000 ALTER TABLE `giaodichvi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `thanhtoan`
 --
 
@@ -922,6 +1189,7 @@ CREATE TABLE `thanhtoan` (
   `MaGiaoDich` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ThoiGianThanhToan` datetime DEFAULT NULL,
   PRIMARY KEY (`MaThanhToan`),
+  UNIQUE KEY `UQ_ThanhToan_PhuongThuc_GiaoDich` (`MaPhuongThuc`,`MaGiaoDich`),
   UNIQUE KEY `UQ_ThanhToan_Ma_DonHang` (`MaThanhToan`,`MaDonHang`),
   KEY `FK_ThanhToan_DonHang` (`MaDonHang`),
   KEY `FK_ThanhToan_PhuongThuc` (`MaPhuongThuc`),

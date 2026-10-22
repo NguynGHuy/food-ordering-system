@@ -15,15 +15,18 @@ namespace DatMonAnOnline.API.Controllers
         private readonly DatMonAnOnlineContext _context;
         private readonly IRealtimeNotificationService _realtime;
         private readonly ILogger<ThanhToanController> _logger;
+        private readonly IWalletService _walletService;
 
         public ThanhToanController(
             DatMonAnOnlineContext context,
             IRealtimeNotificationService realtime,
-            ILogger<ThanhToanController> logger)
+            ILogger<ThanhToanController> logger,
+            IWalletService walletService)
         {
             _context = context;
             _realtime = realtime;
             _logger = logger;
+            _walletService = walletService;
         }
 
         public class TaoThanhToanDto
@@ -185,7 +188,9 @@ namespace DatMonAnOnline.API.Controllers
             var tuChoiVi = await TruViFoodPayNeuCan(
                 khachHang,
                 phuongThuc.TenPhuongThuc,
-                donHang.ThanhTien);
+                donHang.ThanhTien,
+                donHang.MaDonHang,
+                donHang.MaDonHangHienThi);
 
             if (tuChoiVi != null)
             {
@@ -202,7 +207,7 @@ namespace DatMonAnOnline.API.Controllers
                 SoTien = donHang.ThanhTien,
                 TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
                 MaGiaoDich = laFoodPay
-                    ? $"FOODPAY_{DateTime.Now:yyyyMMddHHmmss}"
+                    ? TaoMaGiaoDichFoodPay()
                     : null,
                 ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
             };
@@ -235,7 +240,10 @@ namespace DatMonAnOnline.API.Controllers
             };
 
             var result = await IdempotencyStore.SaveSuccessAsync(
-                _context, idem, response);
+                _context,
+                idem,
+                response,
+                StatusCodes.Status201Created);
 
             await transaction.CommitAsync();
 
@@ -246,6 +254,14 @@ namespace DatMonAnOnline.API.Controllers
                     thongBaoDonMoi.Value.ThongBao,
                     donHang
                 );
+            }
+
+            if (laFoodPay)
+            {
+                await _realtime.GuiDuLieuThayDoiAsync(
+                    khachHang.MaTaiKhoan,
+                    new[] { "vi" },
+                    new { donHang.MaDonHang, hanhDong = "ThanhToanDonHang" });
             }
 
             return result;
@@ -459,7 +475,9 @@ namespace DatMonAnOnline.API.Controllers
             };
 
             var result = await IdempotencyStore.SaveSuccessAsync(
-                _context, idem, response);
+                _context,
+                idem,
+                response);
 
             await transaction.CommitAsync();
 
@@ -621,7 +639,9 @@ namespace DatMonAnOnline.API.Controllers
             var tuChoiVi = await TruViFoodPayNeuCan(
                 khachHang,
                 phuongThuc.TenPhuongThuc,
-                donHang.ThanhTien);
+                donHang.ThanhTien,
+                donHang.MaDonHang,
+                donHang.MaDonHangHienThi);
 
             if (tuChoiVi != null)
             {
@@ -638,7 +658,7 @@ namespace DatMonAnOnline.API.Controllers
                 SoTien = donHang.ThanhTien,
                 TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
                 MaGiaoDich = laFoodPay
-                    ? $"FOODPAY_{DateTime.Now:yyyyMMddHHmmss}"
+                    ? TaoMaGiaoDichFoodPay()
                     : null,
                 ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
             };
@@ -672,7 +692,10 @@ namespace DatMonAnOnline.API.Controllers
             };
 
             var result = await IdempotencyStore.SaveSuccessAsync(
-                _context, idem, response);
+                _context,
+                idem,
+                response,
+                StatusCodes.Status201Created);
 
             await transaction.CommitAsync();
 
@@ -683,6 +706,14 @@ namespace DatMonAnOnline.API.Controllers
                     thongBaoDonMoi.Value.ThongBao,
                     donHang
                 );
+            }
+
+            if (laFoodPay)
+            {
+                await _realtime.GuiDuLieuThayDoiAsync(
+                    khachHang.MaTaiKhoan,
+                    new[] { "vi" },
+                    new { donHang.MaDonHang, hanhDong = "ThanhToanDonHang" });
             }
 
             return result;
@@ -696,33 +727,36 @@ namespace DatMonAnOnline.API.Controllers
                 StringComparison.OrdinalIgnoreCase);
         }
 
+        private static string TaoMaGiaoDichFoodPay()
+            => $"FOODPAY_{Guid.NewGuid():N}";
+
         private async Task<IActionResult?> TruViFoodPayNeuCan(
             Khachhang khachHang,
             string tenPhuongThuc,
-            decimal soTien)
+            decimal soTien,
+            int maDonHang,
+            string maDonHangHienThi)
         {
             if (!LaFoodPay(tenPhuongThuc))
                 return null;
 
-            await _context.Khachhangs
-                .FromSqlInterpolated(
-                    $"SELECT * FROM khachhang WHERE MaKhachHang = {khachHang.MaKhachHang} FOR UPDATE")
-                .AsNoTracking()
-                .ToListAsync();
+            var ketQua = await _walletService.DebitAsync(
+                khachHang.MaTaiKhoan,
+                soTien,
+                WalletTransactionTypes.ThanhToan,
+                $"WALLET-PAYMENT:{maDonHang}",
+                $"Thanh toán đơn {maDonHangHienThi}",
+                maDonHang: maDonHang,
+                cancellationToken: HttpContext.RequestAborted);
 
-            await _context.Entry(khachHang).ReloadAsync();
-
-            var soTienVi = (int)soTien;
-
-            if (khachHang.DiemTichLuy < soTienVi)
+            if (!ketQua.Succeeded)
             {
                 return BadRequest(new
                 {
-                    message = "Số dư ví FoodPay không đủ để thanh toán."
+                    message = ketQua.Error
                 });
             }
 
-            khachHang.DiemTichLuy -= soTienVi;
             return null;
         }
 

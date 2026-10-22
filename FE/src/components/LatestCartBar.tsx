@@ -86,7 +86,11 @@ function LatestCartBar() {
                 <span className="latest-cart-home-info">
                     <small>Giỏ hàng gần đây</small>
                     <strong>{cart.tenNhaHang}</strong>
-                    <span>{cart.soLuongMon} món đang chờ bạn</span>
+                    <span>
+                        {cart.canLamMoi
+                            ? "Sẽ kiểm tra lại khi thanh toán"
+                            : `${cart.soLuongMon} món đang chờ bạn`}
+                    </span>
                 </span>
 
                 <span className="latest-cart-home-total">

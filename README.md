@@ -99,7 +99,9 @@ Ví dụ `Đã thanh toán • Chờ quán xác nhận` là trạng thái hợp 
 - JWT Bearer Authentication và phân quyền theo role.
 - SignalR cho thông báo thời gian thực.
 - OpenAPI và Scalar API Reference trong môi trường Development.
-- In-memory cache cho OTP, khóa đăng nhập tạm thời và giữ giỏ khi checkout.
+- MySQL lưu OTP dạng băm, khóa đăng nhập và rate-limit dùng chung giữa nhiều API instance.
+- SkiaSharp giải mã, giới hạn số pixel và mã hóa lại ảnh upload trước khi lưu.
+- In-memory cache chỉ dùng để giữ giỏ trong lúc checkout trên một API instance.
 - Background service tự hủy đơn online quá hạn.
 
 ### Frontend
@@ -191,7 +193,7 @@ Nếu đã có source thì chỉ cần mở terminal tại thư mục gốc dự
 
 ### 2. Tạo database
 
-Khởi động MySQL, sau đó import file:
+Khởi động MySQL, sau đó import duy nhất file:
 
 ```text
 DatMonAnOnline.API/Database/Database.sql
@@ -204,31 +206,36 @@ Cách dễ nhất với phpMyAdmin:
 3. Chọn `DatMonAnOnline.API/Database/Database.sql`.
 4. Bấm **Import/Go** và chờ hoàn tất.
 
+> Cảnh báo: `Database.sql` tự xóa database `DatMonAnOnline` cũ rồi tạo lại từ đầu. Hãy sao lưu dữ liệu cần giữ trước khi import.
+
 Hoặc dùng MySQL CLI trong Command Prompt:
 
 ```bat
 mysql -u root -p < DatMonAnOnline.API\Database\Database.sql
 ```
 
-> Tên database trong connection string phải trùng tên database vừa import. Cấu hình local hiện tại dùng `DatMonAnOnline_Benchmark`; hãy đổi lại nếu database của bạn có tên khác.
+> Tên database trong connection string phải trùng tên database vừa import. File schema hiện tạo database `DatMonAnOnline`.
 
-### 3. Cấu hình kết nối MySQL
+### 3. Cấu hình secret local và kết nối MySQL
 
-Mở `DatMonAnOnline.API/appsettings.json` và sửa `DefaultConnection`:
+Không ghi JWT secret hoặc mật khẩu MySQL vào `appsettings.json`. Tạo user riêng cho ứng dụng bằng tài khoản quản trị MySQL:
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Port=3306;Database=DatMonAnOnline_Benchmark;Uid=root;Pwd=<mat-khau-mysql>;"
-  }
-}
+```sql
+CREATE USER 'foodie_app'@'localhost' IDENTIFIED BY '<mat-khau-manh>';
+GRANT SELECT, INSERT, UPDATE, DELETE ON DatMonAnOnline.* TO 'foodie_app'@'localhost';
+FLUSH PRIVILEGES;
 ```
 
-Không commit mật khẩu thật. Có thể ghi đè bằng biến môi trường PowerShell:
+Sau đó lưu cấu hình local bằng .NET User Secrets:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection="Server=localhost;Port=3306;Database=DatMonAnOnline_Benchmark;Uid=root;Pwd=<mat-khau-mysql>;"
+cd .\DatMonAnOnline.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=DatMonAnOnline;Uid=foodie_app;Pwd=<mat-khau-manh>;"
+dotnet user-secrets set "Jwt:Secret" "<chuoi-ngau-nhien-it-nhat-32-byte>"
+cd ..
 ```
+
+Secret cũ từng nằm trong source không được tái sử dụng. Mỗi môi trường phải dùng một secret khác nhau.
 
 ### 4. Chạy backend
 
@@ -288,6 +295,9 @@ Các cấu hình quan trọng nằm trong `DatMonAnOnline.API/appsettings.json`:
 | Cấu hình | Ý nghĩa |
 |---|---|
 | `ConnectionStrings:DefaultConnection` | Kết nối MySQL |
+| `Jwt:Secret` | Khóa ký JWT, tối thiểu 32 byte và không commit |
+| `Jwt:Issuer` | Đơn vị phát hành token |
+| `Jwt:Audience` | Ứng dụng/API nhận token |
 | `Email:Smtp:Host` | SMTP server |
 | `Email:Smtp:Port` | Cổng SMTP, thường là 587 |
 | `Email:Smtp:EnableSsl` | Bật TLS/SSL |
@@ -304,6 +314,8 @@ Trong `Production`, API không trả mã ra response và yêu cầu SMTP hợp l
 
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT="Production"
+$env:ConnectionStrings__DefaultConnection="Server=<db-host>;Port=3306;Database=DatMonAnOnline;Uid=foodie_app;Pwd=<mat-khau-manh>;SslMode=Required;"
+$env:Jwt__Secret="<secret-production-ngau-nhien-it-nhat-32-byte>"
 $env:Email__Smtp__Host="smtp.gmail.com"
 $env:Email__Smtp__Port="587"
 $env:Email__Smtp__EnableSsl="true"
@@ -348,12 +360,9 @@ DatMonAnOnline.API/Database/Database.sql
 
 Đây là dự án database-first; repository hiện không có thư mục EF Core `Migrations` hoặc `DatabaseMigrations`. Không chạy `dotnet ef database update` nếu chưa tự tạo migration tương ứng.
 
-Nếu nâng cấp một database cũ:
+`Database.sql` là nguồn database duy nhất của dự án. File đã gồm schema, dữ liệu mẫu, ví điện tử, idempotency, trạng thái OTP/rate-limit dùng chung, ràng buộc mã giao dịch và hồ sơ pháp lý. Không cần chạy thêm script SQL nào khác.
 
-1. Sao lưu database trước.
-2. So sánh schema cũ với `Database.sql` hiện tại.
-3. Bổ sung các bảng/cột còn thiếu hoặc import vào database mới.
-4. Kiểm tra dữ liệu trước khi trỏ ứng dụng sang database mới.
+Khi cần làm mới database: sao lưu dữ liệu cần giữ, dừng backend, import lại `Database.sql`, sau đó khởi động backend. Việc import sẽ xóa toàn bộ dữ liệu cũ.
 
 ### Các nhóm bảng chính
 
@@ -363,7 +372,7 @@ Nếu nâng cấp một database cũ:
 | Danh mục món | `danhmuc`, `monan`, `nhomtopping`, `topping`, `monan_nhomtopping` |
 | Giỏ hàng | `giohang`, `chitietgiohang`, `chitietgiohang_topping` |
 | Đơn hàng | `donhang`, `chitietdonhang`, `chitietdonhang_topping`, `lichsutrangthaidonhang` |
-| Thanh toán | `phuongthucthanhtoan`, `thanhtoan`, `hoantien` |
+| Thanh toán và ví | `phuongthucthanhtoan`, `thanhtoan`, `hoantien`, `vi`, `giaodichvi` |
 | Khuyến mãi | `khuyenmai`, `khachhang_khuyenmai` |
 | Khác | `diachi`, `thongbao`, `danhgiamonan`, `danhgianhahang` |
 
@@ -375,6 +384,9 @@ Phương thức thanh toán:
 - `Momo`
 - `VNPay`
 - `ZaloPay`
+- `FoodPay` (thanh toán bằng số dư trong bảng `vi`)
+
+Mỗi `taikhoan` có tối đa một dòng trong `vi`. Không sửa số dư trực tiếp; mọi lần cộng/trừ phải đồng thời tạo một dòng `giaodichvi` trong cùng transaction database.
 
 Trạng thái đơn theo thứ tự:
 
@@ -478,6 +490,10 @@ curl "http://localhost:5038/api/don-hang/cua-toi?pageNumber=1&pageSize=8" \
 ### Thanh toán
 
 - COD được thu khi giao và được đánh dấu thành công khi đơn hoàn thành.
+- Khi đơn hoàn thành, hệ thống tự động ghi có phần còn phải trả vào ví nhà hàng: đơn online nhận toàn bộ doanh thu thuần; COD chỉ nhận phần hệ thống còn nợ sau số tiền mặt quán đã thu.
+- Giao dịch thu nhập đơn hàng dùng mã tham chiếu duy nhất theo đơn và được ghi trong cùng transaction với trạng thái hoàn thành, nên yêu cầu lặp không thể cộng tiền hai lần.
+- Khi API khởi động, tác vụ phục hồi một lần chỉ xử lý đơn hoàn thành từ mốc áp dụng, chưa đối soát và chưa có giao dịch thu nhập; tác vụ dùng cùng khóa và mã tham chiếu nên an toàn khi chạy nhiều instance.
+- Khi tạo kỳ đối soát, tiền COD và tiền đã tự động cộng ví đều được tính là nhà hàng đã nhận để không thanh toán trùng.
 - Momo, VNPay và ZaloPay hiện là **thanh toán mô phỏng**, chưa kết nối cổng thật.
 - Đơn online chưa thanh toán không được chuyển trạng thái bởi quán.
 - Đơn online chờ thanh toán quá 15 phút được background service tự hủy.

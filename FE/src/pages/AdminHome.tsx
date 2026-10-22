@@ -23,6 +23,7 @@ import type {
     AdminOverview,
     TopRestaurant,
 } from "../services/adminService";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 interface DashboardData {
     overview: AdminOverview;
@@ -79,6 +80,8 @@ function AdminHome() {
 
         return () => window.cancelAnimationFrame(frameId);
     }, [loadDashboard]);
+
+    useRealtimeRefresh(["tongQuan", "nhaHang", "hopDong", "taiChinh"], loadDashboard);
 
     if (loading) {
         return (

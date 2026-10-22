@@ -42,12 +42,12 @@ export interface RestaurantCart {
   soLuongMon: number;
   tongTienTamTinh: number;
   chiTiet: CartItem[];
-  daHetHan?: boolean;
+  canLamMoi?: boolean;
+  giuCheckoutDenUtc?: string | null;
 }
 
 const GUEST_CARTS_KEY = "guest-restaurant-carts-v1";
 export const CART_TTL_MS = 5 * 60 * 1000;
-const expiredGuestRestaurantIds = new Set<number>();
 
 function hasCustomerSession() {
   return Boolean(localStorage.getItem("token"));
@@ -107,33 +107,17 @@ function readGuestCarts(): RestaurantCart[] {
     const carts = JSON.parse(raw) as RestaurantCart[];
     if (!Array.isArray(carts)) return [];
 
-    const now = Date.now();
-    const activeCarts = carts.filter((cart) => {
-      if (!Array.isArray(cart.chiTiet) || cart.chiTiet.length === 0) {
-        return true;
-      }
-
-      const updatedAt = Date.parse(cart.ngayCapNhat ?? "");
-      const isActive = (
-        Number.isFinite(updatedAt) &&
-        now - updatedAt < CART_TTL_MS
-      );
-
-      if (!isActive) expiredGuestRestaurantIds.add(cart.maNhaHang);
-      return isActive;
-    });
-
-    const normalizedCarts = activeCarts.map((cart) =>
+    const normalizedCarts = carts.map((cart) =>
       normalizeGuestCart({
         ...cart,
         chiTiet: mergeGuestCartItems(cart.chiTiet),
       }),
     );
     const hasMergedItems = normalizedCarts.some(
-      (cart, index) => cart.chiTiet.length !== activeCarts[index].chiTiet.length,
+      (cart, index) => cart.chiTiet.length !== carts[index].chiTiet.length,
     );
 
-    if (activeCarts.length !== carts.length || hasMergedItems) {
+    if (hasMergedItems) {
       localStorage.setItem(GUEST_CARTS_KEY, JSON.stringify(normalizedCarts));
     }
 
@@ -163,6 +147,10 @@ function normalizeGuestCart(
     ...item,
     thanhTien: calculateItemTotal(item),
   }));
+  const updatedAt = Date.parse(cart.ngayCapNhat ?? "");
+  const canLamMoi = chiTiet.length > 0 && (
+    !Number.isFinite(updatedAt) || Date.now() - updatedAt >= CART_TTL_MS
+  );
 
   return {
     ...cart,
@@ -173,6 +161,7 @@ function normalizeGuestCart(
     ngayCapNhat: refreshActivity
       ? new Date().toISOString()
       : cart.ngayCapNhat,
+    canLamMoi: refreshActivity ? false : canLamMoi,
   };
 }
 
@@ -220,7 +209,6 @@ export async function getRestaurantCart(maNhaHang: number): Promise<RestaurantCa
   const savedCart = readGuestCarts().find((cart) => cart.maNhaHang === maNhaHang);
   if (savedCart) return normalizeGuestCart(savedCart);
 
-  const daHetHan = expiredGuestRestaurantIds.delete(maNhaHang);
   const restaurant = await getRestaurantById(maNhaHang);
   return {
     maGioHang: null,
@@ -231,7 +219,7 @@ export async function getRestaurantCart(maNhaHang: number): Promise<RestaurantCa
     soLuongMon: 0,
     tongTienTamTinh: 0,
     chiTiet: [],
-    daHetHan,
+    canLamMoi: false,
   };
 }
 

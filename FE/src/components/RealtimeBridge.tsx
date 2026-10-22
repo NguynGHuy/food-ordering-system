@@ -6,6 +6,12 @@ import {
     stopNotificationConnection,
 } from "../services/signalRService";
 
+export type RealtimeDataChanged = {
+    phamVi: string[];
+    duLieu?: unknown;
+    thoiGianUtc?: string;
+};
+
 function RealtimeBridge() {
     const location = useLocation();
 
@@ -30,6 +36,8 @@ function RealtimeBridge() {
             window.dispatchEvent(
                 new Event("restaurant-orders-updated")
             );
+
+            dispatchDataChanged(["donHang"], data);
         };
 
         const handleOrderUpdated = (data: unknown) => {
@@ -42,6 +50,8 @@ function RealtimeBridge() {
             window.dispatchEvent(
                 new Event("customer-orders-updated")
             );
+
+            dispatchDataChanged(["donHang"], data);
         };
 
         const handleOrderCancelled = (data: unknown) => {
@@ -57,6 +67,20 @@ function RealtimeBridge() {
 
             window.dispatchEvent(
                 new Event("restaurant-orders-updated")
+            );
+
+            dispatchDataChanged(["donHang"], data);
+        };
+
+        const handleDataChanged = (data: RealtimeDataChanged) => {
+            if (!data || !Array.isArray(data.phamVi) || data.phamVi.length === 0) {
+                return;
+            }
+
+            window.dispatchEvent(
+                new CustomEvent<RealtimeDataChanged>("realtime-data-changed", {
+                    detail: data,
+                })
             );
         };
 
@@ -96,6 +120,10 @@ function RealtimeBridge() {
             "DonHangDaHuy",
             handleOrderCancelled
         );
+        connection.on(
+            "DuLieuThayDoi",
+            handleDataChanged
+        );
 
         window.addEventListener(
             "login-success",
@@ -127,6 +155,10 @@ function RealtimeBridge() {
                 "DonHangDaHuy",
                 handleOrderCancelled
             );
+            connection.off(
+                "DuLieuThayDoi",
+                handleDataChanged
+            );
 
             window.removeEventListener(
                 "login-success",
@@ -157,6 +189,14 @@ function RealtimeBridge() {
     }, [location.pathname]);
 
     return null;
+}
+
+function dispatchDataChanged(phamVi: string[], duLieu?: unknown) {
+    window.dispatchEvent(
+        new CustomEvent<RealtimeDataChanged>("realtime-data-changed", {
+            detail: { phamVi, duLieu },
+        })
+    );
 }
 
 export default RealtimeBridge;

@@ -97,6 +97,12 @@ builder.Services.AddRateLimiter(options =>
 // =========================
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Thiếu ConnectionStrings:DefaultConnection. " +
+        "Hãy cấu hình bằng user-secrets khi phát triển hoặc biến môi trường khi triển khai.");
+}
 
 builder.Services.AddDbContext<DatMonAnOnlineContext>(options =>
     options.UseMySql(
@@ -104,12 +110,32 @@ builder.Services.AddDbContext<DatMonAnOnlineContext>(options =>
         ServerVersion.AutoDetect(connectionString)
     )
 );
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IOrderIncomeSettlementService, OrderIncomeSettlementService>();
+builder.Services.AddScoped<SharedAuthRateLimiter>();
+builder.Services.AddHostedService<IdempotencyCleanupService>();
 
 // =========================
 // JWT AUTHENTICATION
 // =========================
 
-const string jwtSecret = "DayLaMotChuoiBaoMatRatDaiChoJwtToken123456";
+var jwtOptions = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>() ?? new JwtOptions();
+
+if (Encoding.UTF8.GetByteCount(jwtOptions.Secret) < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:Secret phải được cấu hình ngoài source code và có ít nhất 32 byte.");
+}
+
+if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
+    string.IsNullOrWhiteSpace(jwtOptions.Audience))
+{
+    throw new InvalidOperationException("Jwt:Issuer và Jwt:Audience không được để trống.");
+}
+
+builder.Services.AddSingleton(jwtOptions);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -123,21 +149,24 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer = jwtOptions.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtOptions.Audience,
 
         ValidateLifetime = true,
 
         ValidateIssuerSigningKey = true,
 
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSecret)
+            Encoding.UTF8.GetBytes(jwtOptions.Secret)
         ),
 
         ClockSkew = TimeSpan.FromSeconds(30)
     };
 
-    // Hiển thị lỗi JWT trong Terminal khi authentication thất bại
+    // SignalR gửi access token qua query string khi mở kết nối hub.
+    // Không ghi token hoặc chi tiết lỗi xác thực ra log.
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -173,7 +202,11 @@ builder.Services.AddAuthentication(options =>
             var taiKhoan = await db.Taikhoans
                 .AsNoTracking()
                 .Where(t => t.MaTaiKhoan == maTaiKhoan && t.TrangThai == true)
-                .Select(t => new { t.MatKhau })
+                .Select(t => new
+                {
+                    t.MatKhau,
+                    Role = t.MaRoleNavigation.TenRole
+                })
                 .FirstOrDefaultAsync(
                     context.HttpContext.RequestAborted);
 
@@ -185,7 +218,16 @@ builder.Services.AddAuthentication(options =>
 
             var tokenVersion = context.Principal?.FindFirstValue(PasswordTokenVersion.ClaimType);
             if (!PasswordTokenVersion.Matches(tokenVersion, taiKhoan.MatKhau))
+            {
                 context.Fail("Phiên đăng nhập đã bị thu hồi.");
+                return;
+            }
+
+            var tokenRole = context.Principal?.FindFirstValue(ClaimTypes.Role);
+            if (!string.Equals(tokenRole, taiKhoan.Role, StringComparison.Ordinal))
+            {
+                context.Fail("Quyền trong phiên đăng nhập không còn hợp lệ.");
+            }
         },
         OnChallenge = async context =>
         {
@@ -197,15 +239,7 @@ builder.Services.AddAuthentication(options =>
                 message = "Phiên đăng nhập không hợp lệ, đã hết hạn hoặc tài khoản đã bị khóa. Vui lòng đăng nhập lại."
             });
         },
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine("=================================");
-            Console.WriteLine("JWT AUTH ERROR:");
-            Console.WriteLine(context.Exception.Message);
-            Console.WriteLine("=================================");
-
-            return Task.CompletedTask;
-        }
+        OnAuthenticationFailed = _ => Task.CompletedTask
     };
 });
 
@@ -214,7 +248,6 @@ builder.Services.AddAuthentication(options =>
 // =========================
 
 builder.Services.AddAuthorization();
-builder.Services.AddMemoryCache();
 builder.Services
     .AddOptions<DoiSoatOptions>()
     .Bind(builder.Configuration.GetSection(DoiSoatOptions.SectionName))
@@ -241,6 +274,7 @@ builder.Services.AddSingleton<IPasswordResetEmailQueue>(services =>
 builder.Services.AddHostedService(services =>
     services.GetRequiredService<PasswordResetEmailQueue>());
 builder.Services.AddHostedService<PendingOnlineOrderExpirationService>();
+builder.Services.AddHostedService<CompletedOrderWalletRecoveryService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<
     IRealtimeNotificationService,

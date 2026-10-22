@@ -61,15 +61,14 @@ namespace DatMonAnOnline.API.Controllers
         }
 
         // GET /api/mon-an?maNhaHang={id}
-        // Public: giữ nguyên contract hiện tại để không làm hỏng FE quản lý món.
+        // Public: khách hàng chỉ được nhìn thấy món đang bán.
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetMonAns(
             [FromQuery] int maNhaHang,
             [FromQuery] PaginationQuery pagination,
             [FromQuery] string? search = null,
-            [FromQuery] int? maDanhMuc = null,
-            [FromQuery] bool? trangThai = null)
+            [FromQuery] int? maDanhMuc = null)
         {
             if (maNhaHang <= 0)
             {
@@ -88,6 +87,110 @@ namespace DatMonAnOnline.API.Controllers
                 return NotFound(new { message = "Không tìm thấy nhà hàng hoặc nhà hàng chưa được duyệt." });
             }
 
+            var query = _context.Monans
+                .AsNoTracking()
+                .Where(x => x.MaNhaHang == maNhaHang && x.TrangThai == true);
+
+            var soMonDangBan = await query.CountAsync();
+
+            var counts = new
+            {
+                all = soMonDangBan,
+                selling = soMonDangBan,
+                hidden = 0
+            };
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+                query = query.Where(x =>
+                    x.TenMonAn.Contains(keyword) ||
+                    (x.MoTa != null && x.MoTa.Contains(keyword)));
+            }
+
+            if (maDanhMuc.HasValue)
+            {
+                query = query.Where(x => x.MaDanhMuc == maDanhMuc.Value);
+            }
+
+            var result = await query
+                .OrderBy(x => x.MaDanhMuc)
+                .ThenBy(x => x.TenMonAn)
+                .Select(x => new
+                {
+                    x.MaMonAn,
+                    x.MaNhaHang,
+                    x.MaDanhMuc,
+                    TenDanhMuc = x.MaDanhMucNavigation.TenDanhMuc,
+                    x.TenMonAn,
+                    x.MoTa,
+                    x.Gia,
+                    x.HinhAnh,
+                    x.TrangThai,
+                    x.DanhGiaTrungBinh
+                })
+                .ToPagedResultAsync(pagination);
+
+            return Ok(new
+            {
+                result.Items,
+                result.PageNumber,
+                result.PageSize,
+                result.TotalItems,
+                result.TotalPages,
+                result.HasPreviousPage,
+                result.HasNextPage,
+                counts
+            });
+        }
+
+        // GET /api/mon-an/{id}
+        // Public: chi tiết món + nhóm topping + topping đang bật.
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMonAn(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest(new { message = "MaMonAn không hợp lệ." });
+            }
+
+            var monAn = await _context.Monans
+                .AsNoTracking()
+                .Include(x => x.MaDanhMucNavigation)
+                .Include(x => x.MaNhaHangNavigation)
+                    .ThenInclude(restaurant => restaurant.MaTaiKhoanNavigation)
+                .Include(x => x.MaNhomToppings)
+                    .ThenInclude(x => x.Toppings)
+                .FirstOrDefaultAsync(x => x.MaMonAn == id && x.TrangThai == true);
+
+            if (monAn == null ||
+                monAn.MaNhaHangNavigation.TrangThaiDuyet != "DaDuyet" ||
+                monAn.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai != true)
+            {
+                return NotFound(new { message = "Không tìm thấy món ăn." });
+            }
+
+            return Ok(TaoChiTietMonAn(monAn));
+        }
+
+        // GET /api/mon-an/quan
+        // Quản lý: chủ quán xem được cả món đang bán và món đã ẩn.
+        [HttpGet("quan")]
+        [Authorize(Roles = "Quan")]
+        public async Task<IActionResult> GetMonAnsCuaQuan(
+            [FromQuery] PaginationQuery pagination,
+            [FromQuery] string? search = null,
+            [FromQuery] int? maDanhMuc = null,
+            [FromQuery] bool? trangThai = null)
+        {
+            var nhaHang = await GetAuthorizedRestaurantAsync();
+            if (nhaHang.Result != null)
+            {
+                return nhaHang.Result;
+            }
+
+            var maNhaHang = nhaHang.Restaurant!.MaNhaHang;
             var query = _context.Monans
                 .AsNoTracking()
                 .Where(x => x.MaNhaHang == maNhaHang);
@@ -148,15 +251,19 @@ namespace DatMonAnOnline.API.Controllers
             });
         }
 
-        // GET /api/mon-an/{id}
-        // Public: chi tiết món + nhóm topping + topping đang bật.
-        [HttpGet("{id:int}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetMonAn(int id)
+        [HttpGet("quan/{id:int}")]
+        [Authorize(Roles = "Quan")]
+        public async Task<IActionResult> GetMonAnCuaQuan(int id)
         {
             if (id <= 0)
             {
                 return BadRequest(new { message = "MaMonAn không hợp lệ." });
+            }
+
+            var nhaHang = await GetAuthorizedRestaurantAsync();
+            if (nhaHang.Result != null)
+            {
+                return nhaHang.Result;
             }
 
             var monAn = await _context.Monans
@@ -166,51 +273,16 @@ namespace DatMonAnOnline.API.Controllers
                     .ThenInclude(restaurant => restaurant.MaTaiKhoanNavigation)
                 .Include(x => x.MaNhomToppings)
                     .ThenInclude(x => x.Toppings)
-                .FirstOrDefaultAsync(x => x.MaMonAn == id);
+                .FirstOrDefaultAsync(x =>
+                    x.MaMonAn == id &&
+                    x.MaNhaHang == nhaHang.Restaurant!.MaNhaHang);
 
-            if (monAn == null ||
-                monAn.MaNhaHangNavigation.TrangThaiDuyet != "DaDuyet" ||
-                monAn.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai != true)
+            if (monAn == null)
             {
-                return NotFound(new { message = "Không tìm thấy món ăn." });
+                return NotFound(new { message = "Không tìm thấy món ăn của nhà hàng." });
             }
 
-            var result = new
-            {
-                monAn.MaMonAn,
-                monAn.MaNhaHang,
-                monAn.MaDanhMuc,
-                tenDanhMuc = monAn.MaDanhMucNavigation.TenDanhMuc,
-                monAn.TenMonAn,
-                monAn.MoTa,
-                monAn.Gia,
-                monAn.HinhAnh,
-                monAn.TrangThai,
-                monAn.DanhGiaTrungBinh,
-                nhomToppings = monAn.MaNhomToppings
-                    .OrderBy(x => x.MaNhomTopping)
-                    .Select(x => new
-                    {
-                        x.MaNhomTopping,
-                        x.TenNhom,
-                        x.BatBuocChon,
-                        x.ChonToiDa,
-                        toppings = x.Toppings
-                            .Where(t => t.TrangThai == true)
-                            .OrderBy(t => t.MaTopping)
-                            .Select(t => new
-                            {
-                                t.MaTopping,
-                                t.TenTopping,
-                                t.GiaThem,
-                                t.TrangThai
-                            })
-                            .ToList()
-                    })
-                    .ToList()
-            };
-
-            return Ok(result);
+            return Ok(TaoChiTietMonAn(monAn));
         }
 
         [HttpPost]
@@ -525,6 +597,44 @@ namespace DatMonAnOnline.API.Controllers
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(value, out var id) ? id : null;
+        }
+
+        private static object TaoChiTietMonAn(Monan monAn)
+        {
+            return new
+            {
+                monAn.MaMonAn,
+                monAn.MaNhaHang,
+                monAn.MaDanhMuc,
+                tenDanhMuc = monAn.MaDanhMucNavigation.TenDanhMuc,
+                monAn.TenMonAn,
+                monAn.MoTa,
+                monAn.Gia,
+                monAn.HinhAnh,
+                monAn.TrangThai,
+                monAn.DanhGiaTrungBinh,
+                nhomToppings = monAn.MaNhomToppings
+                    .OrderBy(x => x.MaNhomTopping)
+                    .Select(x => new
+                    {
+                        x.MaNhomTopping,
+                        x.TenNhom,
+                        x.BatBuocChon,
+                        x.ChonToiDa,
+                        toppings = x.Toppings
+                            .Where(t => t.TrangThai == true)
+                            .OrderBy(t => t.MaTopping)
+                            .Select(t => new
+                            {
+                                t.MaTopping,
+                                t.TenTopping,
+                                t.GiaThem,
+                                t.TrangThai
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            };
         }
 
         private async Task<(Nhahang? Restaurant, IActionResult? Result)> GetAuthorizedRestaurantAsync()

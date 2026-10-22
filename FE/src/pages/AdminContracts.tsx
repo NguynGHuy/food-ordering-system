@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { SyntheticEvent } from "react";
 import { Link } from "react-router-dom";
 import { FileText, RefreshCw, Search } from "lucide-react";
@@ -8,6 +8,7 @@ import {
     type AdminContractItem,
 } from "../services/adminContractService";
 import type { PagedResult } from "../services/api";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 const STATUS_LABELS: Record<string, string> = {
     Nhap: "Bản nháp",
@@ -78,6 +79,15 @@ function AdminContracts() {
         query.version,
         queryKey,
     ]);
+
+    const refreshRealtime = useCallback(() => {
+        setQuery((previous) => ({
+            ...previous,
+            version: previous.version + 1,
+        }));
+    }, []);
+
+    useRealtimeRefresh(["hopDong", "nhaHang"], refreshRealtime);
 
     const loading = result?.key !== queryKey;
     const data = loading ? null : result?.data;

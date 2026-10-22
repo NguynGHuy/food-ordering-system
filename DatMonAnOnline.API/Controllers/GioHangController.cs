@@ -13,7 +13,7 @@ namespace DatMonAnOnline.API.Controllers;
 [Authorize(Roles = "KhachHang")]
 public class GioHangController : ControllerBase
 {
-    private static readonly TimeSpan ThoiHanGioHang = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan NguongGioHangCanLamMoi = TimeSpan.FromMinutes(5);
     private readonly DatMonAnOnlineContext _context;
     private readonly ICheckoutCartReservationService _checkoutReservations;
 
@@ -48,38 +48,9 @@ public class GioHangController : ControllerBase
                     .ThenInclude(tp => tp.MaToppingNavigation);
     }
 
-    private async Task<bool> XoaNoiDungNeuHetHan(Giohang? gioHang)
-    {
-        if (gioHang == null ||
-            _checkoutReservations.IsReserved(gioHang.MaGioHang) ||
-            gioHang.NgayCapNhat > DateTime.Now.Subtract(ThoiHanGioHang))
-        {
-            return false;
-        }
-
-        await _context.Entry(gioHang)
-            .Collection(g => g.Chitietgiohangs)
-            .Query()
-            .Include(ct => ct.ChitietgiohangToppings)
-            .LoadAsync();
-
-        if (!gioHang.Chitietgiohangs.Any())
-            return false;
-
-        var cacDongCanXoa = gioHang.Chitietgiohangs.ToList();
-
-        foreach (var chiTiet in cacDongCanXoa)
-        {
-            _context.ChitietgiohangToppings
-                .RemoveRange(chiTiet.ChitietgiohangToppings);
-        }
-
-        _context.Chitietgiohangs.RemoveRange(cacDongCanXoa);
-        gioHang.Chitietgiohangs.Clear();
-        gioHang.NgayCapNhat = DateTime.Now;
-        await _context.SaveChangesAsync();
-        return true;
-    }
+    private static bool GioHangCanLamMoi(Giohang gioHang)
+        => gioHang.Chitietgiohangs.Any() &&
+           gioHang.NgayCapNhat <= DateTime.Now.Subtract(NguongGioHangCanLamMoi);
 
     private static string? ChuanHoaGhiChu(string? ghiChu) =>
         string.IsNullOrWhiteSpace(ghiChu) ? null : ghiChu.Trim();
@@ -177,6 +148,8 @@ public class GioHangController : ControllerBase
             gioHang.MaNhaHangNavigation.TenNhaHang,
             gioHang.MaNhaHangNavigation.AnhBia,
             gioHang.NgayCapNhat,
+            gioHang.GiuCheckoutDenUtc,
+            CanLamMoi = GioHangCanLamMoi(gioHang),
             SoLuongMon = chiTiet.Sum(ct => ct.SoLuong),
             TongTienTamTinh = chiTiet.Sum(ct => ct.ThanhTien),
             ChiTiet = chiTiet
@@ -197,9 +170,7 @@ public class GioHangController : ControllerBase
                 g.MaKhachHang == maKhachHang.Value &&
                 g.MaNhaHang == maNhaHang);
 
-        var daHetHan = await XoaNoiDungNeuHetHan(gioHang);
-
-        if (gioHang != null && !daHetHan)
+        if (gioHang != null)
         {
             if (GopCacDongGiongNhau(gioHang))
                 await _context.SaveChangesAsync();
@@ -226,10 +197,11 @@ public class GioHangController : ControllerBase
             nhaHang.TenNhaHang,
             nhaHang.AnhBia,
             NgayCapNhat = (DateTime?)null,
+            GiuCheckoutDenUtc = (DateTime?)null,
+            CanLamMoi = false,
             SoLuongMon = 0,
             TongTienTamTinh = 0m,
-            ChiTiet = Array.Empty<object>(),
-            DaHetHan = daHetHan
+            ChiTiet = Array.Empty<object>()
         });
     }
 
@@ -253,9 +225,6 @@ public class GioHangController : ControllerBase
         if (gioHang == null)
             return NoContent();
 
-        if (await XoaNoiDungNeuHetHan(gioHang))
-            return NoContent();
-
         if (GopCacDongGiongNhau(gioHang))
             await _context.SaveChangesAsync();
 
@@ -277,14 +246,6 @@ public class GioHangController : ControllerBase
         if (gioHang == null)
             return NotFound(new { message = "Không tìm thấy giỏ hàng." });
 
-        if (await XoaNoiDungNeuHetHan(gioHang))
-        {
-            return StatusCode(410, new
-            {
-                message = "Giỏ hàng đã hết hạn sau 5 phút không hoạt động."
-            });
-        }
-
         if (GopCacDongGiongNhau(gioHang))
             await _context.SaveChangesAsync();
 
@@ -305,15 +266,16 @@ public class GioHangController : ControllerBase
         if (gioHang == null)
             return NotFound(new { message = "Không tìm thấy giỏ hàng." });
 
-        if (await XoaNoiDungNeuHetHan(gioHang) || !gioHang.Chitietgiohangs.Any())
+        if (!gioHang.Chitietgiohangs.Any())
         {
             return StatusCode(StatusCodes.Status410Gone, new
             {
-                message = "Giỏ hàng đã hết hạn hoặc không còn món."
+                message = "Giỏ hàng không còn món."
             });
         }
 
-        var expiresAtUtc = _checkoutReservations.Reserve(maGioHang);
+        var expiresAtUtc = _checkoutReservations.Reserve(gioHang, DateTime.UtcNow);
+        await _context.SaveChangesAsync();
         return Ok(new
         {
             message = "Đã giữ giỏ hàng trong thời gian thanh toán.",
@@ -380,9 +342,6 @@ public class GioHangController : ControllerBase
             .FirstOrDefaultAsync(g =>
                 g.MaKhachHang == maKhachHang.Value &&
                 g.MaNhaHang == monAn.MaNhaHang);
-
-        if (gioHang != null)
-            await XoaNoiDungNeuHetHan(gioHang);
 
         if (gioHang == null)
         {
@@ -512,14 +471,6 @@ public class GioHangController : ControllerBase
         if (chiTiet == null)
             return NotFound(new { message = "Không tìm thấy món trong giỏ." });
 
-        if (await XoaNoiDungNeuHetHan(chiTiet.MaGioHangNavigation))
-        {
-            return StatusCode(410, new
-            {
-                message = "Giỏ hàng đã hết hạn sau 5 phút không hoạt động."
-            });
-        }
-
         chiTiet.SoLuong = request.SoLuong;
         chiTiet.MaGioHangNavigation.NgayCapNhat = DateTime.Now;
         await _context.SaveChangesAsync();
@@ -547,14 +498,6 @@ public class GioHangController : ControllerBase
 
         if (chiTiet == null)
             return NotFound(new { message = "Không tìm thấy món trong giỏ." });
-
-        if (await XoaNoiDungNeuHetHan(chiTiet.MaGioHangNavigation))
-        {
-            return StatusCode(410, new
-            {
-                message = "Giỏ hàng đã hết hạn sau 5 phút không hoạt động."
-            });
-        }
 
         if (chiTiet.MaMonAnNavigation.TrangThai != true)
             return BadRequest(new { message = "Món ăn này đã ngừng bán." });
@@ -643,14 +586,6 @@ public class GioHangController : ControllerBase
         if (chiTiet == null)
             return NotFound(new { message = "Không tìm thấy món trong giỏ." });
 
-        if (await XoaNoiDungNeuHetHan(chiTiet.MaGioHangNavigation))
-        {
-            return StatusCode(410, new
-            {
-                message = "Giỏ hàng đã hết hạn sau 5 phút không hoạt động."
-            });
-        }
-
         chiTiet.MaGioHangNavigation.NgayCapNhat = DateTime.Now;
         _context.ChitietgiohangToppings.RemoveRange(chiTiet.ChitietgiohangToppings);
         _context.Chitietgiohangs.Remove(chiTiet);
@@ -676,20 +611,12 @@ public class GioHangController : ControllerBase
         if (gioHang == null)
             return NotFound(new { message = "Không tìm thấy giỏ hàng." });
 
-        if (await XoaNoiDungNeuHetHan(gioHang))
-        {
-            return Ok(new
-            {
-                message = "Giỏ hàng đã hết hạn và được làm trống."
-            });
-        }
-
         foreach (var chiTiet in gioHang.Chitietgiohangs)
             _context.ChitietgiohangToppings.RemoveRange(chiTiet.ChitietgiohangToppings);
 
         _context.Chitietgiohangs.RemoveRange(gioHang.Chitietgiohangs);
         gioHang.NgayCapNhat = DateTime.Now;
-        _checkoutReservations.Release(maGioHang);
+        _checkoutReservations.Release(gioHang);
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đã xóa các món trong giỏ của nhà hàng này." });

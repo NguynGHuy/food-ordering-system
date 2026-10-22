@@ -40,4 +40,6 @@ public partial class Taikhoan
     public virtual Nhahang? Nhahang { get; set; }
 
     public virtual ICollection<Thongbao> Thongbaos { get; set; } = new List<Thongbao>();
+
+    public virtual Vi? Vi { get; set; }
 }

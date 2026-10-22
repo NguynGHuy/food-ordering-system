@@ -1,4 +1,4 @@
-export async function getIdempotencyKey(
+async function getStorageKey(
     operation: string,
     payload: unknown
 ): Promise<string> {
@@ -23,7 +23,14 @@ export async function getIdempotencyKey(
         .map((byte) => byte.toString(16).padStart(2, "0"))
         .join("");
 
-    const storageKey = `idempotency:${fingerprint}`;
+    return `idempotency:${fingerprint}`;
+}
+
+export async function getIdempotencyKey(
+    operation: string,
+    payload: unknown
+): Promise<string> {
+    const storageKey = await getStorageKey(operation, payload);
     const existing = sessionStorage.getItem(storageKey);
 
     if (existing) return existing;
@@ -32,4 +39,25 @@ export async function getIdempotencyKey(
     sessionStorage.setItem(storageKey, key);
 
     return key;
+}
+
+/**
+ * Mỗi thao tác thành công sẽ bỏ key cũ để lần bấm sau có key mới.
+ * Nếu request lỗi hoặc mất kết nối, key vẫn được giữ để retry an toàn.
+ */
+export async function runIdempotentRequest<T>(
+    operation: string,
+    payload: unknown,
+    request: (key: string) => Promise<T>
+): Promise<T> {
+    const storageKey = await getStorageKey(operation, payload);
+    const key = await getIdempotencyKey(operation, payload);
+    const result = await request(key);
+
+    // Không xóa nhầm key mới nếu một thao tác khác đã bắt đầu song song.
+    if (sessionStorage.getItem(storageKey) === key) {
+        sessionStorage.removeItem(storageKey);
+    }
+
+    return result;
 }

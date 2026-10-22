@@ -1,5 +1,5 @@
 import { apiFetch } from "./api";
-import { getIdempotencyKey } from "./idempotency";
+import { runIdempotentRequest } from "./idempotency";
 
 function authHeaders() {
   const token = localStorage.getItem("token");
@@ -16,12 +16,13 @@ export async function getPaymentMethods() {
 export async function createPayment(maDonHang: number, maPhuongThuc: number) {
   const path = "/thanh-toan";
   const body = { maDonHang, maPhuongThuc };
-  const key = await getIdempotencyKey(`POST ${path}`, body);
-  return apiFetch(path, {
-    method: "POST",
-    headers: { ...authHeaders(), "Idempotency-Key": key },
-    body: JSON.stringify(body),
-  });
+  return runIdempotentRequest(`POST ${path}`, body, (key) =>
+    apiFetch(path, {
+      method: "POST",
+      headers: { ...authHeaders(), "Idempotency-Key": key },
+      body: JSON.stringify(body),
+    })
+  );
 }
 
 export async function getPaymentsByOrder(maDonHang: number) {
@@ -37,23 +38,25 @@ export async function simulatePayment(
 ) {
   const path = `/thanh-toan/${id}/mo-phong`;
   const body = { ketQua };
-  const key = await getIdempotencyKey(`PUT ${path}`, body);
-  return apiFetch(path, {
-    method: "PUT",
-    headers: { ...authHeaders(), "Idempotency-Key": key },
-    body: JSON.stringify(body),
-  });
+  return runIdempotentRequest(`PUT ${path}`, body, (key) =>
+    apiFetch(path, {
+      method: "PUT",
+      headers: { ...authHeaders(), "Idempotency-Key": key },
+      body: JSON.stringify(body),
+    })
+  );
 }
 
 export async function changePaymentMethod(id: number, maPhuongThuc: number) {
   const path = `/thanh-toan/${id}/doi-phuong-thuc`;
   const body = { maPhuongThuc };
-  const key = await getIdempotencyKey(`POST ${path}`, body);
-  return apiFetch(path, {
-    method: "POST",
-    headers: { ...authHeaders(), "Idempotency-Key": key },
-    body: JSON.stringify(body),
-  });
+  return runIdempotentRequest(`POST ${path}`, body, (key) =>
+    apiFetch(path, {
+      method: "POST",
+      headers: { ...authHeaders(), "Idempotency-Key": key },
+      body: JSON.stringify(body),
+    })
+  );
 }
 
 export interface DongMonNho {

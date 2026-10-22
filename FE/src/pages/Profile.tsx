@@ -520,6 +520,11 @@ function Profile() {
             <p>Tất cả quyền lợi được tập trung tại một nơi.</p>
           </div>
 
+          <Link to="/vi" className="profile-wallet-history-link">
+            <WalletCards size={16} /> Xem toàn bộ lịch sử giao dịch ví
+            <ChevronRight size={16} />
+          </Link>
+
           <div className="profile-tools-grid">
             {moLichSuHoan ? (
               <button
@@ -545,7 +550,7 @@ function Profile() {
                     <span className="profile-tool-label">Ví hoàn tiền</span>
                   </div>
                   <div className="profile-wallet-balance">
-                    <strong>{(profile?.diemTichLuy ?? 0).toLocaleString("vi-VN")}</strong>
+                    <strong>{(profile?.soDuVi ?? 0).toLocaleString("vi-VN")}</strong>
                     <span>đ</span>
                   </div>
                   <p>
