@@ -36,6 +36,27 @@ public class GioHangController : ControllerBase
             .FirstOrDefaultAsync();
     }
 
+    private async Task<IActionResult> WithCustomerWriteLock(Func<Task<IActionResult>> action)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var accountId))
+            return Unauthorized();
+
+        // Same mutex as checkout, acquired before any cart read. Batch sync reuses
+        // this transaction; individual item calls must not commit the batch early.
+        await using var transaction = _context.Database.CurrentTransaction == null
+            ? await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, HttpContext.RequestAborted)
+            : null;
+        var customers = await _context.Khachhangs
+            .FromSqlInterpolated($"SELECT * FROM khachhang WHERE MaTaiKhoan = {accountId} FOR UPDATE")
+            .AsNoTracking().ToListAsync(HttpContext.RequestAborted);
+        if (customers.Count != 1) return Unauthorized();
+
+        var result = await action();
+        if (transaction != null && result is OkObjectResult)
+            await transaction.CommitAsync(HttpContext.RequestAborted);
+        return result;
+    }
+
     private IQueryable<Giohang> TruyVanGioHangDayDu()
     {
         return _context.Giohangs
@@ -165,16 +186,13 @@ public class GioHangController : ControllerBase
         if (maKhachHang == null)
             return Unauthorized(new { message = "Không tìm thấy thông tin khách hàng." });
 
-        var gioHang = await TruyVanGioHangDayDu()
+        var gioHang = await TruyVanGioHangDayDu().AsNoTracking()
             .FirstOrDefaultAsync(g =>
                 g.MaKhachHang == maKhachHang.Value &&
                 g.MaNhaHang == maNhaHang);
 
         if (gioHang != null)
         {
-            if (GopCacDongGiongNhau(gioHang))
-                await _context.SaveChangesAsync();
-
             return Ok(TaoDuLieuGioHang(gioHang));
         }
 
@@ -214,7 +232,7 @@ public class GioHangController : ControllerBase
         if (maKhachHang == null)
             return Unauthorized(new { message = "Không tìm thấy thông tin khách hàng." });
 
-        var gioHang = await TruyVanGioHangDayDu()
+        var gioHang = await TruyVanGioHangDayDu().AsNoTracking()
             .Where(g =>
                 g.MaKhachHang == maKhachHang.Value &&
                 g.Chitietgiohangs.Any())
@@ -224,9 +242,6 @@ public class GioHangController : ControllerBase
 
         if (gioHang == null)
             return NoContent();
-
-        if (GopCacDongGiongNhau(gioHang))
-            await _context.SaveChangesAsync();
 
         return Ok(TaoDuLieuGioHang(gioHang));
     }
@@ -238,7 +253,7 @@ public class GioHangController : ControllerBase
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
-        var gioHang = await TruyVanGioHangDayDu()
+        var gioHang = await TruyVanGioHangDayDu().AsNoTracking()
             .FirstOrDefaultAsync(g =>
                 g.MaGioHang == maGioHang &&
                 g.MaKhachHang == maKhachHang.Value);
@@ -246,15 +261,14 @@ public class GioHangController : ControllerBase
         if (gioHang == null)
             return NotFound(new { message = "Không tìm thấy giỏ hàng." });
 
-        if (GopCacDongGiongNhau(gioHang))
-            await _context.SaveChangesAsync();
-
         return Ok(TaoDuLieuGioHang(gioHang));
     }
 
     [HttpPost("{maGioHang:int}/giu-checkout")]
     public async Task<IActionResult> GiuGioHangTrongCheckout(int maGioHang)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -281,11 +295,14 @@ public class GioHangController : ControllerBase
             message = "Đã giữ giỏ hàng trong thời gian thanh toán.",
             expiresAtUtc
         });
+        });
     }
 
     [HttpPost("them-mon")]
     public async Task<IActionResult> ThemMonVaoGio([FromBody] ThemMonYeuCau request)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -420,45 +437,35 @@ public class GioHangController : ControllerBase
             gioHang.MaGioHang,
             gioHang.MaNhaHang
         });
+        });
     }
 
     [HttpPost("dong-bo-khach")]
     public async Task<IActionResult> DongBoGioKhach([FromBody] DongBoGioKhachYeuCau request)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         if (request.CacMon.Count == 0)
             return Ok(new { message = "Không có món khách cần đồng bộ." });
 
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-
-        try
+        foreach (var item in request.CacMon)
         {
-            foreach (var item in request.CacMon)
-            {
-                var result = await ThemMonVaoGio(item);
-                if (result is not OkObjectResult)
-                {
-                    await transaction.RollbackAsync();
-                    return result;
-                }
-            }
-
-            await transaction.CommitAsync();
-            return Ok(new
-            {
-                message = "Đã đồng bộ toàn bộ giỏ khách vào tài khoản.",
-                soDongDaDongBo = request.CacMon.Count
-            });
+            var result = await ThemMonVaoGio(item);
+            if (result is not OkObjectResult) return result;
         }
-        catch (Exception)
+        return Ok(new
         {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            message = "Đã đồng bộ toàn bộ giỏ khách vào tài khoản.",
+            soDongDaDongBo = request.CacMon.Count
+        });
+        });
     }
 
     [HttpPut("chi-tiet/{id:int}")]
     public async Task<IActionResult> SuaSoLuong(int id, [FromBody] SuaSoLuongYeuCau request)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -476,6 +483,7 @@ public class GioHangController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Cập nhật số lượng thành công." });
+        });
     }
 
     [HttpPut("chi-tiet/{id:int}/tuy-chon")]
@@ -483,6 +491,8 @@ public class GioHangController : ControllerBase
         int id,
         [FromBody] SuaTuyChonYeuCau request)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -568,11 +578,14 @@ public class GioHangController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đã cập nhật topping và ghi chú." });
+        });
     }
 
     [HttpDelete("chi-tiet/{id:int}")]
     public async Task<IActionResult> XoaMon(int id)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -592,12 +605,15 @@ public class GioHangController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đã xóa món khỏi giỏ hàng." });
+        });
     }
 
     // Chỉ xóa giỏ được chọn, không ảnh hưởng giỏ của nhà hàng khác.
     [HttpDelete("{maGioHang:int}")]
     public async Task<IActionResult> XoaSachGioHang(int maGioHang)
     {
+        return await WithCustomerWriteLock(async () =>
+        {
         var maKhachHang = await LayMaKhachHang();
         if (maKhachHang == null) return Unauthorized();
 
@@ -620,6 +636,7 @@ public class GioHangController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đã xóa các món trong giỏ của nhà hàng này." });
+        });
     }
 }
 

@@ -10,6 +10,7 @@ export interface Promotion {
     donHangToiThieu: number;
     soLuong: number;
     soLuongDaDung: number;
+    soLuotToiDaMoiKhach: number;
     ngayBatDau: string;
     ngayKetThuc: string;
     trangThai: boolean;
@@ -26,6 +27,7 @@ export interface CustomerVoucher {
     donHangToiThieu: number;
     soLuong: number;
     soLuongDaDung: number;
+    soLuotToiDaMoiKhach: number;
     ngayBatDau: string;
     ngayKetThuc: string;
     maNhaHang: number | null;
@@ -44,6 +46,7 @@ export interface CreatePromotionRequest {
     giamToiDa: number | null;
     donHangToiThieu: number;
     soLuong: number;
+    soLuotToiDaMoiKhach: number;
     ngayBatDau: string;
     ngayKetThuc: string;
 }
@@ -51,6 +54,7 @@ export interface CreatePromotionRequest {
 export interface UpdatePromotionRequest {
     moTa: string | null;
     soLuong: number;
+    soLuotToiDaMoiKhach?: number;
     ngayBatDau: string;
     ngayKetThuc: string;
 }

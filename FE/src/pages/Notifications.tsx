@@ -16,6 +16,7 @@ import {
 } from "../services/notificationService";
 import ScrollReveal from "../components/ScrollReveal";
 import Pagination from "../components/Pagination";
+import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 type NotificationFilter = "all" | "unread" | "read";
 
@@ -105,6 +106,11 @@ function Notifications() {
             window.removeEventListener("notification-received", handleRealtimeNotification);
         };
     }, [loadNotifications]);
+
+    useRealtimeRefresh(
+        ["thongBao"],
+        useCallback(() => loadNotifications(false), [loadNotifications])
+    );
 
     const markAsRead = async (id: number) => {
         try {

@@ -24,6 +24,9 @@ public class PromotionCreateRequest : IValidatableObject
     [Range(1, int.MaxValue)]
     public int SoLuong { get; set; }
 
+    [Range(1, int.MaxValue)]
+    public int SoLuotToiDaMoiKhach { get; set; } = 1;
+
     public DateTime NgayBatDau { get; set; }
 
     public DateTime NgayKetThuc { get; set; }

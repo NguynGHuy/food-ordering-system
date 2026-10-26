@@ -21,23 +21,21 @@ namespace DatMonAnOnline.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly DatMonAnOnlineContext _context;
-        private readonly IWebHostEnvironment _environment;
         private readonly IPasswordResetEmailQueue _passwordResetEmailQueue;
         private readonly SharedAuthRateLimiter _sharedRateLimiter;
         private readonly JwtOptions _jwtOptions;
         private static readonly TimeSpan PasswordResetLifetime = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan PasswordResetResendCooldown = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan LoginLockLifetime = TimeSpan.FromMinutes(15);
         private const int MaxFailedLoginAttempts = 5;
 
         public AuthController(
             DatMonAnOnlineContext context,
-            IWebHostEnvironment environment,
             IPasswordResetEmailQueue passwordResetEmailQueue,
             SharedAuthRateLimiter sharedRateLimiter,
             JwtOptions jwtOptions)
         {
             _context = context;
-            _environment = environment;
             _passwordResetEmailQueue = passwordResetEmailQueue;
             _sharedRateLimiter = sharedRateLimiter;
             _jwtOptions = jwtOptions;
@@ -64,6 +62,7 @@ namespace DatMonAnOnline.API.Controllers
             [MaxLength(255)] public string? AnhBia { get; set; }
             public TimeOnly? GioMoCua { get; set; }
             public TimeOnly? GioDongCua { get; set; }
+            [DatMonAnOnline.API.Common.VndAmount]
             public decimal PhiShipMacDinh { get; set; } = 15000;
         }
 
@@ -94,7 +93,6 @@ namespace DatMonAnOnline.API.Controllers
         private sealed class PasswordResetReference
         {
             public string MaYeuCau { get; init; } = string.Empty;
-            public string? MaXacNhanThuNghiem { get; init; }
             public DateTime HetHanUtc { get; init; }
         }
 
@@ -416,6 +414,7 @@ namespace DatMonAnOnline.API.Controllers
 
             taiKhoan.MatKhau = HashPassword(request.MatKhauMoi);
             await _context.SaveChangesAsync();
+            DatMonAnOnline.API.Hubs.NotificationHub.RevokeLocalSessions(taiKhoan.MaTaiKhoan);
 
             return Ok(new
             {
@@ -433,6 +432,14 @@ namespace DatMonAnOnline.API.Controllers
                 3,
                 TimeSpan.FromMinutes(15));
             if (rateLimited != null) return rateLimited;
+
+            // Never expose an OTP over HTTP, including Development/tunneled demos.
+            // Fail uniformly before looking up an email when SMTP is not configured.
+            if (!_passwordResetEmailQueue.IsAvailable)
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Dịch vụ gửi email chưa sẵn sàng. Vui lòng thử lại sau."
+                });
 
             var email = request.Email.Trim().ToLowerInvariant();
             var emailHash = HashCacheKey(email);
@@ -477,7 +484,8 @@ namespace DatMonAnOnline.API.Controllers
             if (existingRequest == null)
                 throw new InvalidOperationException("Không thể tạo yêu cầu đặt lại mật khẩu.");
 
-            if (existingRequest.MaYeuCau != maYeuCau && existingRequest.HetHanUtc > now)
+            if (existingRequest.MaYeuCau != maYeuCau && existingRequest.HetHanUtc > now &&
+                existingRequest.NgayTaoUtc.Add(PasswordResetResendCooldown) > now)
             {
                 await transaction.CommitAsync(HttpContext.RequestAborted);
                 return PasswordResetRequested(new PasswordResetReference
@@ -504,16 +512,16 @@ namespace DatMonAnOnline.API.Controllers
             var requestReference = new PasswordResetReference
             {
                 MaYeuCau = maYeuCau,
-                MaXacNhanThuNghiem = _environment.IsDevelopment() ? maXacNhan : null,
                 HetHanUtc = hetHanUtc
             };
 
-            if (taiKhoan != null && !_environment.IsDevelopment())
+            // Reserve queue capacity uniformly for known/unknown accounts; the
+            // worker ignores empty recipients. Never send email to unknown users.
             {
                 var queued = _passwordResetEmailQueue.TryQueue(new PasswordResetEmail(
-                    taiKhoan.Email,
+                    taiKhoan?.Email ?? string.Empty,
                     maXacNhan,
-                    (int)PasswordResetLifetime.TotalMinutes));
+                    (int)PasswordResetLifetime.TotalMinutes) { ExpiresAtUtc = hetHanUtc });
 
                 if (!queued)
                 {
@@ -605,6 +613,7 @@ namespace DatMonAnOnline.API.Controllers
             _context.Passwordresetrequests.Remove(entry);
             await _context.SaveChangesAsync(HttpContext.RequestAborted);
             await transaction.CommitAsync(HttpContext.RequestAborted);
+            DatMonAnOnline.API.Hubs.NotificationHub.RevokeLocalSessions(taiKhoan.MaTaiKhoan);
 
             return Ok(new
             {
@@ -629,8 +638,8 @@ namespace DatMonAnOnline.API.Controllers
                 message = "Nếu email tồn tại, mã xác nhận đã được gửi.",
                 maYeuCau = request.MaYeuCau,
                 hetHanSauPhut = remainingMinutes,
-                // Chỉ trả mã trực tiếp khi chạy local Development.
-                maXacNhanThuNghiem = request.MaXacNhanThuNghiem
+                // Retain the response field for existing clients, never the code.
+                maXacNhanThuNghiem = (string?)null
             });
         }
 

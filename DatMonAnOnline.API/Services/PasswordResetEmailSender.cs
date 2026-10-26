@@ -80,57 +80,75 @@ public sealed class SmtpPasswordResetEmailSender : IPasswordResetEmailSender
 public sealed record PasswordResetEmail(
     string RecipientEmail,
     string ConfirmationCode,
-    int ExpiresAfterMinutes);
+    int ExpiresAfterMinutes)
+{
+    public DateTime ExpiresAtUtc { get; init; } = DateTime.UtcNow.AddMinutes(ExpiresAfterMinutes);
+}
 
 public interface IPasswordResetEmailQueue
 {
+    bool IsAvailable { get; }
     bool TryQueue(PasswordResetEmail email);
 }
 
 public sealed class PasswordResetEmailQueue : BackgroundService, IPasswordResetEmailQueue
 {
     private readonly Channel<PasswordResetEmail> _channel =
-        Channel.CreateUnbounded<PasswordResetEmail>(new UnboundedChannelOptions
+        Channel.CreateBounded<PasswordResetEmail>(new BoundedChannelOptions(100)
         {
             SingleReader = true,
-            SingleWriter = false
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait
         });
 
     private readonly IPasswordResetEmailSender _sender;
     private readonly ILogger<PasswordResetEmailQueue> _logger;
+    private readonly SmtpEmailOptions _options;
 
     public PasswordResetEmailQueue(
         IPasswordResetEmailSender sender,
-        ILogger<PasswordResetEmailQueue> logger)
+        ILogger<PasswordResetEmailQueue> logger,
+        IOptions<SmtpEmailOptions> options)
     {
         _sender = sender;
         _logger = logger;
+        _options = options.Value;
     }
 
+    public bool IsAvailable => _options.IsValid();
+
     public bool TryQueue(PasswordResetEmail email)
-        => _channel.Writer.TryWrite(email);
+        => IsAvailable && _channel.Writer.TryWrite(email);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await foreach (var email in _channel.Reader.ReadAllAsync(stoppingToken))
         {
-            try
+            if (string.IsNullOrWhiteSpace(email.RecipientEmail)) continue;
+            for (var attempt = 1; attempt <= 3 && !stoppingToken.IsCancellationRequested; attempt++)
             {
-                await _sender.SendAsync(
-                    email.RecipientEmail,
-                    email.ConfirmationCode,
-                    email.ExpiresAfterMinutes,
-                    stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(
-                    exception,
-                    "Không thể gửi email đặt lại mật khẩu tới địa chỉ đã được che giấu.");
+                var remaining = email.ExpiresAtUtc - DateTime.UtcNow;
+                if (remaining <= TimeSpan.Zero) break;
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                timeout.CancelAfter(remaining < TimeSpan.FromSeconds(10) ? remaining : TimeSpan.FromSeconds(10));
+                try
+                {
+                    await _sender.SendAsync(email.RecipientEmail, email.ConfirmationCode,
+                        Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes)), timeout.Token);
+                    break;
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
+                catch (Exception exception)
+                {
+                    // SMTP exceptions can contain recipients/server responses; don't log their payload.
+                    _logger.LogWarning("Gửi email đặt lại mật khẩu thất bại, lần {Attempt}, loại {ErrorType}.",
+                        attempt, exception.GetType().Name);
+                    if (attempt < 3)
+                    {
+                        try { await Task.Delay(TimeSpan.FromSeconds(attempt), stoppingToken); }
+                        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
+                    }
+                }
             }
         }
     }

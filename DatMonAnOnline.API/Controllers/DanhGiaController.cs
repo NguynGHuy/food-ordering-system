@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using DatMonAnOnline.API.Common;
 
@@ -17,17 +19,48 @@ namespace DatMonAnOnline.API.Controllers
             _context = context;
         }
 
-        private int GetKhachHangId()
+        private async Task<int> GetKhachHangIdAsync()
         {
-            var tkId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            return _context.Khachhangs.FirstOrDefault(k => k.MaTaiKhoan == tkId)?.MaKhachHang ?? 0;
+            if (!int.TryParse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out var tkId) || tkId <= 0)
+            {
+                return 0;
+            }
+
+            return await _context.Khachhangs
+                .AsNoTracking()
+                .Where(k => k.MaTaiKhoan == tkId)
+                .Select(k => k.MaKhachHang)
+                .FirstOrDefaultAsync();
+        }
+
+        private static string? ChuanHoaNoiDung(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static bool HinhAnhHopLe(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return true;
+
+            var normalized = value.Trim();
+            if (normalized.Length > 255) return false;
+            if (normalized.Any(char.IsControl) || normalized.Contains('\\'))
+                return false;
+
+            if (Uri.TryCreate(normalized, UriKind.Absolute, out var absolute))
+                return absolute.Scheme == Uri.UriSchemeHttps &&
+                       !string.IsNullOrWhiteSpace(absolute.Host);
+
+            return normalized.StartsWith('/') &&
+                   !normalized.StartsWith("//") &&
+                   Uri.TryCreate(normalized, UriKind.Relative, out _);
         }
 
         [HttpGet("api/don-hang/{id:int}/danh-gia-cua-toi")]
         [Authorize(Roles = "KhachHang")]
         public async Task<IActionResult> LayDanhGiaCuaToiTrongDon(int id)
         {
-            var maKhachHang = GetKhachHangId();
+            var maKhachHang = await GetKhachHangIdAsync();
 
             if (maKhachHang == 0)
                 return Unauthorized(new
@@ -94,10 +127,11 @@ namespace DatMonAnOnline.API.Controllers
         [Authorize(Roles = "KhachHang")]
         public async Task<IActionResult> DanhGiaMonAn([FromBody] DanhGiaMonAnRequest req)
         {
-            int maKhachHang = GetKhachHangId();
+            int maKhachHang = await GetKhachHangIdAsync();
 
-            // Check trạng thái đơn hàng (5 = HoanThanh)
-            var donHang = await _context.Donhangs.FindAsync(req.MaDonHang);
+            var donHang = await _context.Donhangs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaDonHang == req.MaDonHang);
             if (donHang == null || donHang.MaTrangThai != 5)
                 return BadRequest("Chỉ được đánh giá các đơn hàng đã hoàn thành.");
 
@@ -107,8 +141,8 @@ namespace DatMonAnOnline.API.Controllers
             if (donHang.MaKhachHang != maKhachHang)
                 return Forbid();
 
-            if (req.SoSao < 1 || req.SoSao > 5)
-                return BadRequest("Số sao phải từ 1 đến 5.");
+            if (!HinhAnhHopLe(req.HinhAnh))
+                return BadRequest("Đường dẫn hình ảnh không hợp lệ. Chỉ chấp nhận HTTPS hoặc đường dẫn nội bộ bắt đầu bằng /.");
 
             bool monThuocDon = await _context.Chitietdonhangs
                 .AnyAsync(x =>
@@ -118,10 +152,22 @@ namespace DatMonAnOnline.API.Controllers
             if (!monThuocDon)
                 return BadRequest("Món ăn không thuộc đơn hàng này.");
 
-            // Check đánh giá trùng
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var monAnDaKhoa = await _context.Monans
+                .FromSqlInterpolated(
+                    $"SELECT * FROM monan WHERE MaMonAn = {req.MaMonAn} FOR UPDATE")
+                .SingleOrDefaultAsync();
+
+            if (monAnDaKhoa == null)
+                return BadRequest("Món ăn không tồn tại.");
+
             bool isExist = await _context.Danhgiamonans.AnyAsync(x =>
-                x.MaKhachHang == maKhachHang && x.MaMonAn == req.MaMonAn && x.MaDonHang == req.MaDonHang);
-            if (isExist) return BadRequest("Bạn đã đánh giá món này trong đơn hàng này rồi.");
+                x.MaKhachHang == maKhachHang &&
+                x.MaMonAn == req.MaMonAn &&
+                x.MaDonHang == req.MaDonHang);
+            if (isExist)
+                return Conflict("Bạn đã đánh giá món này trong đơn hàng này rồi.");
 
             // Chuyển dữ liệu từ Request (DTO) sang Entity Model để lưu vào DB
             var model = new Danhgiamonan
@@ -130,21 +176,30 @@ namespace DatMonAnOnline.API.Controllers
                 MaMonAn = req.MaMonAn,
                 MaDonHang = req.MaDonHang,
                 SoSao = req.SoSao,
-                NoiDung = req.NoiDung,
-                HinhAnh = req.HinhAnh,
+                NoiDung = ChuanHoaNoiDung(req.NoiDung),
+                HinhAnh = string.IsNullOrWhiteSpace(req.HinhAnh)
+                    ? null
+                    : req.HinhAnh.Trim(),
                 NgayDanhGia = DateTime.Now
             };
 
             _context.Danhgiamonans.Add(model);
-            await _context.SaveChangesAsync();
-
-            // Cập nhật Rating cho Món ăn
-            var avg = await _context.Danhgiamonans.Where(x => x.MaMonAn == model.MaMonAn).AverageAsync(x => x.SoSao);
-            var mon = await _context.Monans.FindAsync(model.MaMonAn);
-            if (mon != null)
+            try
             {
-                mon.DanhGiaTrungBinh = (float)avg;
                 await _context.SaveChangesAsync();
+
+                var avg = await _context.Danhgiamonans
+                    .Where(x => x.MaMonAn == model.MaMonAn)
+                    .AverageAsync(x => x.SoSao);
+                monAnDaKhoa.DanhGiaTrungBinh = (float)avg;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is MySqlException { Number: 1062 })
+            {
+                await transaction.RollbackAsync();
+                return Conflict("Bạn đã đánh giá món này trong đơn hàng này rồi.");
             }
 
             return Ok(new { message = "Đánh giá món ăn thành công" });
@@ -167,9 +222,11 @@ namespace DatMonAnOnline.API.Controllers
         [Authorize(Roles = "KhachHang")]
         public async Task<IActionResult> DanhGiaNhaHang([FromBody] DanhGiaNhaHangRequest req)
         {
-            int maKhachHang = GetKhachHangId();
+            int maKhachHang = await GetKhachHangIdAsync();
 
-            var donHang = await _context.Donhangs.FindAsync(req.MaDonHang);
+            var donHang = await _context.Donhangs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaDonHang == req.MaDonHang);
             if (donHang == null || donHang.MaTrangThai != 5)
                 return BadRequest("Chỉ được đánh giá các đơn hàng đã hoàn thành.");
 
@@ -179,15 +236,22 @@ namespace DatMonAnOnline.API.Controllers
             if (donHang.MaKhachHang != maKhachHang)
                 return Forbid();
 
-            if (req.SoSao < 1 || req.SoSao > 5)
-                return BadRequest("Số sao phải từ 1 đến 5.");
-
             if (donHang.MaNhaHang != req.MaNhaHang)
                 return BadRequest("Nhà hàng không thuộc đơn hàng này.");
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var nhaHangDaKhoa = await _context.Nhahangs
+                .FromSqlInterpolated(
+                    $"SELECT * FROM nhahang WHERE MaNhaHang = {req.MaNhaHang} FOR UPDATE")
+                .SingleOrDefaultAsync();
+
+            if (nhaHangDaKhoa == null)
+                return BadRequest("Nhà hàng không tồn tại.");
+
             bool isExist = await _context.Danhgianhahangs.AnyAsync(x =>
                 x.MaKhachHang == maKhachHang && x.MaNhaHang == req.MaNhaHang && x.MaDonHang == req.MaDonHang);
-            if (isExist) return BadRequest("Bạn đã đánh giá nhà hàng này rồi.");
+            if (isExist) return Conflict("Bạn đã đánh giá nhà hàng này rồi.");
 
             var model = new Danhgianhahang
             {
@@ -195,20 +259,27 @@ namespace DatMonAnOnline.API.Controllers
                 MaNhaHang = req.MaNhaHang,
                 MaDonHang = req.MaDonHang,
                 SoSao = req.SoSao,
-                NoiDung = req.NoiDung,
+                NoiDung = ChuanHoaNoiDung(req.NoiDung),
                 NgayDanhGia = DateTime.Now
             };
 
             _context.Danhgianhahangs.Add(model);
-            await _context.SaveChangesAsync();
-
-            // Cập nhật Rating cho Quán
-            var avg = await _context.Danhgianhahangs.Where(x => x.MaNhaHang == model.MaNhaHang).AverageAsync(x => x.SoSao);
-            var quan = await _context.Nhahangs.FindAsync(model.MaNhaHang);
-            if (quan != null)
+            try
             {
-                quan.DanhGiaTrungBinh = (float)avg;
                 await _context.SaveChangesAsync();
+
+                var avg = await _context.Danhgianhahangs
+                    .Where(x => x.MaNhaHang == model.MaNhaHang)
+                    .AverageAsync(x => x.SoSao);
+                nhaHangDaKhoa.DanhGiaTrungBinh = (float)avg;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is MySqlException { Number: 1062 })
+            {
+                await transaction.RollbackAsync();
+                return Conflict("Bạn đã đánh giá nhà hàng này rồi.");
             }
 
             return Ok(new { message = "Đánh giá nhà hàng thành công" });
@@ -231,18 +302,34 @@ namespace DatMonAnOnline.API.Controllers
     // --- CÁC CLASS DTO HỨNG DỮ LIỆU TỪ POSTMAN ---
     public class DanhGiaMonAnRequest
     {
+        [Range(1, int.MaxValue)]
         public int MaMonAn { get; set; }
+
+        [Range(1, int.MaxValue)]
         public int MaDonHang { get; set; }
+
+        [Range(1, 5)]
         public sbyte SoSao { get; set; }
+
+        [MaxLength(500)]
         public string? NoiDung { get; set; }
+
+        [MaxLength(255)]
         public string? HinhAnh { get; set; }
     }
 
     public class DanhGiaNhaHangRequest
     {
+        [Range(1, int.MaxValue)]
         public int MaNhaHang { get; set; }
+
+        [Range(1, int.MaxValue)]
         public int MaDonHang { get; set; }
+
+        [Range(1, 5)]
         public sbyte SoSao { get; set; }
+
+        [MaxLength(500)]
         public string? NoiDung { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, Eye, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, RefreshCw, X } from "lucide-react";
 import Pagination from "../components/Pagination";
 import ReconciliationBreakdown from "../components/ReconciliationBreakdown";
 import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
@@ -8,6 +8,7 @@ import {
   confirmDoiSoat,
   getQuanDoiSoat,
   getQuanDoiSoatDetail,
+  openDoiSoatDispute,
   type DoiSoatDetail,
   type DoiSoatSummary,
 } from "../services/doiSoatService";
@@ -22,6 +23,12 @@ function money(value: number) {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.";
+}
+
+function settlementDirection(value: number) {
+  if (value > 0) return `Hệ thống trả bạn: ${money(value)}`;
+  if (value < 0) return `Bạn trả hệ thống: ${money(Math.abs(value))}`;
+  return "Không phát sinh";
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,6 +47,7 @@ export default function RestaurantDoiSoat() {
   const [totalPages, setTotalPages] = useState(0);
   const [showDetail, setShowDetail] = useState<number | null>(null);
   const [detailData, setDetailData] = useState<DoiSoatDetail | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -90,6 +98,26 @@ export default function RestaurantDoiSoat() {
   const closeDetail = () => {
     setShowDetail(null);
     setDetailData(null);
+    setDisputeReason("");
+  };
+
+  const handleOpenDispute = async () => {
+    if (!showDetail || !disputeReason.trim()) {
+      alert("Vui lòng nhập lý do tranh chấp.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await openDoiSoatDispute(showDetail, disputeReason);
+      alert("Đã mở tranh chấp. Admin phải giải quyết trước khi ghi nhận thanh toán.");
+      closeDetail();
+      await loadData();
+    } catch (caughtError: unknown) {
+      alert(getErrorMessage(caughtError));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleConfirm = async () => {
@@ -168,7 +196,7 @@ export default function RestaurantDoiSoat() {
                     <td>{money(item.tongTienNhaHangDaThu)}</td>
                     <td>
                       <strong className={item.soTienCanDoiSoat < 0 ? "finance-negative" : "finance-positive"}>
-                        {item.soTienCanDoiSoat < 0 ? "−" : ""}{money(Math.abs(item.soTienCanDoiSoat))}
+                        {settlementDirection(item.soTienCanDoiSoat)}
                       </strong>
                     </td>
                     <td>
@@ -218,9 +246,37 @@ export default function RestaurantDoiSoat() {
                 </div>
               )}
 
+              {(detailData.trangThai === "ChoXacNhan" || detailData.trangThai === "DaXacNhan") && (
+                <div className="reconciliation-dispute-box">
+                  <strong>Nếu số liệu chưa đúng</strong>
+                  <p>
+                    Nêu rõ đơn hàng hoặc khoản tiền cần kiểm tra. Khi tranh chấp được mở,
+                    Admin không thể ghi nhận thanh toán cho đến khi giải quyết xong.
+                  </p>
+                  <textarea
+                    required
+                    maxLength={500}
+                    placeholder="Lý do tranh chấp"
+                    value={disputeReason}
+                    onChange={(event) => setDisputeReason(event.target.value)}
+                  />
+                  <button type="button" onClick={() => void handleOpenDispute()} disabled={busy}>
+                    <AlertTriangle size={17} />
+                    {busy ? "Đang gửi..." : "Mở tranh chấp"}
+                  </button>
+                </div>
+              )}
+
+              {detailData.trangThai === "TranhChap" && (
+                <div className="reconciliation-dispute-status">
+                  <strong>Đang tranh chấp</strong>
+                  <span>Admin cần ghi nhận kết quả giải quyết trước khi kỳ có thể được thanh toán.</span>
+                </div>
+              )}
+
               {detailData.trangThai === "DaThanhToan" && (
                 <div className="reconciliation-paid">
-                  <strong>Đã hoàn tất đối soát</strong>
+                  <strong>Đã ghi nhận hoàn tất đối soát mô phỏng</strong>
                   <span>Mã giao dịch: {detailData.maGiaoDichDoiSoat || "—"}</span>
                 </div>
               )}

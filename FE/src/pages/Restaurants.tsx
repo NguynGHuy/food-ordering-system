@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getRestaurants } from "../services/restaurantService";
@@ -18,18 +19,6 @@ import {
   Store,
   X,
 } from "lucide-react";
-// interface Restaurant {
-//     maNhaHang: number;
-//     tenNhaHang: string;
-//     moTa?: string;
-//     diaChiQuan?: string;
-//     anhBia?: string | null;
-//     danhGiaTrungBinh?: number;
-//     phiShipMacDinh?: number;
-//     gioMoCua?: string;
-//     gioDongCua?: string;
-//     trangThaiHoatDong?: string;
-// }
 
 function isRestaurantOpen(restaurant: Restaurant): boolean {
   return restaurant.dangMoCua;
@@ -280,7 +269,7 @@ function Restaurants() {
 
                     <div className="restaurant-card-image">
                       {restaurant.anhBia ? (
-                        <img
+                        <MediaImage kind="restaurant"
                           src={restaurant.anhBia}
                           alt={restaurant.tenNhaHang}
                         />

@@ -19,6 +19,7 @@ namespace DatMonAnOnline.API.Controllers
         private readonly ICheckoutCartReservationService _checkoutReservations;
         private readonly IWalletService _walletService;
         private readonly IOrderIncomeSettlementService _orderIncomeSettlement;
+        private readonly TimeProvider _timeProvider;
 
         public DonHangController(
             DatMonAnOnlineContext context,
@@ -26,7 +27,8 @@ namespace DatMonAnOnline.API.Controllers
             ILogger<DonHangController> logger,
             ICheckoutCartReservationService checkoutReservations,
             IWalletService walletService,
-            IOrderIncomeSettlementService orderIncomeSettlement)
+            IOrderIncomeSettlementService orderIncomeSettlement,
+            TimeProvider? timeProvider = null)
         {
             _context = context;
             _realtime = realtime;
@@ -34,19 +36,7 @@ namespace DatMonAnOnline.API.Controllers
             _checkoutReservations = checkoutReservations;
             _walletService = walletService;
             _orderIncomeSettlement = orderIncomeSettlement;
-        }
-
-        private static bool HienThiDonChoQuan(Donhang donHang)
-        {
-            var moiNhat = donHang.Thanhtoans
-                .OrderByDescending(x => x.MaThanhToan)
-                .FirstOrDefault();
-
-            if (moiNhat == null) return true;
-            if (OrderPaymentRules.IsCod(moiNhat)) return true;
-
-            return moiNhat.TrangThaiThanhToan != "ChoThanhToan"
-                && moiNhat.TrangThaiThanhToan != "ThatBai";
+            _timeProvider = timeProvider ?? TimeProvider.System;
         }
 
         private Task<int?> LayMaTaiKhoan()
@@ -103,7 +93,7 @@ namespace DatMonAnOnline.API.Controllers
                 return Unauthorized(new { Message = "Vui lòng đăng nhập." });
 
             await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+                await _context.Database.BeginTransactionAsync(HttpContext.RequestAborted);
 
             try
             {
@@ -190,7 +180,22 @@ namespace DatMonAnOnline.API.Controllers
                 }
 
                 var thoiGianDat = DateTime.Now;
-                var ngayDat = DateOnly.FromDateTime(thoiGianDat);
+                // Current locking read: the tracked owner from pricing may be stale.
+                // Hold a shared account lock until commit so an account lock cannot pass
+                // between this eligibility check and order creation.
+                var chuQuansDaKhoa = await _context.Taikhoans
+                    .FromSqlInterpolated($"SELECT * FROM taikhoan WHERE MaTaiKhoan = {nhaHangDaKhoa.MaTaiKhoan} FOR SHARE")
+                    .AsNoTracking()
+                    .ToListAsync(HttpContext.RequestAborted);
+                var chuQuanDaKhoa = chuQuansDaKhoa.SingleOrDefault();
+                var thoiDiemNhanDon = VietnamBusinessTime.Now(_timeProvider);
+                if (chuQuanDaKhoa?.TrangThai != true ||
+                    !TrangThaiNhaHangHelper.KiemTra(nhaHangDaKhoa, thoiDiemNhanDon).DangMoCua)
+                {
+                    await transaction.RollbackAsync();
+                    return Conflict(new { Message = "Nhà hàng hiện không mở cửa nhận đơn. Vui lòng kiểm tra lại." });
+                }
+                var ngayDat = DateOnly.FromDateTime(thoiDiemNhanDon);
 
                 // Đọc và khóa hợp đồng còn hiệu lực tại thời điểm tạo đơn.
                 var hopDongsDaKhoa = await _context.Hopdongnhahangs
@@ -255,16 +260,23 @@ namespace DatMonAnOnline.API.Controllers
                         });
                     }
 
-                    soTienGiam = voucher.LoaiGiam == "SoTien"
-                        ? voucher.GiaTriGiam
-                        : tongTienHang * voucher.GiaTriGiam / 100;
+                    var soLuotKhachDaDung = await _context.Donhangs
+                        .AsNoTracking()
+                        .CountAsync(order =>
+                            order.MaKhachHang == khachHang.MaKhachHang &&
+                            order.MaKhuyenMai == maKhuyenMai &&
+                            order.MaTrangThai != 6);
 
-                    if (voucher.GiamToiDa.HasValue)
-                        soTienGiam = Math.Min(soTienGiam, voucher.GiamToiDa.Value);
+                    if (soLuotKhachDaDung >= voucher.SoLuotToiDaMoiKhach)
+                    {
+                        await transaction.RollbackAsync();
+                        return Conflict(new
+                        {
+                            Message = "Khách hàng đã sử dụng hết số lượt cho phép của mã khuyến mãi này."
+                        });
+                    }
 
-                    soTienGiam = Math.Min(
-                        Math.Max(soTienGiam, 0m),
-                        tongTienHang);
+                    soTienGiam = PromotionWriteHelper.CalculateDiscount(voucher, tongTienHang);
 
                     // Phân tách giảm giá để tính phí nền tảng
                     if (voucher.MaNhaHang.HasValue)
@@ -275,9 +287,21 @@ namespace DatMonAnOnline.API.Controllers
                     thanhTien = tongTienHang + phiShip - soTienGiam;
                 }
 
+                // Time can advance while waiting for the contract/voucher locks.
+                // Recheck the contract date and opening hours immediately before creating the order.
+                var thoiDiemXacNhan = VietnamBusinessTime.Now(_timeProvider);
+                var ngayXacNhan = DateOnly.FromDateTime(thoiDiemXacNhan);
+                if (!TrangThaiNhaHangHelper.KiemTra(nhaHangDaKhoa, thoiDiemXacNhan).DangMoCua ||
+                    hopDongNhanDon.NgayBatDau > ngayXacNhan || hopDongNhanDon.NgayKetThuc < ngayXacNhan)
+                {
+                    await transaction.RollbackAsync();
+                    return Conflict(new { Message = "Nhà hàng đã hết giờ nhận đơn hoặc hợp đồng đã hết hiệu lực. Vui lòng kiểm tra lại." });
+                }
+
                 // Công thức tính doanh thu và phí nền tảng
                 decimal doanhThuTinhPhi = tongTienHang - giamGiaNhaHang;
-                decimal phiNenTang = Math.Round(doanhThuTinhPhi * hopDongNhanDon.TyLePhiNenTang / 100);
+                decimal phiNenTang = Math.Round(doanhThuTinhPhi * hopDongNhanDon.TyLePhiNenTang / 100,
+                    0, MidpointRounding.AwayFromZero);
                 // Quán tự giao nên phí ship thuộc về nhà hàng.
                 decimal soTienNhaHangNhan = doanhThuTinhPhi + phiShip - phiNenTang;
 
@@ -377,10 +401,20 @@ namespace DatMonAnOnline.API.Controllers
                 {
                     var maKhuyenMai = request.MaKhuyenMai.Value;
 
-                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                    var daGiuLuotVoucher = await _context.Database.ExecuteSqlInterpolatedAsync(
                         $@"UPDATE khuyenmai
                         SET SoLuongDaDung = SoLuongDaDung + 1
-                        WHERE MaKhuyenMai = {maKhuyenMai}");
+                        WHERE MaKhuyenMai = {maKhuyenMai}
+                          AND SoLuongDaDung < SoLuong");
+
+                    if (daGiuLuotVoucher != 1)
+                    {
+                        await transaction.RollbackAsync();
+                        return Conflict(new
+                        {
+                            Message = "Mã khuyến mãi vừa hết lượt. Vui lòng tải lại checkout."
+                        });
+                    }
                 }
 
                 _context.Lichsutrangthaidonhangs.Add(
@@ -874,7 +908,7 @@ namespace DatMonAnOnline.API.Controllers
         }
 
         [HttpPut("{id}/huy")]
-        [Authorize]
+        [Authorize(Roles = "KhachHang,Quan,Admin")]
         public async Task<IActionResult> HuyDonHang(
             int id,
             [FromBody] HuyDonHangYeuCau request)
@@ -885,30 +919,33 @@ namespace DatMonAnOnline.API.Controllers
             var role = User.FindFirstValue(ClaimTypes.Role);
 
             await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+                await _context.Database.BeginTransactionAsync(HttpContext.RequestAborted);
 
-            await _context.Donhangs
+            var lockedOrders = await _context.Donhangs
                 .FromSqlInterpolated(
                     $"SELECT * FROM donhang WHERE MaDonHang = {id} FOR UPDATE")
-                .AsNoTracking()
-                .ToListAsync();
-
-            var idem = await IdempotencyStore.CheckAsync(
-                _context, Request, maTaiKhoan.Value, request);
-
-            if (idem.Result != null)
-                return idem.Result;
-
-            var donHang = await _context.Donhangs
-                .Include(order => order.Thanhtoans)
-                    .ThenInclude(payment => payment.MaPhuongThucNavigation)
-                .Include(order => order.MaKhuyenMaiNavigation)
-                .FirstOrDefaultAsync(order => order.MaDonHang == id);
+                .ToListAsync(HttpContext.RequestAborted);
+            var donHang = lockedOrders.SingleOrDefault();
 
             if (donHang == null)
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(HttpContext.RequestAborted);
                 return NotFound(new { Message = "Đơn hàng không tồn tại." });
+            }
+
+            var payments = await _context.Thanhtoans
+                .FromSqlInterpolated(
+                    $"SELECT * FROM thanhtoan WHERE MaDonHang = {id} ORDER BY MaThanhToan FOR UPDATE")
+                .ToListAsync(HttpContext.RequestAborted);
+            var methodIds = payments
+                .Select(payment => payment.MaPhuongThuc)
+                .Distinct()
+                .ToList();
+            if (methodIds.Count > 0)
+            {
+                await _context.Phuongthucthanhtoans
+                    .Where(method => methodIds.Contains(method.MaPhuongThuc))
+                    .LoadAsync(HttpContext.RequestAborted);
             }
 
             if (role == "KhachHang")
@@ -942,6 +979,12 @@ namespace DatMonAnOnline.API.Controllers
                 }
             }
 
+            var idem = await IdempotencyStore.CheckAsync(
+                _context, Request, maTaiKhoan.Value, request);
+
+            if (idem.Result != null)
+                return idem.Result;
+
             if (donHang.MaTrangThai > 2)
             {
                 await transaction.RollbackAsync();
@@ -951,60 +994,76 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
-            var taiKhoanNhanThongBao = await _context.Khachhangs
+            var taiKhoanKhach = await _context.Khachhangs
                 .Where(x => x.MaKhachHang == donHang.MaKhachHang)
-                .Select(x => x.MaTaiKhoan)
-                .Union(
-                    _context.Nhahangs
-                        .Where(x => x.MaNhaHang == donHang.MaNhaHang)
-                        .Select(x => x.MaTaiKhoan)
-                )
-                .Where(x => x != maTaiKhoan.Value)
-                .ToListAsync();
+                .Select(x => (int?)x.MaTaiKhoan)
+                .FirstOrDefaultAsync();
+
+            var taiKhoanQuan = await _context.Nhahangs
+                .Where(x => x.MaNhaHang == donHang.MaNhaHang)
+                .Select(x => (int?)x.MaTaiKhoan)
+                .FirstOrDefaultAsync();
+
+            if (taiKhoanKhach == null || taiKhoanQuan == null)
+            {
+                await transaction.RollbackAsync();
+                return Conflict(new
+                {
+                    Message = "Không xác định được tài khoản nhận thông báo của đơn hàng."
+                });
+            }
+
+            var taiKhoanNhanThongBao = new List<(int MaTaiKhoan, string DuongDan)>();
+
+            if (taiKhoanKhach.Value != maTaiKhoan.Value)
+            {
+                taiKhoanNhanThongBao.Add((
+                    taiKhoanKhach.Value,
+                    $"/don-hang/{donHang.MaDonHang}"));
+            }
+
+            if (taiKhoanQuan.Value != maTaiKhoan.Value)
+            {
+                taiKhoanNhanThongBao.Add((
+                    taiKhoanQuan.Value,
+                    $"/quan/don-hang/{donHang.MaDonHang}"));
+            }
 
             var lyDo = request.LyDoHuy.Trim();
             decimal soTienHoan = 0;
             var daHoanTien = false;
 
-            var claimed = await _context.Donhangs
-                .Where(order =>
-                    order.MaDonHang == donHang.MaDonHang &&
-                    order.MaTrangThai == donHang.MaTrangThai)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(order => order.MaTrangThai, 6)
-                    .SetProperty(order => order.LyDoHuy, lyDo));
-
-            if (claimed == 0)
-            {
-                await transaction.RollbackAsync();
-                return Conflict(new
-                {
-                    Message = "Trạng thái đơn vừa thay đổi. Vui lòng tải lại trước khi hủy."
-                });
-            }
-
             donHang.MaTrangThai = 6;
             donHang.LyDoHuy = lyDo;
 
-            var khoanHoan = donHang.Thanhtoans
+            var khoanHoan = payments
                 .Where(payment =>
                     payment.TrangThaiThanhToan == "ThanhCong" &&
                     payment.MaPhuongThucNavigation.TenPhuongThuc is "Momo" or "VNPay" or "ZaloPay" or "FoodPay")
                 .OrderByDescending(payment => payment.MaThanhToan)
                 .FirstOrDefault();
 
-            foreach (var payment in donHang.Thanhtoans.Where(payment =>
+            if (khoanHoan != null && khoanHoan.SoTien != donHang.ThanhTien)
+            {
+                await transaction.RollbackAsync(HttpContext.RequestAborted);
+                return Conflict(new
+                {
+                    Message = "Số tiền giao dịch không khớp tổng tiền đơn hàng; chưa thực hiện hủy và hoàn tiền."
+                });
+            }
+
+            foreach (var payment in payments.Where(payment =>
                          payment.TrangThaiThanhToan == "ChoThanhToan"))
             {
                 payment.TrangThaiThanhToan = "ThatBai";
                 payment.ThoiGianThanhToan = DateTime.Now;
             }
 
-            if (donHang.MaKhuyenMaiNavigation != null &&
-                donHang.MaKhuyenMaiNavigation.SoLuongDaDung > 0)
-            {
-                donHang.MaKhuyenMaiNavigation.SoLuongDaDung--;
-            }
+            await PromotionWriteHelper.ReturnUsageIfEligibleAsync(
+                _context,
+                donHang.MaKhuyenMai,
+                DateTime.Now,
+                HttpContext.RequestAborted);
 
             var ghiChuHuy = $"Huỷ đơn. Lý do: {lyDo}";
 
@@ -1041,32 +1100,28 @@ namespace DatMonAnOnline.API.Controllers
             {
                 var thongBao = new Thongbao
                 {
-                    MaTaiKhoan = taiKhoanNhan,
+                    MaTaiKhoan = taiKhoanNhan.MaTaiKhoan,
                     TieuDe = "Đơn hàng đã bị hủy",
                     NoiDung = noiDungThongBao.Length > 500
                         ? noiDungThongBao[..500]
                         : noiDungThongBao,
                     Loai = "DonHang",
-                    DuongDan = User.IsInRole("KhachHang")
-                        ? $"/quan/don-hang/{donHang.MaDonHang}"
-                        : $"/don-hang/{donHang.MaDonHang}",
+                    DuongDan = taiKhoanNhan.DuongDan,
                     DaDoc = false,
                     NgayTao = DateTime.Now
                 };
 
                 _context.Thongbaos.Add(thongBao);
-                thongBaoHuyDaTao.Add((taiKhoanNhan, thongBao));
+                thongBaoHuyDaTao.Add((taiKhoanNhan.MaTaiKhoan, thongBao));
             }
 
             var daCoHoanTien = await _context.Hoantiens
                 .AnyAsync(item => item.MaDonHang == donHang.MaDonHang);
 
+            Thongbao? thongBaoHoanTien = null;
+
             if (khoanHoan != null && donHang.ThanhTien > 0 && !daCoHoanTien)
             {
-                var taiKhoanKhach = await _context.Khachhangs
-                    .Where(item => item.MaKhachHang == donHang.MaKhachHang)
-                    .Select(item => item.MaTaiKhoan)
-                    .FirstAsync();
                 var bayGio = DateTime.Now;
                 soTienHoan = donHang.ThanhTien;
 
@@ -1090,7 +1145,7 @@ namespace DatMonAnOnline.API.Controllers
                 await _context.SaveChangesAsync();
 
                 var ketQuaVi = await _walletService.CreditAsync(
-                    taiKhoanKhach,
+                    taiKhoanKhach.Value,
                     soTienHoan,
                     WalletTransactionTypes.HoanTien,
                     $"WALLET-REFUND:{donHang.MaDonHang}",
@@ -1109,6 +1164,23 @@ namespace DatMonAnOnline.API.Controllers
                 }
 
                 daHoanTien = true;
+
+                var noiDungHoanTien =
+                    $"Đã hoàn {soTienHoan:N0}đ của đơn {donHang.MaDonHangHienThi} vào ví Foodie.";
+
+                thongBaoHoanTien = new Thongbao
+                {
+                    MaTaiKhoan = taiKhoanKhach.Value,
+                    TieuDe = "Hoàn tiền thành công",
+                    NoiDung = noiDungHoanTien.Length > 500
+                        ? noiDungHoanTien[..500]
+                        : noiDungHoanTien,
+                    Loai = "HoanTien",
+                    DuongDan = "/vi",
+                    DaDoc = false,
+                    NgayTao = bayGio
+                };
+                _context.Thongbaos.Add(thongBaoHoanTien);
             }
 
             await _context.SaveChangesAsync();
@@ -1172,10 +1244,16 @@ namespace DatMonAnOnline.API.Controllers
 
             if (daHoanTien)
             {
-                await _realtime.GuiDuLieuThayDoiAsync(
-                    maTaiKhoan.Value,
-                    new[] { "vi" },
-                    new { donHang.MaDonHang, hanhDong = "HoanTienHuyDon" });
+                await Task.WhenAll(
+                    thongBaoHoanTien == null
+                        ? Task.CompletedTask
+                        : _realtime.GuiThongBaoAsync(
+                            taiKhoanKhach.Value,
+                            thongBaoHoanTien),
+                    _realtime.GuiDuLieuThayDoiAsync(
+                        taiKhoanKhach.Value,
+                        new[] { "vi" },
+                        new { donHang.MaDonHang, hanhDong = "HoanTienHuyDon" }));
             }
 
             return result;
@@ -1285,22 +1363,42 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+                await _context.Database.BeginTransactionAsync(HttpContext.RequestAborted);
+
+            if (request.MaTrangThai == 5)
+            {
+                // Same mutex as period creation, BEFORE the order/payment locks.
+                // A completion stamped before midnight must commit before that day
+                // can be closed; a completion waiting behind a period gets a new timestamp.
+                await _context.Nhahangs
+                    .FromSqlInterpolated($"SELECT * FROM nhahang WHERE MaNhaHang = {nhaHang.MaNhaHang} FOR UPDATE")
+                    .AsNoTracking()
+                    .ToListAsync(HttpContext.RequestAborted);
+            }
 
             var lockedOrders = await _context.Donhangs
                 .FromSqlInterpolated(
                     $"SELECT * FROM donhang WHERE MaDonHang = {id} FOR UPDATE")
-                .ToListAsync();
+                .ToListAsync(HttpContext.RequestAborted);
             var donHang = lockedOrders.SingleOrDefault();
 
             if (donHang == null)
                 return NotFound(new { message = "Không tìm thấy đơn hàng." });
 
-            await _context.Entry(donHang)
-                .Collection(x => x.Thanhtoans)
-                .Query()
-                .Include(x => x.MaPhuongThucNavigation)
-                .LoadAsync();
+            var payments = await _context.Thanhtoans
+                .FromSqlInterpolated(
+                    $"SELECT * FROM thanhtoan WHERE MaDonHang = {id} ORDER BY MaThanhToan FOR UPDATE")
+                .ToListAsync(HttpContext.RequestAborted);
+            var methodIds = payments
+                .Select(payment => payment.MaPhuongThuc)
+                .Distinct()
+                .ToList();
+            if (methodIds.Count > 0)
+            {
+                await _context.Phuongthucthanhtoans
+                    .Where(method => methodIds.Contains(method.MaPhuongThuc))
+                    .LoadAsync(HttpContext.RequestAborted);
+            }
 
             if (donHang.MaNhaHang != nhaHang.MaNhaHang)
             {
@@ -1326,7 +1424,7 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
-            var latestPayment = donHang.Thanhtoans
+            var latestPayment = payments
                 .OrderByDescending(payment => payment.MaThanhToan)
                 .FirstOrDefault();
 
@@ -1400,10 +1498,11 @@ namespace DatMonAnOnline.API.Controllers
 
             donHang.MaTrangThai = request.MaTrangThai;
             decimal soTienDaCongVaoVi = 0;
+            var changedAt = VietnamBusinessTime.Now(_timeProvider);
 
             if (request.MaTrangThai == 5)
             {
-                var completedAt = DateTime.Now;
+                var completedAt = changedAt;
                 donHang.ThoiGianGiaoThucTe = completedAt;
 
                 if (isCodPayment &&
@@ -1421,7 +1520,7 @@ namespace DatMonAnOnline.API.Controllers
 
                 if (!settlement.Succeeded)
                 {
-                    await transaction.RollbackAsync();
+                    await transaction.RollbackAsync(HttpContext.RequestAborted);
                     _logger.LogWarning(
                         "Không thể quyết toán thu nhập đơn {MaDonHang}: {Reason}",
                         donHang.MaDonHang,
@@ -1442,7 +1541,7 @@ namespace DatMonAnOnline.API.Controllers
                     MaDonHang = donHang.MaDonHang,
                     MaTrangThai = request.MaTrangThai,
                     MaTaiKhoan = maTaiKhoan.Value,
-                    ThoiGianTao = DateTime.Now,
+                    ThoiGianTao = changedAt,
                     GhiChu = string.IsNullOrWhiteSpace(request.GhiChu)
                         ? $"Quán cập nhật trạng thái: {trangThaiMoi.TenTrangThai}"
                         : request.GhiChu.Trim()
@@ -1473,12 +1572,12 @@ namespace DatMonAnOnline.API.Controllers
                 Loai = "DonHang",
                 DuongDan = $"/don-hang/{donHang.MaDonHang}",
                 DaDoc = false,
-                NgayTao = DateTime.Now
+                NgayTao = changedAt
             };
 
             _context.Thongbaos.Add(thongBaoCapNhat);
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _context.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
 
             var thongBaoPayload = new
             {
@@ -1638,7 +1737,8 @@ namespace DatMonAnOnline.API.Controllers
                 );
             }
 
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var thoiDiemKiemTra = VietnamBusinessTime.Now(_timeProvider);
+            var homNay = DateOnly.FromDateTime(thoiDiemKiemTra);
 
             var coHopDongHieuLuc = await _context.Hopdongnhahangs
                 .AsNoTracking()
@@ -1658,7 +1758,7 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             var trangThaiNhaHang =
-                TrangThaiNhaHangHelper.KiemTra(nhaHang);
+                TrangThaiNhaHangHelper.KiemTra(nhaHang, thoiDiemKiemTra);
 
             if (!trangThaiNhaHang.DangMoCua)
             {
@@ -1675,6 +1775,8 @@ namespace DatMonAnOnline.API.Controllers
 
             foreach (var ct in gioHang.Chitietgiohangs)
             {
+                if (ct.SoLuong is < 1 or > 100 || !VndAmountAttribute.IsSupported(ct.MaMonAnNavigation.Gia))
+                    return (0, 0, 0, null, "Giá hoặc số lượng món trong giỏ không hợp lệ.");
                 if (ct.MaMonAnNavigation.MaNhaHang != maNhaHang)
                 {
                     return (
@@ -1748,17 +1850,25 @@ namespace DatMonAnOnline.API.Controllers
 
                     if (realTp != null)
                     {
+                        if (!VndAmountAttribute.IsSupported(realTp.GiaThem))
+                            return (0, 0, 0, null, "Giá topping không hợp lệ.");
                         giaToppingThucTe +=
                             realTp.GiaThem * tp.SoLuong;
+                        if (giaToppingThucTe > VndAmountAttribute.Maximum)
+                            return (0, 0, 0, null, "Tổng tiền topping vượt giới hạn lưu trữ.");
                     }
                 }
 
                 tongTienHang +=
                     (ct.MaMonAnNavigation.Gia + giaToppingThucTe) *
                     ct.SoLuong;
+                if (!VndAmountAttribute.IsSupported(tongTienHang))
+                    return (0, 0, 0, null, "Tổng tiền hàng vượt giới hạn lưu trữ.");
             }
 
             decimal phiShip = nhaHang.PhiShipMacDinh;
+            if (!VndAmountAttribute.IsSupported(phiShip) || tongTienHang + phiShip > VndAmountAttribute.Maximum)
+                return (0, 0, 0, null, "Tổng tiền và phí giao hàng vượt giới hạn lưu trữ.");
             decimal soTienGiam = 0;
 
             if (maKhuyenMai.HasValue)
@@ -1784,6 +1894,21 @@ namespace DatMonAnOnline.API.Controllers
                 if (km.SoLuongDaDung >= km.SoLuong)
                     return (0, 0, 0, null, "Mã khuyến mãi đã hết lượt.");
 
+                var soLuotKhachDaDung = await _context.Donhangs
+                    .AsNoTracking()
+                    .CountAsync(order =>
+                        order.MaKhachHang == maKhachHang &&
+                        order.MaKhuyenMai == km.MaKhuyenMai &&
+                        order.MaTrangThai != 6);
+
+                if (soLuotKhachDaDung >= km.SoLuotToiDaMoiKhach)
+                {
+                    return (
+                        0, 0, 0, null,
+                        "Bạn đã sử dụng hết số lượt cho phép của mã khuyến mãi này."
+                    );
+                }
+
                 if (tongTienHang < km.DonHangToiThieu)
                 {
                     return (
@@ -1807,15 +1932,7 @@ namespace DatMonAnOnline.API.Controllers
                     );
                 }
 
-                soTienGiam = km.LoaiGiam == "SoTien"
-                    ? km.GiaTriGiam
-                    : tongTienHang * km.GiaTriGiam / 100;
-
-                if (km.GiamToiDa.HasValue &&
-                    soTienGiam > km.GiamToiDa.Value)
-                {
-                    soTienGiam = km.GiamToiDa.Value;
-                }
+                soTienGiam = PromotionWriteHelper.CalculateDiscount(km, tongTienHang);
             }
 
             soTienGiam = Math.Min(

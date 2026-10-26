@@ -1,6 +1,8 @@
 using DatMonAnOnline.API.Hubs;
 using DatMonAnOnline.API.Models;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using DatMonAnOnline.API.Security;
 
 namespace DatMonAnOnline.API.Services;
 
@@ -45,14 +47,17 @@ public class RealtimeNotificationService
     private readonly IHubContext<NotificationHub>
         _hubContext;
     private readonly ILogger<RealtimeNotificationService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public RealtimeNotificationService(
         IHubContext<NotificationHub> hubContext,
-        ILogger<RealtimeNotificationService> logger
+        ILogger<RealtimeNotificationService> logger,
+        IServiceScopeFactory scopeFactory
     )
     {
         _hubContext = hubContext;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     public Task GuiThongBaoAsync(
@@ -130,7 +135,7 @@ public class RealtimeNotificationService
         object? duLieu = null)
     {
         return GuiAsync(
-            _hubContext.Clients.User(maTaiKhoan.ToString()),
+            maTaiKhoan,
             "DuLieuThayDoi",
             TaoPayload(phamVi, duLieu));
     }
@@ -140,8 +145,8 @@ public class RealtimeNotificationService
         IEnumerable<string> phamVi,
         object? duLieu = null)
     {
-        return GuiAsync(
-            _hubContext.Clients.Group(NotificationHub.GetRoleGroupName(vaiTro)),
+        return GuiChoPhienHopLeAsync(
+            null, vaiTro,
             "DuLieuThayDoi",
             TaoPayload(phamVi, duLieu));
     }
@@ -170,20 +175,34 @@ public class RealtimeNotificationService
         object duLieu
     )
     {
-        return GuiAsync(
-            _hubContext.Clients.User(maTaiKhoan.ToString()),
-            tenSuKien,
-            duLieu);
+        return GuiChoPhienHopLeAsync(
+            maTaiKhoan, null, tenSuKien, duLieu);
     }
 
-    private async Task GuiAsync(
-        IClientProxy client,
+    private async Task GuiChoPhienHopLeAsync(
+        int? maTaiKhoan, string? vaiTro,
         string tenSuKien,
         object duLieu)
     {
         try
         {
-            await client.SendAsync(tenSuKien, duLieu);
+            // A fresh scope avoids concurrent operations on the request DbContext
+            // when callers send several notifications with Task.WhenAll.
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<DatMonAnOnlineContext>();
+            var accounts = db.Taikhoans.AsNoTracking().Where(a => a.TrangThai == true);
+            if (maTaiKhoan.HasValue) accounts = accounts.Where(a => a.MaTaiKhoan == maTaiKhoan.Value);
+            if (vaiTro != null) accounts = accounts.Where(a => a.MaRoleNavigation.TenRole == vaiTro);
+            var recipients = await accounts.Select(a => new
+            {
+                a.MaTaiKhoan, a.MatKhau, Role = a.MaRoleNavigation.TenRole
+            }).ToListAsync();
+            // Old sockets cannot receive after password/role revocation, even on
+            // another API instance. Never broadcast to unversioned role/user groups.
+            var groups = recipients.Select(a => NotificationHub.GetSessionGroupName(
+                a.MaTaiKhoan, a.Role, PasswordTokenVersion.Create(a.MatKhau))).ToArray();
+            if (groups.Length > 0)
+                await _hubContext.Clients.Groups(groups).SendAsync(tenSuKien, duLieu);
         }
         catch (Exception exception)
         {

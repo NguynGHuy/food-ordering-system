@@ -41,6 +41,8 @@ public partial class DatMonAnOnlineContext : DbContext
 
     public virtual DbSet<Hoantien> Hoantiens { get; set; }
 
+    public virtual DbSet<Lichsudoisoat> Lichsudoisoats { get; set; }
+
     public virtual DbSet<Hopdongnhahang> Hopdongnhahangs { get; set; }
 
     public virtual DbSet<Khachhang> Khachhangs { get; set; }
@@ -434,6 +436,36 @@ public partial class DatMonAnOnlineContext : DbContext
             entity.HasOne(d => d.MaTaiKhoanDuyetNavigation).WithMany(p => p.Doisoatnhahangs)
                 .HasForeignKey(d => d.MaTaiKhoanDuyet)
                 .HasConstraintName("FK_DoiSoat_NguoiDuyet");
+        });
+
+        modelBuilder.Entity<Lichsudoisoat>(entity =>
+        {
+            entity.HasKey(e => e.MaLichSuDoiSoat).HasName("PRIMARY");
+
+            entity.ToTable("lichsudoisoat");
+
+            entity.HasIndex(e => new { e.MaDoiSoat, e.ThoiGian }, "IX_LichSuDoiSoat_Ky_ThoiGian");
+
+            entity.HasIndex(e => e.MaTaiKhoan, "FK_LichSuDoiSoat_TaiKhoan");
+
+            entity.Property(e => e.HanhDong).HasMaxLength(50);
+            entity.Property(e => e.TrangThaiTruoc).HasMaxLength(20);
+            entity.Property(e => e.TrangThaiSau).HasMaxLength(20);
+            entity.Property(e => e.MaGiaoDich).HasMaxLength(100);
+            entity.Property(e => e.GhiChu).HasMaxLength(500);
+            entity.Property(e => e.ThoiGian)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.MaDoiSoatNavigation).WithMany(p => p.Lichsudoisoats)
+                .HasForeignKey(d => d.MaDoiSoat)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_LichSuDoiSoat_DoiSoat");
+
+            entity.HasOne(d => d.MaTaiKhoanNavigation).WithMany(p => p.Lichsudoisoats)
+                .HasForeignKey(d => d.MaTaiKhoan)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LichSuDoiSoat_TaiKhoan");
         });
 
         modelBuilder.Entity<Donhang>(entity =>
@@ -850,6 +882,7 @@ public partial class DatMonAnOnlineContext : DbContext
             entity.Property(e => e.MoTa).HasMaxLength(200);
             entity.Property(e => e.NgayBatDau).HasColumnType("datetime");
             entity.Property(e => e.NgayKetThuc).HasColumnType("datetime");
+            entity.Property(e => e.SoLuotToiDaMoiKhach).HasDefaultValue(1);
             entity.Property(e => e.TrangThai)
                 .IsRequired()
                 .HasDefaultValueSql("'1'");

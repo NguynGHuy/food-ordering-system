@@ -10,16 +10,27 @@ using Scalar.AspNetCore;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<ForwardedHeadersOptions>(options => TrustedProxyHeaders.Configure(
+    options, builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? []));
+var frontendOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? (builder.Environment.IsDevelopment()
+        ? ["http://localhost:5173", "http://localhost:5174"]
+        : Array.Empty<string>());
+foreach (var origin in frontendOrigins)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
+        (uri.Scheme != "https" && !(builder.Environment.IsDevelopment() && uri.Scheme == "http")) ||
+        uri.GetLeftPart(UriPartial.Authority) != origin || origin.Contains('*'))
+        throw new InvalidOperationException("Cors:AllowedOrigins phải chứa origin chính xác, HTTPS khi triển khai.");
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174"
-            )
+            .WithOrigins(frontendOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -323,11 +334,13 @@ if (app.Environment.IsDevelopment())
 // HTTP PIPELINE
 // =========================
 
+app.UseForwardedHeaders();
+if (!app.Environment.IsDevelopment()) app.UseHsts();
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
-
 app.UseCors("AllowFrontend");
+
+app.UseStaticFiles();
 
 app.UseRateLimiter();
 
@@ -338,7 +351,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHub<NotificationHub>(
-    "/hubs/thong-bao"
+    "/hubs/thong-bao", options => options.CloseOnAuthenticationExpiration = true
 );
 
 app.Run();

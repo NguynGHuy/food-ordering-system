@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -424,7 +425,7 @@ if (cart.chiTiet.length === 0) {
                 >
                         <div className="cart-item-image">
                             {item.hinhAnh ? (
-                                <img
+                                <MediaImage
                                     src={item.hinhAnh}
                                     alt={item.tenMonAn}
                                 />

@@ -67,13 +67,18 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
-            // Kiểm tra nhà hàng có tồn tại và đã được duyệt
+            // Kiểm tra nhà hàng có tồn tại, đã duyệt và đủ điều kiện nhận đơn.
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var nhaHangTonTai = await _context.Nhahangs
                 .AsNoTracking()
                 .AnyAsync(x =>
                     x.MaNhaHang == maNhaHang &&
                     x.TrangThaiDuyet == "DaDuyet" &&
-                    x.MaTaiKhoanNavigation.TrangThai == true);
+                    x.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay));
 
             if (!nhaHangTonTai)
             {

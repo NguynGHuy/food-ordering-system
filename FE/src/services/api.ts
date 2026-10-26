@@ -1,4 +1,17 @@
-export const API_URL = "http://localhost:5038/api";
+export function getApiUrl(configuredUrl: string | undefined, development: boolean): string {
+    const value = configuredUrl?.trim().replace(/\/+$/, "") ||
+        (development ? "http://localhost:5038/api" : "/api");
+    if (value.startsWith("/") && !value.startsWith("//") && !/[?#\\]/.test(value)) {
+        return value;
+    }
+    const url = new URL(value);
+    if (!(["http:", "https:"].includes(url.protocol)) || url.username || url.password || url.search || url.hash) {
+        throw new Error("VITE_API_URL phải là URL HTTP(S) hoặc đường dẫn cùng origin, không chứa thông tin đăng nhập/query.");
+    }
+    return value;
+}
+
+export const API_URL = getApiUrl(import.meta.env?.VITE_API_URL, import.meta.env?.DEV ?? false);
 
 export interface PagedResult<T> {
     items: T[];

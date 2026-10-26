@@ -32,6 +32,7 @@ function CreatePromotionForm({
     const [giamToiDa, setGiamToiDa] = useState("");
     const [donHangToiThieu, setDonHangToiThieu] = useState(0);
     const [soLuong, setSoLuong] = useState(100);
+    const [soLuotToiDaMoiKhach, setSoLuotToiDaMoiKhach] = useState(1);
     const [ngayBatDau, setNgayBatDau] = useState("");
     const [ngayKetThuc, setNgayKetThuc] = useState("");
     const [busy, setBusy] = useState(false);
@@ -76,7 +77,7 @@ function CreatePromotionForm({
             return;
         }
 
-        if (donHangToiThieu < 0 || soLuong < 1) {
+        if (donHangToiThieu < 0 || soLuong < 1 || soLuotToiDaMoiKhach < 1) {
             setError(
                 "Điều kiện đơn và số lượng mã không hợp lệ."
             );
@@ -93,7 +94,8 @@ function CreatePromotionForm({
         if (
             !Number.isInteger(giaTriGiam) ||
             !Number.isInteger(donHangToiThieu) ||
-            !Number.isInteger(soLuong)
+            !Number.isInteger(soLuong) ||
+            !Number.isInteger(soLuotToiDaMoiKhach)
         ) {
             setError("Giá trị giảm, đơn tối thiểu và số lượng phải là số nguyên.");
             return;
@@ -134,6 +136,7 @@ function CreatePromotionForm({
                         : null,
                 donHangToiThieu,
                 soLuong,
+                soLuotToiDaMoiKhach,
                 ngayBatDau,
                 ngayKetThuc,
             };
@@ -300,6 +303,20 @@ function CreatePromotionForm({
                         value={soLuong}
                         onChange={(event) =>
                             setSoLuong(Number(event.target.value))
+                        }
+                    />
+                </label>
+
+                <label className="merchant-promo-field">
+                    <span>Số lượt tối đa mỗi khách</span>
+                    <input
+                        required
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={soLuotToiDaMoiKhach}
+                        onChange={(event) =>
+                            setSoLuotToiDaMoiKhach(Number(event.target.value))
                         }
                     />
                 </label>

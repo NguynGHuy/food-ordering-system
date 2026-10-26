@@ -63,16 +63,27 @@ namespace DatMonAnOnline.API.Controllers
             [FromQuery] PaginationQuery pagination)
         {
             var now = DateTime.Now;
+            var homNay = DateOnly.FromDateTime(now);
             var maKhachHang = await GetCurrentCustomerId();
 
             var result = await _context.Khuyenmais
                 .AsNoTracking()
                 .Where(x =>
                     x.MaNhaHang == maNhaHang &&
+                    x.MaNhaHangNavigation!.TrangThaiDuyet == "DaDuyet" &&
+                    x.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.MaNhaHangNavigation.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay) &&
                     x.TrangThai == true &&
                     x.NgayBatDau <= now &&
                     x.NgayKetThuc >= now &&
-                    x.SoLuongDaDung < x.SoLuong)
+                    x.SoLuongDaDung < x.SoLuong &&
+                    (!maKhachHang.HasValue ||
+                     x.Donhangs.Count(order =>
+                         order.MaKhachHang == maKhachHang.Value &&
+                         order.MaTrangThai != 6) < x.SoLuotToiDaMoiKhach))
                 .OrderBy(x => x.NgayKetThuc)
                 .ThenByDescending(x => x.GiaTriGiam)
                 .Select(x => new
@@ -86,6 +97,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.DonHangToiThieu,
                     x.SoLuong,
                     x.SoLuongDaDung,
+                    x.SoLuotToiDaMoiKhach,
                     x.NgayBatDau,
                     x.NgayKetThuc,
                     x.MaNhaHang,
@@ -117,7 +129,10 @@ namespace DatMonAnOnline.API.Controllers
                     x.TrangThai == true &&
                     x.NgayBatDau <= now &&
                     x.NgayKetThuc >= now &&
-                    x.SoLuongDaDung < x.SoLuong)
+                    x.SoLuongDaDung < x.SoLuong &&
+                    x.Donhangs.Count(order =>
+                        order.MaKhachHang == maKhachHang.Value &&
+                        order.MaTrangThai != 6) < x.SoLuotToiDaMoiKhach)
                 .OrderBy(x => x.NgayKetThuc)
                 .ThenByDescending(x => x.GiaTriGiam)
                 .Select(x => new
@@ -131,6 +146,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.DonHangToiThieu,
                     x.SoLuong,
                     x.SoLuongDaDung,
+                    x.SoLuotToiDaMoiKhach,
                     x.NgayBatDau,
                     x.NgayKetThuc,
                     x.MaNhaHang,
@@ -174,7 +190,10 @@ namespace DatMonAnOnline.API.Controllers
                     x.MaKhuyenMaiNavigation.TrangThai == true &&
                     x.MaKhuyenMaiNavigation.NgayBatDau <= now &&
                     x.MaKhuyenMaiNavigation.NgayKetThuc >= now &&
-                    x.MaKhuyenMaiNavigation.SoLuongDaDung < x.MaKhuyenMaiNavigation.SoLuong);
+                    x.MaKhuyenMaiNavigation.SoLuongDaDung < x.MaKhuyenMaiNavigation.SoLuong &&
+                    x.MaKhuyenMaiNavigation.Donhangs.Count(order =>
+                        order.MaKhachHang == maKhachHang.Value &&
+                        order.MaTrangThai != 6) < x.MaKhuyenMaiNavigation.SoLuotToiDaMoiKhach);
             }
 
             var result = await query
@@ -190,6 +209,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.MaKhuyenMaiNavigation.DonHangToiThieu,
                     x.MaKhuyenMaiNavigation.SoLuong,
                     x.MaKhuyenMaiNavigation.SoLuongDaDung,
+                    x.MaKhuyenMaiNavigation.SoLuotToiDaMoiKhach,
                     x.MaKhuyenMaiNavigation.NgayBatDau,
                     x.MaKhuyenMaiNavigation.NgayKetThuc,
                     x.MaKhuyenMaiNavigation.MaNhaHang,
@@ -203,7 +223,10 @@ namespace DatMonAnOnline.API.Controllers
                         x.MaKhuyenMaiNavigation.TrangThai == true &&
                         x.MaKhuyenMaiNavigation.NgayBatDau <= now &&
                         x.MaKhuyenMaiNavigation.NgayKetThuc >= now &&
-                        x.MaKhuyenMaiNavigation.SoLuongDaDung < x.MaKhuyenMaiNavigation.SoLuong
+                        x.MaKhuyenMaiNavigation.SoLuongDaDung < x.MaKhuyenMaiNavigation.SoLuong &&
+                        x.MaKhuyenMaiNavigation.Donhangs.Count(order =>
+                            order.MaKhachHang == maKhachHang.Value &&
+                            order.MaTrangThai != 6) < x.MaKhuyenMaiNavigation.SoLuotToiDaMoiKhach
                 })
                 .ToPagedResultAsync(pagination);
 
@@ -235,13 +258,18 @@ namespace DatMonAnOnline.API.Controllers
             if (daLuu)
                 return Ok(new { message = "Voucher đã có trong kho của bạn." });
 
-            _context.KhachhangKhuyenmais.Add(new KhachhangKhuyenmai
+            var saved = new KhachhangKhuyenmai
             {
                 MaKhachHang = maKhachHang.Value,
                 MaKhuyenMai = id,
                 NgayLuu = now
-            });
-            await _context.SaveChangesAsync();
+            };
+            _context.KhachhangKhuyenmais.Add(saved);
+            if (!await PromotionWriteHelper.SaveNewAsync(_context))
+            {
+                _context.Entry(saved).State = EntityState.Detached;
+                return Ok(new { message = "Voucher đã có trong kho của bạn." });
+            }
 
             return Ok(new { message = "Đã lưu voucher vào kho." });
         }
@@ -254,14 +282,10 @@ namespace DatMonAnOnline.API.Controllers
             if (!maKhachHang.HasValue)
                 return Unauthorized(new { message = "Không tìm thấy hồ sơ khách hàng." });
 
-            var saved = await _context.KhachhangKhuyenmais.FirstOrDefaultAsync(x =>
-                x.MaKhachHang == maKhachHang.Value && x.MaKhuyenMai == id);
-
-            if (saved == null)
+            var deleted = await _context.KhachhangKhuyenmais.Where(x =>
+                x.MaKhachHang == maKhachHang.Value && x.MaKhuyenMai == id).ExecuteDeleteAsync();
+            if (deleted == 0)
                 return NotFound(new { message = "Voucher không có trong kho." });
-
-            _context.KhachhangKhuyenmais.Remove(saved);
-            await _context.SaveChangesAsync();
             return Ok(new { message = "Đã bỏ voucher khỏi kho." });
         }
 
@@ -302,6 +326,7 @@ namespace DatMonAnOnline.API.Controllers
                 MaCode = request.MaCode,
                 MoTa = request.MoTa,
                 SoLuong = request.SoLuong,
+                SoLuotToiDaMoiKhach = request.SoLuotToiDaMoiKhach,
                 NgayBatDau = request.NgayBatDau,
                 NgayKetThuc = request.NgayKetThuc,
                 DonHangToiThieu = request.DonHangToiThieu,
@@ -335,6 +360,7 @@ namespace DatMonAnOnline.API.Controllers
                     khuyenMai.MoTa,
                     khuyenMai.SoLuong,
                     khuyenMai.SoLuongDaDung,
+                    khuyenMai.SoLuotToiDaMoiKhach,
                     khuyenMai.NgayBatDau,
                     khuyenMai.NgayKetThuc,
                     khuyenMai.DonHangToiThieu,
@@ -406,6 +432,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.MoTa,
                     x.SoLuong,
                     x.SoLuongDaDung,
+                    x.SoLuotToiDaMoiKhach,
                     x.NgayBatDau,
                     x.NgayKetThuc,
                     x.DonHangToiThieu,
@@ -440,7 +467,11 @@ namespace DatMonAnOnline.API.Controllers
             int id,
             [FromBody] CapNhatKhuyenMaiRequest request)
         {
-            var km = await _context.Khuyenmais.FindAsync(id);
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.ReadCommitted, HttpContext.RequestAborted);
+            var locked = await _context.Khuyenmais.FromSqlInterpolated(
+                $"SELECT * FROM khuyenmai WHERE MaKhuyenMai = {id} FOR UPDATE").ToListAsync(HttpContext.RequestAborted);
+            var km = locked.SingleOrDefault();
 
             if (km == null)
                 return NotFound();
@@ -473,10 +504,13 @@ namespace DatMonAnOnline.API.Controllers
                 ? null
                 : request.MoTa.Trim();
             km.SoLuong = request.SoLuong;
+            if (request.SoLuotToiDaMoiKhach.HasValue)
+                km.SoLuotToiDaMoiKhach = request.SoLuotToiDaMoiKhach.Value;
             km.NgayBatDau = request.NgayBatDau;
             km.NgayKetThuc = request.NgayKetThuc;
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync(HttpContext.RequestAborted);
 
             return Ok(new
             {
@@ -492,7 +526,11 @@ namespace DatMonAnOnline.API.Controllers
         [Authorize(Roles = "Quan,Admin")]
         public async Task<IActionResult> ThayDoiTrangThai(int id)
         {
-            var km = await _context.Khuyenmais.FindAsync(id);
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.ReadCommitted, HttpContext.RequestAborted);
+            var locked = await _context.Khuyenmais.FromSqlInterpolated(
+                $"SELECT * FROM khuyenmai WHERE MaKhuyenMai = {id} FOR UPDATE").ToListAsync(HttpContext.RequestAborted);
+            var km = locked.SingleOrDefault();
 
             if (km == null)
                 return NotFound();
@@ -508,6 +546,7 @@ namespace DatMonAnOnline.API.Controllers
             km.TrangThai = !km.TrangThai;
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync(HttpContext.RequestAborted);
 
             return Ok(new
             {
@@ -555,6 +594,20 @@ namespace DatMonAnOnline.API.Controllers
                     "Mã đã hết lượt sử dụng."
                 );
 
+            var maKhachHang = await GetCurrentCustomerId();
+            if (!maKhachHang.HasValue)
+                return Unauthorized(new { message = "Không tìm thấy hồ sơ khách hàng." });
+
+            var soLuotKhachDaDung = await _context.Donhangs
+                .AsNoTracking()
+                .CountAsync(order =>
+                    order.MaKhachHang == maKhachHang.Value &&
+                    order.MaKhuyenMai == km.MaKhuyenMai &&
+                    order.MaTrangThai != 6);
+
+            if (soLuotKhachDaDung >= km.SoLuotToiDaMoiKhach)
+                return BadRequest("Bạn đã sử dụng hết số lượt cho phép của mã này.");
+
             if (req.TongTienHang < km.DonHangToiThieu)
             {
                 return BadRequest(
@@ -570,21 +623,7 @@ namespace DatMonAnOnline.API.Controllers
                 );
             }
 
-            decimal soTienGiam =
-                km.LoaiGiam == "SoTien"
-                    ? km.GiaTriGiam
-                    : (req.TongTienHang * km.GiaTriGiam / 100);
-
-            if (km.GiamToiDa.HasValue &&
-                soTienGiam > km.GiamToiDa.Value)
-            {
-                soTienGiam = km.GiamToiDa.Value;
-            }
-
-            soTienGiam = Math.Min(
-                Math.Max(soTienGiam, 0m),
-                Math.Max(req.TongTienHang, 0m)
-             );
+            decimal soTienGiam = PromotionWriteHelper.CalculateDiscount(km, req.TongTienHang);
 
             return Ok(new
             {
@@ -614,6 +653,9 @@ namespace DatMonAnOnline.API.Controllers
 
         [Range(1, int.MaxValue)]
         public int SoLuong { get; set; }
+
+        [Range(1, int.MaxValue)]
+        public int? SoLuotToiDaMoiKhach { get; set; }
 
         public DateTime NgayBatDau { get; set; }
 

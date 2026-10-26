@@ -24,6 +24,9 @@ function EditPromotionForm({
 }: Props) {
     const [moTa, setMoTa] = useState(promotion.moTa ?? "");
     const [soLuong, setSoLuong] = useState(promotion.soLuong);
+    const [soLuotToiDaMoiKhach, setSoLuotToiDaMoiKhach] = useState(
+        promotion.soLuotToiDaMoiKhach ?? 1
+    );
     const [ngayBatDau, setNgayBatDau] = useState(
         promotion.ngayBatDau.slice(0, 16)
     );
@@ -40,6 +43,11 @@ function EditPromotionForm({
         if (busy) return;
 
         setError("");
+
+        if (!Number.isInteger(soLuotToiDaMoiKhach) || soLuotToiDaMoiKhach < 1) {
+            setError("Số lượt tối đa mỗi khách phải là số nguyên dương.");
+            return;
+        }
 
         if (
             !Number.isInteger(soLuong) ||
@@ -69,6 +77,7 @@ function EditPromotionForm({
         const payload: UpdatePromotionRequest = {
             moTa: moTa.trim() || null,
             soLuong,
+            soLuotToiDaMoiKhach,
             ngayBatDau,
             ngayKetThuc,
         };
@@ -177,6 +186,20 @@ function EditPromotionForm({
                             setSoLuong(
                                 Number(event.target.value)
                             )
+                        }
+                    />
+                </label>
+
+                <label className="merchant-promo-field full">
+                    <span>Số lượt tối đa mỗi khách</span>
+                    <input
+                        required
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={soLuotToiDaMoiKhach}
+                        onChange={(event) =>
+                            setSoLuotToiDaMoiKhach(Number(event.target.value))
                         }
                     />
                 </label>

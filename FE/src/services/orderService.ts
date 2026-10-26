@@ -189,12 +189,3 @@ export interface OrderStatusHistory {
   thoiGianTao: string;
   ghiChu: string | null;
 }
-
-
-export async function getOrderDetail(id: number) {
-    const token = localStorage.getItem("token");
-    return apiFetch(`/don-hang/${id}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-    });
-}

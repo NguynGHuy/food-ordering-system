@@ -244,6 +244,7 @@ function OrderReviewForm(props: Props) {
                         <textarea
                             id={inputId}
                             rows={3}
+                            maxLength={500}
                             placeholder={
                                 props.loai === "quan"
                                     ? "Chia sẻ cảm nhận về nhà hàng, dịch vụ hoặc cách đóng gói..."
@@ -257,7 +258,7 @@ function OrderReviewForm(props: Props) {
                         />
 
                         <div className="order-review-character-count">
-                            Nhận xét không bắt buộc
+                            {noiDung.length}/500 ký tự · không bắt buộc
                         </div>
                     </fieldset>
 

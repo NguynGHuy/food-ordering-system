@@ -345,7 +345,7 @@
   text-align: left;
 }
 
-.reconciliation-orders table { min-width: 1500px; }
+.reconciliation-orders table { min-width: 1620px; }
 .reconciliation-list-table { min-width: 1050px; }
 
 .reconciliation-orders th,
@@ -381,6 +381,14 @@
 .money-positive { color: #047857 !important; font-weight: 800; }
 .money-negative { color: #dc2626 !important; font-weight: 800; }
 .reconciliation-note { margin: 0; padding: 12px 14px; border-radius: 9px; background: #fffbeb; color: #92400e; }
+.reconciliation-audit { overflow: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+.reconciliation-audit ol { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.reconciliation-audit li { display: grid; gap: 5px; padding: 12px 16px; border-bottom: 1px solid #edf2f7; }
+.reconciliation-audit li:last-child { border-bottom: 0; }
+.reconciliation-audit li > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reconciliation-audit li span,
+.reconciliation-audit li p { margin: 0; color: #64748b; font-size: 12px; }
+.reconciliation-audit-empty { margin: 0; padding: 16px; color: #64748b; font-size: 13px; }
 .reconciliation-list-panel { overflow: hidden; }
 .reconciliation-view-button { min-height: auto !important; padding: 7px 11px !important; }
 
@@ -477,7 +485,9 @@
 
 .reconciliation-payment-box,
 .reconciliation-confirm-box,
-.reconciliation-paid {
+.reconciliation-paid,
+.reconciliation-dispute-box,
+.reconciliation-dispute-status {
   display: grid;
   gap: 12px;
   margin-top: 18px;
@@ -488,13 +498,24 @@
   color: #047857;
 }
 
-.reconciliation-payment-box input { min-height: 42px; padding: 9px 11px; border: 1px solid #94a3b8; border-radius: 8px; }
+.reconciliation-payment-box input,
+.reconciliation-payment-box textarea,
+.reconciliation-dispute-box textarea { min-height: 42px; padding: 9px 11px; border: 1px solid #94a3b8; border-radius: 8px; font: inherit; }
+.reconciliation-payment-box textarea,
+.reconciliation-dispute-box textarea { min-height: 82px; resize: vertical; }
 .reconciliation-payment-box > button,
-.reconciliation-confirm-box > button { justify-self: end; min-height: 42px; padding: 0 16px; border: 0; border-radius: 8px; background: #047857; color: #fff; font-weight: 800; cursor: pointer; }
+.reconciliation-confirm-box > button,
+.reconciliation-dispute-box > button { justify-self: end; min-height: 42px; padding: 0 16px; border: 0; border-radius: 8px; background: #047857; color: #fff; font-weight: 800; cursor: pointer; }
 .reconciliation-payment-box > button:disabled,
-.reconciliation-confirm-box > button:disabled { cursor: wait; opacity: .65; }
-.reconciliation-confirm-box p { margin: 0; color: #475569; }
+.reconciliation-confirm-box > button:disabled,
+.reconciliation-dispute-box > button:disabled { cursor: wait; opacity: .65; }
+.reconciliation-confirm-box p,
+.reconciliation-dispute-box p { margin: 0; color: #475569; }
 .reconciliation-paid span { color: #475569; font-size: 13px; }
+.reconciliation-dispute-box,
+.reconciliation-dispute-status { border-color: #fdba74; background: #fff7ed; color: #c2410c; }
+.reconciliation-dispute-box > button { display: inline-flex; align-items: center; gap: 7px; background: #c2410c; }
+.reconciliation-dispute-status span { color: #7c2d12; font-size: 13px; }
 
 @media (max-width: 1050px) {
   .reconciliation-period-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -508,7 +529,8 @@
   .reconciliation-result { grid-template-columns: 1fr; }
   .reconciliation-result > div:last-child { border-top: 1px solid currentColor; border-left: 0; padding-top: 14px; padding-left: 0; }
   .reconciliation-payment-box > button,
-  .reconciliation-confirm-box > button { width: 100%; justify-self: stretch; }
+  .reconciliation-confirm-box > button,
+  .reconciliation-dispute-box > button { width: 100%; justify-self: stretch; }
 }
 
 @media (max-width: 1050px) {
@@ -13148,6 +13170,16 @@ img {
   border-bottom: 1px solid var(--food-line);
 }
 
+.food-option-image {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #f7f7f8;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
 .food-option-eyebrow {
   display: block;
   margin-bottom: 5px;

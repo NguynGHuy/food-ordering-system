@@ -109,7 +109,52 @@ public class AdminHopDongController : ControllerBase
                 })
                 .FirstOrDefaultAsync();
 
-        return Ok(new { nhaHang, hopDong, thamDinh });
+        var lichSuHopDong = await _context.Hopdongnhahangs
+            .AsNoTracking()
+            .Where(x => x.MaNhaHang == id)
+            .OrderByDescending(x => x.MaHopDong)
+            .Select(x => new
+            {
+                x.MaHopDong,
+                x.SoHopDong,
+                x.TrangThai,
+                x.NgayBatDau,
+                x.NgayKetThuc,
+                x.ThoiGianKy,
+                x.ThoiGianGuiDuyet,
+                x.ThoiGianDuyet,
+                x.MaTaiKhoanDuyet,
+                x.LyDoTuChoi,
+                x.LyDoChamDut,
+                x.MaTaiKhoanChamDut,
+                x.ThoiGianChamDut
+            })
+            .ToListAsync();
+
+        var lichSuThamDinh = await _context.Thamdinhhosonhahangs
+            .AsNoTracking()
+            .Where(x => _context.Hopdongnhahangs.Any(h =>
+                h.MaHopDong == x.MaHopDong &&
+                h.MaNhaHang == id))
+            .OrderByDescending(x => x.ThoiGian)
+            .Select(x => new
+            {
+                x.MaHopDong,
+                x.KetQua,
+                x.GhiChu,
+                x.ThoiGian,
+                x.MaTaiKhoanAdmin
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            nhaHang,
+            hopDong,
+            thamDinh,
+            lichSuHopDong,
+            lichSuThamDinh
+        });
     }
 
     [HttpGet("hop-dong/{id:int}/tep/{loai}")]

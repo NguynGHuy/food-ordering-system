@@ -25,6 +25,8 @@ public partial class Khuyenmai
 
     public int SoLuongDaDung { get; set; }
 
+    public int SoLuotToiDaMoiKhach { get; set; }
+
     public DateTime NgayBatDau { get; set; }
 
     public DateTime NgayKetThuc { get; set; }

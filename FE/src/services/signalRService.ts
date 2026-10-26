@@ -5,9 +5,9 @@ import {
   LogLevel,
 } from "@microsoft/signalr";
 
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5038/api";
+import { API_URL } from "./api";
 
-const serverUrl = apiUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
+const serverUrl = API_URL.replace(/\/api\/?$/, "").replace(/\/$/, "");
 
 const hubUrl = `${serverUrl}/hubs/thong-bao`;
 
@@ -39,6 +39,7 @@ export function getNotificationConnection(): HubConnection {
         new CustomEvent("realtime-data-changed", {
           detail: {
             phamVi: [
+              "thongBao",
               "donHang",
               "vi",
               "doiSoat",
@@ -52,6 +53,8 @@ export function getNotificationConnection(): HubConnection {
           },
         }),
       );
+
+      window.dispatchEvent(new Event("notifications-updated"));
     });
 
     connection.onclose(() => {

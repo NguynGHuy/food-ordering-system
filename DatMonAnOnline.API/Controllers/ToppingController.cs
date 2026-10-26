@@ -1,4 +1,5 @@
 using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace DatMonAnOnline.API.Controllers
             [Required, MaxLength(100)]
             public string TenTopping { get; set; } = string.Empty;
 
-            [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+            [VndAmount]
             public decimal GiaThem { get; set; }
         }
 
@@ -35,7 +36,7 @@ namespace DatMonAnOnline.API.Controllers
             [Required, MaxLength(100)]
             public string TenTopping { get; set; } = string.Empty;
 
-            [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+            [VndAmount]
             public decimal GiaThem { get; set; }
         }
 
@@ -55,12 +56,17 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "Mã nhóm topping không hợp lệ." });
             }
 
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var nhomHopLe = await _context.Nhomtoppings
                 .AsNoTracking()
                 .AnyAsync(x =>
                     x.MaNhomTopping == maNhomTopping &&
                     x.MaNhaHangNavigation.TrangThaiDuyet == "DaDuyet" &&
-                    x.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai == true);
+                    x.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.MaNhaHangNavigation.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay));
 
             if (!nhomHopLe)
             {

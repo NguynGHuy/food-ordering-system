@@ -30,7 +30,7 @@ namespace DatMonAnOnline.API.Controllers
             [MaxLength(500)]
             public string? MoTa { get; set; }
 
-            [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+            [VndAmount]
             public decimal Gia { get; set; }
 
             [MaxLength(255)]
@@ -48,7 +48,7 @@ namespace DatMonAnOnline.API.Controllers
             [MaxLength(500)]
             public string? MoTa { get; set; }
 
-            [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+            [VndAmount]
             public decimal Gia { get; set; }
 
             [MaxLength(255)]
@@ -75,12 +75,17 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "MaNhaHang không hợp lệ." });
             }
 
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var nhaHangTonTai = await _context.Nhahangs
                 .AsNoTracking()
                 .AnyAsync(x =>
                     x.MaNhaHang == maNhaHang &&
                     x.TrangThaiDuyet == "DaDuyet" &&
-                    x.MaTaiKhoanNavigation.TrangThai == true);
+                    x.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay));
 
             if (!nhaHangTonTai)
             {
@@ -155,6 +160,7 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "MaMonAn không hợp lệ." });
             }
 
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var monAn = await _context.Monans
                 .AsNoTracking()
                 .Include(x => x.MaDanhMucNavigation)
@@ -166,7 +172,12 @@ namespace DatMonAnOnline.API.Controllers
 
             if (monAn == null ||
                 monAn.MaNhaHangNavigation.TrangThaiDuyet != "DaDuyet" ||
-                monAn.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai != true)
+                monAn.MaNhaHangNavigation.MaTaiKhoanNavigation.TrangThai != true ||
+                !await _context.Hopdongnhahangs.AsNoTracking().AnyAsync(contract =>
+                    contract.MaNhaHang == monAn.MaNhaHang &&
+                    contract.TrangThai == "HieuLuc" &&
+                    contract.NgayBatDau <= homNay &&
+                    contract.NgayKetThuc >= homNay))
             {
                 return NotFound(new { message = "Không tìm thấy món ăn." });
             }

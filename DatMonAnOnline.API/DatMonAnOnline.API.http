@@ -1,6 +1,0 @@
-@DatMonAnOnline.API_HostAddress = http://localhost:5038
-
-GET {{DatMonAnOnline.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -37,6 +37,7 @@ namespace DatMonAnOnline.API.Controllers
 
             public TimeOnly? GioDongCua { get; set; }
 
+            [VndAmount]
             public decimal PhiShipMacDinh { get; set; }
         }
 
@@ -44,6 +45,59 @@ namespace DatMonAnOnline.API.Controllers
         {
             [Required]
             public string CheDoHoatDong { get; set; } = string.Empty;
+        }
+
+        [HttpPost("anh-bia")]
+        [Authorize(Roles = "Quan")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> UploadAnhBia(
+            [FromForm] IFormFile? file,
+            [FromServices] IWebHostEnvironment environment)
+        {
+            var accountId = GetMaTaiKhoan();
+            if (accountId == null) return Unauthorized();
+            var restaurantId = await _context.Nhahangs.AsNoTracking()
+                .Where(x => x.MaTaiKhoan == accountId && x.MaTaiKhoanNavigation.TrangThai == true)
+                .Select(x => (int?)x.MaNhaHang).SingleOrDefaultAsync(HttpContext.RequestAborted);
+            if (restaurantId == null) return NotFound(new { message = "Không tìm thấy nhà hàng đang hoạt động của tài khoản." });
+            if (file == null || file.Length == 0 || file.Length > 5 * 1024 * 1024)
+                return BadRequest(new { message = "Chọn ảnh JPEG, PNG hoặc WebP không quá 5 MB." });
+
+            var extension = file.ContentType.ToLowerInvariant() switch
+            {
+                "image/jpeg" => ".jpg",
+                "image/png" => ".png",
+                "image/webp" => ".webp",
+                _ => null
+            };
+            if (extension == null) return BadRequest(new { message = "Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP." });
+            using var input = new MemoryStream();
+            await file.CopyToAsync(input, HttpContext.RequestAborted);
+            var (safeImage, error) = SafeImageProcessor.DecodeAndSanitize(input.ToArray(), extension, HttpContext.RequestAborted);
+            if (safeImage == null) return BadRequest(new { message = error });
+
+            using var bitmap = SkiaSharp.SKBitmap.Decode(safeImage.Content);
+            using var image = SkiaSharp.SKImage.FromBitmap(bitmap);
+            using var webp = image.Encode(SkiaSharp.SKEncodedImageFormat.Webp, 85);
+            var directory = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "restaurants");
+            Directory.CreateDirectory(directory);
+            // Server-owned filename: never trust client paths or overwrite an existing upload.
+            var name = $"owner-{restaurantId}-{Guid.NewGuid():N}.webp";
+            var target = Path.Combine(directory, name);
+            var created = false;
+            try
+            {
+                await using var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                created = true;
+                await output.WriteAsync(webp.ToArray(), HttpContext.RequestAborted);
+            }
+            catch
+            {
+                if (created && System.IO.File.Exists(target)) System.IO.File.Delete(target);
+                throw;
+            }
+            // The existing profile PUT applies the selected image when the owner presses Save.
+            return Ok(new { anhBia = $"/uploads/restaurants/{name}" });
         }
 
         // =====================================================
@@ -58,12 +112,17 @@ namespace DatMonAnOnline.API.Controllers
             [FromQuery] string? sort = null,
             [FromQuery] bool openOnly = false)
         {
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var query = _context.Nhahangs
                 .AsNoTracking()
                 .Include(x => x.MaTaiKhoanNavigation)
                 .Where(x =>
                     x.TrangThaiDuyet == "DaDuyet" &&
-                    x.MaTaiKhoanNavigation.TrangThai == true);
+                    x.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay));
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -145,13 +204,18 @@ namespace DatMonAnOnline.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetChiTietNhaHang(int id)
         {
+            var homNay = DateOnly.FromDateTime(DateTime.Now);
             var nhaHang = await _context.Nhahangs
                 .AsNoTracking()
                 .Include(x => x.MaTaiKhoanNavigation)
                 .FirstOrDefaultAsync(x =>
                     x.MaNhaHang == id &&
                     x.TrangThaiDuyet == "DaDuyet" &&
-                    x.MaTaiKhoanNavigation.TrangThai == true
+                    x.MaTaiKhoanNavigation.TrangThai == true &&
+                    x.Hopdongnhahangs.Any(contract =>
+                        contract.TrangThai == "HieuLuc" &&
+                        contract.NgayBatDau <= homNay &&
+                        contract.NgayKetThuc >= homNay)
                 );
 
             if (nhaHang == null)

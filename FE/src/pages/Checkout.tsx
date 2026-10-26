@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useEffect, useState } from "react";
 import {
   Link,
@@ -985,19 +986,13 @@ function Checkout() {
                   >
                     <div className="checkout-review-item-image">
                       {line.hinhAnh ? (
-                        <img
+                        <MediaImage
                           src={
                             line.hinhAnh
                           }
                           alt={
                             line.tenMonAn
                           }
-                          onError={(
-                            event,
-                          ) => {
-                            event.currentTarget.style.display =
-                              "none";
-                          }}
                         />
                       ) : (
                         <UtensilsCrossed
@@ -1783,19 +1778,13 @@ function Checkout() {
                   >
                     <div className="checkout-compact-item-image">
                       {line.hinhAnh ? (
-                        <img
+                        <MediaImage
                           src={
                             line.hinhAnh
                           }
                           alt={
                             line.tenMonAn
                           }
-                          onError={(
-                            event,
-                          ) => {
-                            event.currentTarget.style.display =
-                              "none";
-                          }}
                         />
                       ) : (
                         <UtensilsCrossed

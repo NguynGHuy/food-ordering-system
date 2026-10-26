@@ -62,6 +62,28 @@ export interface AdminContractDetails {
         thoiGian: string;
         maTaiKhoanAdmin: number;
     } | null;
+    lichSuHopDong: Array<{
+        maHopDong: number;
+        soHopDong: string;
+        trangThai: string;
+        ngayBatDau: string;
+        ngayKetThuc: string;
+        thoiGianKy: string | null;
+        thoiGianGuiDuyet: string | null;
+        thoiGianDuyet: string | null;
+        maTaiKhoanDuyet: number | null;
+        lyDoTuChoi: string | null;
+        lyDoChamDut: string | null;
+        maTaiKhoanChamDut: number | null;
+        thoiGianChamDut: string | null;
+    }>;
+    lichSuThamDinh: Array<{
+        maHopDong: number;
+        ketQua: "DaDuyet" | "TuChoi";
+        ghiChu: string | null;
+        thoiGian: string;
+        maTaiKhoanAdmin: number;
+    }>;
 }
 
 export interface AdminContractItem {

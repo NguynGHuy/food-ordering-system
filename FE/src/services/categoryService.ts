@@ -85,25 +85,3 @@ export async function deleteDanhMuc(
         headers: getAuthHeaders(),
     });
 }
-
-// =====================================================
-// SẮP XẾP DANH MỤC
-// Role: Quan
-// =====================================================
-
-export interface SapXepDanhMucItem {
-    maDanhMuc: number;
-    thuTuHienThi: number;
-}
-
-export async function sapXepDanhMuc(
-    items: SapXepDanhMucItem[]
-) {
-    return apiFetch("/danh-muc/sap-xep", {
-        method: "PUT",
-
-        headers: getAuthHeaders(),
-
-        body: JSON.stringify(items),
-    });
-}

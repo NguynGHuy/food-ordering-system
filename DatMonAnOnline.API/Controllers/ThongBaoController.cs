@@ -19,19 +19,24 @@ namespace DatMonAnOnline.API.Controllers
             _context = context;
         }
 
-        private int GetCurrentUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        //private int GetCurrentUserId() {
-        //    return 4;        
-        //}
+        private int? GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(value, out var id) && id > 0 ? id : null;
+        }
 
         [HttpGet]
         public async Task<IActionResult> LayDanhSachThongBao(
             [FromQuery] PaginationQuery pagination,
             [FromQuery] string? filter = null)
         {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
             var baseQuery = _context.Thongbaos
                 .AsNoTracking()
-                .Where(x => x.MaTaiKhoan == GetCurrentUserId());
+                .Where(x => x.MaTaiKhoan == currentUserId.Value);
 
             var unreadCount = await baseQuery.CountAsync(x => !x.DaDoc);
             var totalCount = await baseQuery.CountAsync();
@@ -68,7 +73,13 @@ namespace DatMonAnOnline.API.Controllers
         [HttpPut("{id}/da-doc")]
         public async Task<IActionResult> DanhDauDaDoc(int id)
         {
-            var tb = await _context.Thongbaos.FirstOrDefaultAsync(x => x.MaThongBao == id && x.MaTaiKhoan == GetCurrentUserId());
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
+            var tb = await _context.Thongbaos.FirstOrDefaultAsync(x =>
+                x.MaThongBao == id &&
+                x.MaTaiKhoan == currentUserId.Value);
             if (tb == null) return NotFound();
 
             tb.DaDoc = true;
@@ -79,8 +90,12 @@ namespace DatMonAnOnline.API.Controllers
         [HttpPut("danh-dau-tat-ca")]
         public async Task<IActionResult> DanhDauTatCaDaDoc()
         {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
             await _context.Thongbaos
-                .Where(x => x.MaTaiKhoan == GetCurrentUserId() && !x.DaDoc)
+                .Where(x => x.MaTaiKhoan == currentUserId.Value && !x.DaDoc)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.DaDoc, true));
             return Ok(new { message = "Đã đánh dấu đọc tất cả" });
         }

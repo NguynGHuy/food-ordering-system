@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   CircleDollarSign,
@@ -481,12 +482,9 @@ function RestaurantMenu() {
                 <ImageIcon size={25} />
 
                 {item.hinhAnh && (
-                  <img
+                  <MediaImage
                     src={item.hinhAnh}
                     alt={item.tenMonAn}
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
                   />
                 )}
 
@@ -672,13 +670,10 @@ function RestaurantMenu() {
               {form.hinhAnh.trim() && (
                 <div className="merchant-menu-image-preview">
                   <ImageIcon size={24} />
-                  <img
+                  <MediaImage
                     key={form.hinhAnh}
                     src={form.hinhAnh}
                     alt="Xem trước món ăn"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
                   />
                 </div>
               )}

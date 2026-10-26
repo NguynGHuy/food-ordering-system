@@ -13,18 +13,6 @@ export async function getPaymentMethods() {
   });
 }
 
-export async function createPayment(maDonHang: number, maPhuongThuc: number) {
-  const path = "/thanh-toan";
-  const body = { maDonHang, maPhuongThuc };
-  return runIdempotentRequest(`POST ${path}`, body, (key) =>
-    apiFetch(path, {
-      method: "POST",
-      headers: { ...authHeaders(), "Idempotency-Key": key },
-      body: JSON.stringify(body),
-    })
-  );
-}
-
 export async function getPaymentsByOrder(maDonHang: number) {
   return apiFetch(`/thanh-toan/don-hang/${maDonHang}`, {
     method: "GET",

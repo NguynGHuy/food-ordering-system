@@ -191,7 +191,7 @@ public sealed class WalletService : IWalletService
                 "Thao tác ví phải được thực hiện trong một giao dịch cơ sở dữ liệu.");
         }
 
-        if (soTien <= 0 || decimal.Truncate(soTien) != soTien)
+        if (soTien <= 0 || !DatMonAnOnline.API.Common.VndAmountAttribute.IsSupported(soTien))
             return new WalletOperationResult(false, "Số tiền ví không hợp lệ.");
 
         if (!WalletTransactionTypes.IsValid(loaiGiaoDich))
@@ -263,6 +263,9 @@ public sealed class WalletService : IWalletService
 
         if (soDuSau < 0)
             return new WalletOperationResult(false, "Số dư ví FoodPay không đủ để thanh toán.");
+
+        if (!DatMonAnOnline.API.Common.VndAmountAttribute.IsSupported(soDuSau))
+            return new WalletOperationResult(false, "Số dư ví vượt giới hạn lưu trữ.");
 
         wallet.SoDu = soDuSau;
         wallet.NgayCapNhat = DateTime.Now;

@@ -33,6 +33,26 @@ function debtDescription(value: number, perspective: "admin" | "restaurant") {
     : "Bạn còn phải thanh toán lại cho hệ thống.";
 }
 
+function debtLabel(value: number, perspective: "admin" | "restaurant") {
+  if (value === 0) return "Không phát sinh công nợ";
+  if (value > 0) {
+    return perspective === "admin"
+      ? "Hệ thống trả nhà hàng"
+      : "Hệ thống trả bạn";
+  }
+  return perspective === "admin"
+    ? "Nhà hàng trả hệ thống"
+    : "Bạn trả hệ thống";
+}
+
+const AUDIT_ACTION_LABEL: Record<string, string> = {
+  TaoKy: "Tạo kỳ",
+  XacNhan: "Nhà hàng xác nhận",
+  MoTranhChap: "Mở tranh chấp",
+  GiaiQuyetTranhChap: "Admin giải quyết tranh chấp",
+  ThanhToan: "Ghi nhận thanh toán",
+};
+
 export default function ReconciliationBreakdown({
   detail,
   perspective,
@@ -47,6 +67,7 @@ export default function ReconciliationBreakdown({
   );
   const adminRevenue = detail.tongPhiNenTang - detail.tongGiamGiaHeThong;
   const debt = Number(detail.soTienCanDoiSoat || 0);
+  const auditHistory = detail.lichSu ?? [];
 
   const metrics = [
     ["Tổng tiền món", detail.tongTienHang],
@@ -54,6 +75,7 @@ export default function ReconciliationBreakdown({
     ["Nhà hàng tài trợ", detail.tongGiamGiaNhaHang],
     ["Hệ thống tài trợ", detail.tongGiamGiaHeThong],
     ["Phí nền tảng", detail.tongPhiNenTang],
+    ["Tiền hoàn", detail.tongTienHoan],
     ["Doanh thu Admin", adminRevenue],
     ["Nhà hàng được hưởng", detail.tongTienNhaHangNhan],
     ["Nhà hàng đã thu COD", codCollected],
@@ -99,10 +121,14 @@ export default function ReconciliationBreakdown({
             <span>−</span>
             Đã thu COD và nhận vào ví <b>{money(detail.tongTienNhaHangDaThu)}</b>
           </p>
+          <p>
+            Tiền hoàn được trình bày riêng. Kỳ mới chỉ nhận đơn hoàn thành không có
+            khoản hoàn tiền thành công.
+          </p>
         </div>
         <div>
-          <small>Số tiền còn phải đối soát</small>
-          <strong>{debt < 0 ? "−" : ""}{money(Math.abs(debt))}</strong>
+          <small>{debtLabel(debt, perspective)}</small>
+          <strong>{money(Math.abs(debt))}</strong>
           <p>{debtDescription(debt, perspective)}</p>
         </div>
       </section>
@@ -125,6 +151,7 @@ export default function ReconciliationBreakdown({
                 <th>Giảm giá</th>
                 <th>Phí ship</th>
                 <th>Phí nền tảng</th>
+                <th>Hoàn tiền</th>
                 <th>Doanh thu Admin</th>
                 <th>Nhà hàng được hưởng</th>
                 <th>Đã thu COD</th>
@@ -155,6 +182,7 @@ export default function ReconciliationBreakdown({
                       {money(order.phiNenTang)}
                       <small>{order.tyLePhiNenTang}%</small>
                     </td>
+                    <td>{money(order.soTienHoan)}</td>
                     <td className={orderAdminRevenue < 0 ? "money-negative" : "money-positive"}>
                       {money(orderAdminRevenue)}
                     </td>
@@ -171,6 +199,38 @@ export default function ReconciliationBreakdown({
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="reconciliation-audit">
+        <div className="reconciliation-orders-heading">
+          <div>
+            <small>Nhật ký bất biến</small>
+            <h3>Lịch sử xử lý đối soát</h3>
+          </div>
+          <span>{auditHistory.length} sự kiện</span>
+        </div>
+        {auditHistory.length === 0 ? (
+          <p className="reconciliation-audit-empty">
+            Kỳ cũ chưa có dữ liệu audit. Các thao tác mới sẽ được ghi nhận sau khi áp dụng migration.
+          </p>
+        ) : (
+          <ol>
+            {auditHistory.map((entry) => (
+              <li key={entry.maLichSuDoiSoat}>
+                <div>
+                  <strong>{AUDIT_ACTION_LABEL[entry.hanhDong] || entry.hanhDong}</strong>
+                  <span>{dateTime(entry.thoiGian)}</span>
+                </div>
+                <p>
+                  {entry.trangThaiTruoc ? `${entry.trangThaiTruoc} → ` : ""}
+                  {entry.trangThaiSau} · {entry.vaiTroNguoiThucHien} #{entry.maTaiKhoan}
+                </p>
+                {entry.maGiaoDich && <p>Mã giao dịch: {entry.maGiaoDich}</p>}
+                {entry.ghiChu && <p>{entry.ghiChu}</p>}
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
       {detail.ghiChu && (

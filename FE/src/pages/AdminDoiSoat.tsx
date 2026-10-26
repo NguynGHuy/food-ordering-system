@@ -4,12 +4,14 @@ import { Check, Eye, LoaderCircle, Plus, RefreshCw, Search, X } from "lucide-rea
 import Pagination from "../components/Pagination";
 import ReconciliationBreakdown from "../components/ReconciliationBreakdown";
 import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
+import { lastClosedDate } from "../utils/settlementDate";
 import {
   createDoiSoat,
   getAdminDoiSoat,
   getAdminDoiSoatDetail,
   getDoiSoatRestaurantOptions,
   payDoiSoat,
+  resolveDoiSoatDispute,
   type DoiSoatDetail,
   type DoiSoatRestaurantOption,
   type DoiSoatSummary,
@@ -25,6 +27,12 @@ function money(value: number) {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.";
+}
+
+function settlementDirection(value: number) {
+  if (value > 0) return `Hệ thống trả quán: ${money(value)}`;
+  if (value < 0) return `Quán trả hệ thống: ${money(Math.abs(value))}`;
+  return "Không phát sinh";
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -45,6 +53,8 @@ export default function AdminDoiSoat() {
   const [showDetail, setShowDetail] = useState<number | null>(null);
   const [detailData, setDetailData] = useState<DoiSoatDetail | null>(null);
   const [maGiaoDich, setMaGiaoDich] = useState("");
+  const [ghiChuThanhToan, setGhiChuThanhToan] = useState("");
+  const [ghiChuGiaiQuyet, setGhiChuGiaiQuyet] = useState("");
   const [hinhThucThanhToan, setHinhThucThanhToan] = useState<"ChuyenKhoan" | "ViNhaHang">("ChuyenKhoan");
   const [formCreate, setFormCreate] = useState({ maNhaHang: "", tuNgay: "", denNgay: "" });
   const [restaurantSearch, setRestaurantSearch] = useState("");
@@ -53,6 +63,7 @@ export default function AdminDoiSoat() {
   const [restaurantOptionsError, setRestaurantOptionsError] = useState("");
   const [restaurantPickerOpen, setRestaurantPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [maxSettlementDate, setMaxSettlementDate] = useState(lastClosedDate);
 
   const loadData = useCallback(async () => {
     try {
@@ -88,6 +99,17 @@ export default function AdminDoiSoat() {
 
   useEffect(() => {
     if (!showCreate) return;
+    const refresh = () => setMaxSettlementDate(lastClosedDate());
+    const timer = window.setInterval(refresh, 1000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [showCreate]);
+
+  useEffect(() => {
+    if (!showCreate) return;
 
     let cancelled = false;
     const timeoutId = window.setTimeout(async () => {
@@ -113,6 +135,7 @@ export default function AdminDoiSoat() {
   }, [restaurantSearch, showCreate]);
 
   const openCreateModal = () => {
+    setMaxSettlementDate(lastClosedDate());
     setFormCreate({ maNhaHang: "", tuNgay: "", denNgay: "" });
     setRestaurantSearch("");
     setRestaurantOptionsError("");
@@ -179,6 +202,8 @@ export default function AdminDoiSoat() {
     setShowDetail(null);
     setDetailData(null);
     setMaGiaoDich("");
+    setGhiChuThanhToan("");
+    setGhiChuGiaiQuyet("");
     setHinhThucThanhToan("ChuyenKhoan");
   };
 
@@ -193,8 +218,27 @@ export default function AdminDoiSoat() {
 
     try {
       setBusy(true);
-      await payDoiSoat(showDetail, maGiaoDich, hinhThucThanhToan);
-      alert("Xác nhận thanh toán thành công.");
+      await payDoiSoat(showDetail, maGiaoDich, hinhThucThanhToan, ghiChuThanhToan);
+      alert("Đã ghi nhận thanh toán mô phỏng thành công.");
+      closeDetail();
+      await loadData();
+    } catch (caughtError: unknown) {
+      alert(getErrorMessage(caughtError));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleResolveDispute = async () => {
+    if (!showDetail || !ghiChuGiaiQuyet.trim()) {
+      alert("Vui lòng nhập kết quả giải quyết tranh chấp.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await resolveDoiSoatDispute(showDetail, ghiChuGiaiQuyet);
+      alert("Đã giải quyết tranh chấp. Kỳ đối soát chuyển sang chờ ghi nhận thanh toán.");
       closeDetail();
       await loadData();
     } catch (caughtError: unknown) {
@@ -267,7 +311,7 @@ export default function AdminDoiSoat() {
                     <td>{money(item.tongTienNhaHangDaThu)}</td>
                     <td>
                       <strong className={item.soTienCanDoiSoat < 0 ? "finance-negative" : "finance-positive"}>
-                        {item.soTienCanDoiSoat < 0 ? "−" : ""}{money(Math.abs(item.soTienCanDoiSoat))}
+                        {settlementDirection(item.soTienCanDoiSoat)}
                       </strong>
                     </td>
                     <td>
@@ -357,11 +401,12 @@ export default function AdminDoiSoat() {
               </div>
               <label className="reconciliation-form-field">
                 <span>Từ ngày</span>
-                <input type="date" required value={formCreate.tuNgay} onChange={(event) => setFormCreate({ ...formCreate, tuNgay: event.target.value })} />
+                <input type="date" required max={formCreate.denNgay || maxSettlementDate} value={formCreate.tuNgay} onChange={(event) => setFormCreate({ ...formCreate, tuNgay: event.target.value })} />
               </label>
               <label className="reconciliation-form-field">
                 <span>Đến ngày</span>
-                <input type="date" required value={formCreate.denNgay} onChange={(event) => setFormCreate({ ...formCreate, denNgay: event.target.value })} />
+                <input type="date" required min={formCreate.tuNgay || undefined} max={maxSettlementDate} value={formCreate.denNgay} onChange={(event) => setFormCreate({ ...formCreate, denNgay: event.target.value })} />
+                <small>Chỉ chốt ngày đã kết thúc theo giờ Việt Nam, đến hết hôm qua.</small>
               </label>
               <div className="promotion-edit-actions">
                 <button type="button" onClick={closeCreateModal} disabled={busy}>Hủy</button>
@@ -391,7 +436,7 @@ export default function AdminDoiSoat() {
                     <span>Hình thức thanh toán</span>
                     <select value={hinhThucThanhToan} onChange={(event) => setHinhThucThanhToan(event.target.value as "ChuyenKhoan" | "ViNhaHang")}>
                       <option value="ViNhaHang">Cộng vào ví nhà hàng</option>
-                      <option value="ChuyenKhoan">Chuyển khoản ngân hàng</option>
+                      <option value="ChuyenKhoan">Ghi nhận chuyển khoản mô phỏng</option>
                     </select>
                   </label>
                 )}
@@ -399,26 +444,52 @@ export default function AdminDoiSoat() {
                   <input
                     type="text"
                     maxLength={100}
-                    placeholder="Nhập mã giao dịch ngân hàng"
+                    placeholder="Nhập mã ghi nhận thanh toán mô phỏng"
                     value={maGiaoDich}
                     onChange={(event) => setMaGiaoDich(event.target.value)}
                   />
                 )}
+                <textarea
+                  maxLength={500}
+                  placeholder="Ghi chú thanh toán (không bắt buộc)"
+                  value={ghiChuThanhToan}
+                  onChange={(event) => setGhiChuThanhToan(event.target.value)}
+                />
                 <button type="button" onClick={() => void handlePay()} disabled={busy}>
                   {detailData.soTienCanDoiSoat === 0
                     ? "Chốt kỳ không phát sinh công nợ"
                     : hinhThucThanhToan === "ViNhaHang"
                       ? "Cộng tiền vào ví nhà hàng"
                       : detailData.soTienCanDoiSoat > 0
-                        ? "Xác nhận đã chuyển khoản"
-                        : "Xác nhận đã nhận tiền"}
+                        ? "Ghi nhận hệ thống đã trả quán (mô phỏng)"
+                        : "Ghi nhận quán đã trả hệ thống (mô phỏng)"}
+                </button>
+              </section>
+            )}
+
+            {detailData.trangThai === "TranhChap" && (
+              <section className="reconciliation-dispute-box">
+                <strong>Giải quyết tranh chấp</strong>
+                <p>
+                  Việc giải quyết không sửa số tiền. Sau khi xác nhận, kỳ sẽ chuyển sang
+                  trạng thái chờ ghi nhận thanh toán.
+                </p>
+                <textarea
+                  required
+                  maxLength={500}
+                  placeholder="Kết quả xử lý và căn cứ giải quyết"
+                  value={ghiChuGiaiQuyet}
+                  onChange={(event) => setGhiChuGiaiQuyet(event.target.value)}
+                />
+                <button type="button" onClick={() => void handleResolveDispute()} disabled={busy}>
+                  {busy ? "Đang xử lý..." : "Xác nhận đã giải quyết"}
                 </button>
               </section>
             )}
 
             {detailData.trangThai === "DaThanhToan" && (
               <p className="reconciliation-paid">
-                Đã thanh toán · Mã giao dịch: {detailData.maGiaoDichDoiSoat || "—"}
+                Đã ghi nhận thanh toán mô phỏng · Mã giao dịch: {detailData.maGiaoDichDoiSoat || "—"}
               </p>
             )}
           </div>

@@ -322,9 +322,17 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
-# User-generated uploads
+# User uploads are private/local by default; only reviewed demo assets are published.
+DatMonAnOnline.API/wwwroot/uploads/*
+!DatMonAnOnline.API/wwwroot/uploads/avatars/
 DatMonAnOnline.API/wwwroot/uploads/avatars/*
 !DatMonAnOnline.API/wwwroot/uploads/avatars/.gitkeep
+!DatMonAnOnline.API/wwwroot/uploads/foods/
+DatMonAnOnline.API/wwwroot/uploads/foods/*
+!DatMonAnOnline.API/wwwroot/uploads/foods/demo-v1-*.webp
+!DatMonAnOnline.API/wwwroot/uploads/restaurants/
+DatMonAnOnline.API/wwwroot/uploads/restaurants/*
+!DatMonAnOnline.API/wwwroot/uploads/restaurants/demo-v1-*.webp
 
 # Private legal documents uploaded by restaurant owners
 DatMonAnOnline.API/App_Data/
@@ -444,3 +452,31 @@ FodyWeavers.xsd
 
 # Local verification artifacts and temporary database backups
 .build-check/
+
+# Environment secrets: keep only explicitly named templates.
+.env.*
+!.env.example
+!.env.*.example
+appsettings.*.local.json
+appsettings.Production.json
+appsettings.Staging.json
+CopilotIndices/
+
+# OS/editor state and generated frontend output
+desktop.ini
+Thumbs.db
+.DS_Store
+.idea/
+.kilo/
+.postman/
+*.tsbuildinfo
+FE/dist/
+FE/dist-ssr/
+FE/coverage/
+.eslintcache
+
+# Local private key exports; public templates must be reviewed explicitly.
+*.pem
+*.key
+*.p12
+*.p8

@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import {
   useCallback,
   useEffect,
@@ -19,6 +20,7 @@ import {
 import {
   getRestaurantProfile,
   updateRestaurantProfile,
+  uploadRestaurantCover,
   type Restaurant,
 } from "../services/restaurantService";
 import ScrollReveal from "../components/ScrollReveal";
@@ -66,6 +68,7 @@ function QuanRestaurantInfo() {
   const [form, setForm] = useState<RestaurantForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -110,14 +113,37 @@ function QuanRestaurantInfo() {
   };
 
   const handleReset = () => {
-    if (!restaurant || saving) return;
+    if (!restaurant || saving || uploading) return;
     setForm(toForm(restaurant));
     setMessage("");
     setError("");
   };
 
+  const handleCoverUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || uploading || saving) return;
+    setMessage("");
+    setError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      setError("Chọn ảnh JPEG, PNG hoặc WebP không quá 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const result = await uploadRestaurantCover(file);
+      setForm(current => ({ ...current, anhBia: result.anhBia }));
+      setMessage("Ảnh đã tải lên. Bấm Lưu thay đổi để áp dụng.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể tải ảnh bìa.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (uploading || saving) return;
 
     if (!form.tenNhaHang.trim()) {
       setError("Vui lòng nhập tên nhà hàng.");
@@ -279,17 +305,17 @@ function QuanRestaurantInfo() {
               </label>
 
               <label className="merchant-info-field">
-                <span>Đường dẫn ảnh bìa</span>
+                <span>Ảnh bìa nhà hàng</span>
                 <div className="merchant-info-input-icon">
                   <ImageIcon size={16} />
                   <input
-                    type="url"
-                    name="anhBia"
-                    value={form.anhBia}
-                    onChange={handleChange}
-                    placeholder="https://..."
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleCoverUpload}
+                    disabled={uploading || saving}
                   />
                 </div>
+                <small>{uploading ? "Đang tải ảnh..." : "JPEG, PNG hoặc WebP, tối đa 5 MB. Chọn ảnh ngang để bìa hiển thị đẹp."}</small>
               </label>
             </div>
             </section>
@@ -351,7 +377,7 @@ function QuanRestaurantInfo() {
               type="button"
               className="merchant-info-reset"
               onClick={handleReset}
-              disabled={saving}
+              disabled={saving || uploading}
             >
               <RotateCcw size={16} />
               Khôi phục
@@ -360,7 +386,7 @@ function QuanRestaurantInfo() {
             <button
               type="submit"
               className="merchant-info-save"
-              disabled={saving}
+              disabled={saving || uploading}
             >
               <Save size={16} />
               {saving ? "Đang lưu..." : "Lưu thay đổi"}
@@ -378,13 +404,10 @@ function QuanRestaurantInfo() {
               </div>
 
               {form.anhBia.trim() && (
-                <img
+                <MediaImage kind="restaurant"
                   key={form.anhBia}
                   src={form.anhBia}
                   alt={form.tenNhaHang || "Ảnh bìa nhà hàng"}
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
                 />
               )}
 

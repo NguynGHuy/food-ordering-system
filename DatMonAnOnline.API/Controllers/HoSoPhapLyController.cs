@@ -105,8 +105,12 @@ public class HoSoPhapLyController : ControllerBase
         var maTaiKhoan = LayMaTaiKhoan();
         if (maTaiKhoan == null) return Unauthorized();
 
-        var nhaHang = await _context.Nhahangs
-            .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan.Value);
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.ReadCommitted, HttpContext.RequestAborted);
+        var lockedRestaurants = await _context.Nhahangs
+            .FromSqlInterpolated($"SELECT * FROM nhahang WHERE MaTaiKhoan = {maTaiKhoan.Value} FOR UPDATE")
+            .AsNoTracking().ToListAsync(HttpContext.RequestAborted);
+        var nhaHang = lockedRestaurants.SingleOrDefault();
 
         if (nhaHang == null)
             return NotFound(new
@@ -143,6 +147,7 @@ public class HoSoPhapLyController : ControllerBase
         hoSo.SoGiayPhepKinhDoanh = ChuanHoa(request.SoGiayPhepKinhDoanh);
 
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync(HttpContext.RequestAborted);
 
         return Ok(new
         {
@@ -204,6 +209,7 @@ public class HoSoPhapLyController : ControllerBase
         if (maTaiKhoan == null) return Unauthorized();
 
         var nhaHang = await _context.Nhahangs
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan.Value);
 
         if (nhaHang == null)
@@ -217,9 +223,6 @@ public class HoSoPhapLyController : ControllerBase
             {
                 message = "Hồ sơ đã ký hoặc gửi xét duyệt, không thể thay giấy tờ."
             });
-
-        var hoSo = await _context.Hosophaplynhahangs
-            .FirstOrDefaultAsync(x => x.MaNhaHang == nhaHang.MaNhaHang);
 
         byte[] noiDungTep;
 
@@ -263,6 +266,20 @@ public class HoSoPhapLyController : ControllerBase
             extension = safeImage.Extension;
         }
 
+        // Decode outside the lock, then re-read permission under the same
+        // restaurant-row lock used by signing/submission. Never save a stale profile.
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.ReadCommitted, HttpContext.RequestAborted);
+        var lockedRestaurants = await _context.Nhahangs
+            .FromSqlInterpolated($"SELECT * FROM nhahang WHERE MaTaiKhoan = {maTaiKhoan.Value} FOR UPDATE")
+            .AsNoTracking().ToListAsync(HttpContext.RequestAborted);
+        nhaHang = lockedRestaurants.SingleOrDefault();
+        if (nhaHang == null) return NotFound();
+        if (!await DuocChinhSua(nhaHang))
+            return Conflict(new { message = "Hồ sơ đã ký hoặc gửi xét duyệt, không thể thay giấy tờ." });
+
+        var hoSo = await _context.Hosophaplynhahangs
+            .FirstOrDefaultAsync(x => x.MaNhaHang == nhaHang.MaNhaHang);
         if (hoSo == null)
         {
             hoSo = new Hosophaplynhahang
@@ -291,6 +308,7 @@ public class HoSoPhapLyController : ControllerBase
             ? hoSo.FileGiayPhepKinhDoanh
             : hoSo.FileGiayToNguoiDaiDien;
 
+        var commitAttempted = false;
         try
         {
             await using (var output = new FileStream(
@@ -308,15 +326,24 @@ public class HoSoPhapLyController : ControllerBase
                 hoSo.FileGiayToNguoiDaiDien = thamChieuTep;
 
             await _context.SaveChangesAsync();
+            commitAttempted = true;
+            await transaction.CommitAsync(HttpContext.RequestAborted);
         }
         catch
         {
-            if (System.IO.File.Exists(duongDanVatLy))
-                System.IO.File.Delete(duongDanVatLy);
+            // A commit timeout has an unknown outcome: retaining an orphan is
+            // safer than deleting a document that may already be referenced.
+            if (!commitAttempted)
+            {
+                try { System.IO.File.Delete(duongDanVatLy); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                { _logger.LogWarning(ex, "Không thể dọn tệp pháp lý chưa lưu."); }
+            }
 
             throw;
         }
 
+        await transaction.DisposeAsync();
         await XoaTepCuNeuKhongConDuocThamChieu(
             nhaHang.MaNhaHang,
             thamChieuTepCu,
@@ -424,6 +451,16 @@ public class HoSoPhapLyController : ControllerBase
             return;
         }
 
+        try
+        {
+        // Cleanup is post-commit and serialized with all profile/signing writers.
+        // Recheck both current profile and historical contracts before deleting.
+        await using var cleanup = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+        await _context.Nhahangs.FromSqlInterpolated(
+            $"SELECT * FROM nhahang WHERE MaNhaHang = {maNhaHang} FOR UPDATE").AsNoTracking().ToListAsync();
+        if (await _context.Hosophaplynhahangs.AsNoTracking().AnyAsync(x =>
+            x.FileGiayPhepKinhDoanh == thamChieuCu || x.FileGiayToNguoiDaiDien == thamChieuCu)) return;
+
         // Giữ giấy tờ đã nằm trong hợp đồng cũ để bảo toàn lịch sử xét duyệt.
         var dangDuocHopDongThamChieu = await _context.Hopdongnhahangs
             .AsNoTracking()
@@ -445,17 +482,16 @@ public class HoSoPhapLyController : ControllerBase
             maNhaHang.ToString(),
             tenTep);
 
-        try
-        {
             if (System.IO.File.Exists(duongDan))
                 System.IO.File.Delete(duongDan);
+            await cleanup.CommitAsync();
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
             _logger.LogWarning(
                 ex,
-                "Không thể xóa giấy tờ pháp lý cũ {LegalDocumentPath}.",
-                duongDan);
+                "Chưa dọn được tệp cũ của nhà hàng {MaNhaHang}; hồ sơ mới đã lưu.",
+                maNhaHang);
         }
     }
 

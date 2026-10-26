@@ -47,7 +47,9 @@ public static class SafeImageProcessor
                     $"Ảnh vượt giới hạn {MaxDimension:N0}px mỗi chiều hoặc {MaxPixels:N0} pixel.");
             }
 
-            if (codec.FrameCount != 1)
+            // Static codecs may report zero (SkiaSharp SKCodec.FrameCount).
+            // Still require a complete successful decode below; reject animations.
+            if (codec.FrameCount > 1)
             {
                 return (null, "Ảnh động không được hỗ trợ.");
             }

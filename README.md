@@ -1,177 +1,129 @@
-# Đặt Món Ăn Online
+# Foodie — Đặt Món Ăn Online
 
-Đây là hệ thống đặt món ăn trực tuyến gồm website cho khách hàng, khu vực quản lý nhà hàng và trang quản trị hệ thống. Dự án được xây dựng theo mô hình frontend React giao tiếp với ASP.NET Core Web API, sử dụng MySQL để lưu dữ liệu và SignalR để gửi thông báo theo thời gian thực.
+Website đặt món ăn với ba khu vực: **Khách hàng**, **Nhà hàng** và **Quản trị viên**. Frontend React/TypeScript gọi ASP.NET Core Web API; dữ liệu lưu trong MySQL, thông báo cập nhật qua SignalR.
 
-README này dành cho cả người chưa biết dự án. Chỉ cần làm lần lượt phần **Cài đặt và chạy dự án** là có thể khởi động hệ thống ở máy local.
+Đây là **đồ án demo**: MoMo, VNPay và ZaloPay là thanh toán mô phỏng; Foodie là ví ảo. Hoàn tiền hợp lệ được ghi vào ví Foodie. Đối soát ghi nhận thanh toán mô phỏng giữa hệ thống và quán, không chuyển tiền ngân hàng thật.
 
 ## Mục lục
 
-- [Chức năng chính](#chức-năng-chính)
-- [Luồng hoạt động](#luồng-hoạt-động)
-- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
-- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-- [Yêu cầu môi trường](#yêu-cầu-môi-trường)
-- [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
+- [Chức năng](#chức-năng)
+- [Công nghệ và kiến trúc](#công-nghệ-và-kiến-trúc)
+- [Cấu trúc repository](#cấu-trúc-repository)
+- [Cài đặt và chạy local](#cài-đặt-và-chạy-local)
 - [Cấu hình](#cấu-hình)
-- [Database](#database)
-- [API và phân quyền](#api-và-phân-quyền)
-- [Quy tắc nghiệp vụ quan trọng](#quy-tắc-nghiệp-vụ-quan-trọng)
-- [Kiểm tra trước khi commit](#kiểm-tra-trước-khi-commit)
-- [Lỗi thường gặp](#lỗi-thường-gặp)
-- [Lưu ý khi triển khai thật](#lưu-ý-khi-triển-khai-thật)
+- [Database và dữ liệu demo](#database-và-dữ-liệu-demo)
+- [Quy tắc nghiệp vụ](#quy-tắc-nghiệp-vụ)
+- [API và realtime](#api-và-realtime)
+- [Ảnh và hồ sơ pháp lý](#ảnh-và-hồ-sơ-pháp-lý)
+- [Build và kiểm thử](#build-và-kiểm-thử)
+- [Kịch bản demo](#kịch-bản-demo)
+- [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
+- [Public GitHub và triển khai](#public-github-và-triển-khai)
+- [Đóng góp](#đóng-góp)
 
-## Chức năng chính
+## Chức năng
 
-Hệ thống có 3 vai trò: `KhachHang`, `Quan` và `Admin`.
+| Vai trò | Chức năng hiện có |
+|---|---|
+| Khách hàng (`KhachHang`) | Đăng ký/đăng nhập, đổi và đặt lại mật khẩu; hồ sơ, avatar, địa chỉ giao hàng; tìm nhà hàng, xem thực đơn/topping; giỏ riêng theo quán; lưu và áp dụng voucher; đặt hàng, thanh toán, hủy đơn hợp lệ; xem hoàn tiền, ví và lịch sử giao dịch; đánh giá đơn hoàn thành; thông báo. |
+| Nhà hàng (`Quan`) | Hồ sơ và upload ảnh bìa; giờ mở cửa, chế độ tự động/thủ công/tạm ngừng; danh mục, món, nhóm topping và topping; khuyến mãi quán; xử lý đơn theo trạng thái; hồ sơ pháp lý và hợp đồng; ví/doanh thu; xác nhận hoặc tranh chấp đối soát; thông báo. |
+| Quản trị (`Admin`) | Tổng quan, quản lý và khóa/mở tài khoản; duyệt hồ sơ nhà hàng; xem, thẩm định và chấm dứt hợp đồng theo quyền; khuyến mãi hệ thống; tra cứu đơn; báo cáo tài chính; tạo kỳ đối soát, giải quyết tranh chấp, ghi nhận thanh toán mô phỏng và xem lịch sử. |
 
-### Khách hàng
+Khách chưa đăng nhập có thể chuẩn bị giỏ ở trình duyệt; bước đặt hàng yêu cầu đăng nhập. Backend kiểm tra quyền sở hữu và điều kiện nghiệp vụ, không chỉ dựa vào việc ẩn nút trên giao diện.
 
-- Đăng ký, đăng nhập và đăng xuất.
-- Quên mật khẩu bằng mã xác nhận; đổi mật khẩu khi đang đăng nhập.
-- Cập nhật hồ sơ và ảnh đại diện.
-- Xem, tìm kiếm và lọc nhà hàng.
-- Xem chi tiết nhà hàng, thực đơn, topping, đánh giá và voucher.
-- Thêm món vào giỏ khi chưa đăng nhập; giỏ khách được lưu ở trình duyệt.
-- Đồng bộ giỏ khách lên tài khoản sau khi đăng nhập.
-- Quản lý nhiều địa chỉ giao hàng và chọn địa chỉ mặc định.
-- Lưu voucher vào kho voucher và chọn voucher phù hợp khi thanh toán.
-- Thanh toán bằng COD hoặc mô phỏng Momo, VNPay, ZaloPay qua mã QR.
-- Theo dõi riêng trạng thái thanh toán và trạng thái xử lý đơn.
-- Xem lịch sử trạng thái, hủy đơn khi còn được phép và đánh giá sau khi hoàn thành.
-- Nhận thông báo cập nhật đơn hàng theo thời gian thực.
+**Giới hạn hiện tại:**
 
-### Chủ nhà hàng (`Quan`)
+- Không có tài xế/GPS, cổng thanh toán thật, rút tiền hoặc chuyển khoản ngân hàng.
+- API ví hiện có chức năng xem số dư/lịch sử và được sử dụng trong thanh toán, hoàn tiền, thu nhập đơn hàng. **Chưa có API nạp tiền demo**; các giá trị enum như `NapTien`, `RutTien`, `ChuyenTien` không đồng nghĩa tính năng đã được triển khai.
+- Không có chữ ký số hoặc tích hợp nhà cung cấp hợp đồng điện tử.
 
-- Đăng ký nhà hàng và chờ quản trị viên duyệt.
-- Xem tổng quan hoạt động của quán.
-- Cập nhật thông tin, giờ mở cửa, phí giao hàng và trạng thái nhận đơn.
-- Quản lý danh mục và thứ tự danh mục.
-- Quản lý món ăn, trạng thái bán và nhóm topping.
-- Quản lý topping và gán nhóm topping cho món.
-- Tạo, sửa và bật/tắt khuyến mãi của quán.
-- Xem đơn hàng, phân trang, lọc và chuyển trạng thái đúng thứ tự.
-- Chỉ xử lý đơn online sau khi thanh toán thành công; tránh thu tiền lần hai.
-- Nhận đơn mới và thông báo qua SignalR.
+## Công nghệ và kiến trúc
 
-### Quản trị viên (`Admin`)
+| Thành phần | Công nghệ |
+|---|---|
+| Backend | ASP.NET Core Web API, .NET 10 |
+| Database | MySQL 8.0, Entity Framework Core 9, Pomelo MySQL 9 |
+| Xác thực | JWT Bearer, role và kiểm tra tài khoản tại backend |
+| Realtime | ASP.NET Core SignalR / `@microsoft/signalr` |
+| Frontend | React 19, TypeScript 6, React Router 7, Vite 8 |
+| Giao diện | CSS, Lucide React, Be Vietnam Pro |
+| Xử lý file | SkiaSharp cho ảnh, PdfPig cho kiểm tra PDF |
+| Tài liệu API | OpenAPI và Scalar trong Development |
+| Kiểm thử | xUnit, EF InMemory, MySQL test riêng, Node test runner, Edge headless |
 
-- Xem thống kê tổng quan và nhà hàng nổi bật.
-- Xem danh sách tài khoản theo role và trạng thái.
-- Khóa hoặc mở khóa tài khoản.
-- Duyệt hoặc từ chối nhà hàng mới.
-- Quản lý voucher cấp hệ thống.
-- Xem dữ liệu đơn hàng toàn hệ thống.
-- Nhận và quản lý thông báo.
-
-## Luồng hoạt động
-
-### Luồng đặt món
-
-1. Khách chọn một nhà hàng và thêm món/topping vào giỏ.
-2. Các dòng có cùng món, cùng topping và cùng ghi chú được gộp số lượng.
-3. Khách có thể tạo giỏ khi chưa đăng nhập.
-4. Khi bấm thanh toán, hệ thống yêu cầu đăng nhập nếu chưa có phiên.
-5. Giỏ khách được đồng bộ lên tài khoản.
-6. Khách chọn địa chỉ, phương thức thanh toán, voucher và nhập ghi chú.
-7. Backend kiểm tra lại giá, trạng thái quán, món, voucher và quyền sở hữu giỏ.
-8. Đơn được tạo với snapshot tên nhà hàng, tên món và topping tại thời điểm đặt.
-9. COD chuyển sang chờ quán xác nhận. Đơn online phải thanh toán thành công trước khi quán xử lý.
-10. Quán cập nhật lần lượt: `ChoXacNhan` → `DaXacNhan` → `DangChuanBi` → `DangGiao` → `HoanThanh`.
-11. Khách theo dõi đơn, nhận thông báo và đánh giá khi đơn hoàn thành.
-
-### Trạng thái thanh toán và trạng thái đơn
-
-Hai loại trạng thái độc lập, không được hiểu là một:
-
-- Trạng thái đơn: quán đã xác nhận hay đang chuẩn bị/giao món đến đâu.
-- Trạng thái thanh toán: khách đã trả tiền hay chưa.
-
-Ví dụ `Đã thanh toán • Chờ quán xác nhận` là trạng thái hợp lệ.
-
-## Công nghệ sử dụng
-
-### Backend
-
-- ASP.NET Core Web API, target framework `.NET 10`.
-- Entity Framework Core 9 và `Pomelo.EntityFrameworkCore.MySql`.
-- MySQL.
-- JWT Bearer Authentication và phân quyền theo role.
-- SignalR cho thông báo thời gian thực.
-- OpenAPI và Scalar API Reference trong môi trường Development.
-- MySQL lưu OTP dạng băm, khóa đăng nhập và rate-limit dùng chung giữa nhiều API instance.
-- SkiaSharp giải mã, giới hạn số pixel và mã hóa lại ảnh upload trước khi lưu.
-- In-memory cache chỉ dùng để giữ giỏ trong lúc checkout trên một API instance.
-- Background service tự hủy đơn online quá hạn.
-
-### Frontend
-
-- React 19.
-- TypeScript 6.
-- Vite 8.
-- React Router 7.
-- SignalR client.
-- Lucide React cho icon.
-- Font Be Vietnam Pro.
-- CSS thuần với responsive layout và scroll animation.
-
-## Kiến trúc hệ thống
+Phiên bản dependency chính xác nằm trong [API.csproj](DatMonAnOnline.API/DatMonAnOnline.API.csproj), [package.json](FE/package.json) và [package-lock.json](FE/package-lock.json).
 
 ```mermaid
 flowchart LR
-    U[Trình duyệt] -->|React UI| FE[Frontend Vite :5173]
-    FE -->|REST / JSON + JWT| API[ASP.NET Core API :5038]
-    FE <-->|SignalR /hubs/thong-bao| API
-    API -->|Entity Framework Core| DB[(MySQL)]
-    API --> FS[wwwroot/uploads/avatars]
-    API --> SMTP[SMTP khi chạy Production]
+    Browser["React / TypeScript"] -->|"REST + JWT"| API["ASP.NET Core API"]
+    Browser <-->|"SignalR"| Hub["NotificationHub"]
+    Hub --- API
+    API -->|"EF Core / Pomelo"| DB[("MySQL")]
+    API --> Public["wwwroot/uploads: ảnh công khai"]
+    API --> Private["App_Data: hồ sơ riêng tư"]
+    API --> SMTP["SMTP: mã đặt lại mật khẩu"]
 ```
 
-- Frontend không truy cập database trực tiếp.
-- Mọi kiểm tra quyền, giá tiền và trạng thái nghiệp vụ phải được thực hiện lại ở backend.
-- JWT được gửi trong header `Authorization: Bearer <token>`.
-- SignalR dùng cùng token để xác thực kết nối thông báo.
+Controller xử lý HTTP và phân quyền; service hỗ trợ giao dịch ví, thu nhập đơn, giữ giỏ, idempotency, email và realtime. Các background service xử lý đơn online quá hạn, hợp đồng hết hạn, phục hồi ghi nhận thu nhập và dọn bản ghi idempotency hết hạn.
 
-## Cấu trúc thư mục
+## Cấu trúc repository
 
 ```text
 DatMonAnOnline/
-├── DatMonAnOnline.API/             # Backend ASP.NET Core
-│   ├── Common/                     # Phân trang IQueryable và kiểu PagedResult
-│   ├── Controllers/                # REST API theo từng nghiệp vụ
-│   ├── Data/                       # Thành phần truy cập dữ liệu bổ sung
-│   ├── Database/Database.sql       # Script khởi tạo database
-│   ├── DTOs/                       # Kiểu dữ liệu request/response
-│   ├── Hubs/NotificationHub.cs     # SignalR hub
-│   ├── Models/                     # Entity và DbContext
-│   ├── Security/                   # Version token và policy rate limit
-│   ├── Services/                   # Email, realtime, timeout thanh toán...
-│   ├── wwwroot/uploads/avatars/    # Ảnh đại diện tải lên
-│   ├── Program.cs                  # DI, middleware, CORS, JWT, OpenAPI
-│   └── appsettings.json            # Connection string và SMTP
-├── FE/                             # Frontend React
-│   ├── src/components/             # Component tái sử dụng
-│   ├── src/pages/                  # Các trang theo role
-│   ├── src/services/               # Hàm gọi API và SignalR
-│   ├── src/App.tsx                 # Khai báo route
-│   └── src/App.css                 # Style toàn ứng dụng
-├── postman/                        # Tài nguyên Postman của workspace
-├── DatMonAnOnline.slnx             # Solution .NET
+├── DatMonAnOnline.API/
+│   ├── Common/                    # Validation, phân trang, tiền VND, giờ Việt Nam
+│   ├── Controllers/               # REST API
+│   ├── Database/
+│   │   ├── Database.sql           # Schema + danh mục hệ thống cho cài mới
+│   │   └── SeedDemo.sql           # Dữ liệu demo, chạy riêng trên DB sạch
+│   ├── Hubs/                      # SignalR
+│   ├── Models/                    # EF entities và DatMonAnOnlineContext
+│   ├── Options/
+│   ├── Security/
+│   ├── Services/
+│   ├── App_Data/                  # Local/private, không commit
+│   ├── wwwroot/uploads/
+│   │   ├── avatars/
+│   │   ├── foods/
+│   │   └── restaurants/
+│   ├── Program.cs
+│   └── appsettings.json           # Giá trị mặc định; secret được cấp ngoài Git
+├── DatMonAnOnline.Tests/           # Unit/integration tests backend
+├── FE/
+│   ├── public/images/             # Ảnh dự phòng
+│   ├── src/components/
+│   ├── src/hooks/
+│   ├── src/pages/
+│   ├── src/services/
+│   ├── src/utils/
+│   ├── src/App.tsx                # Routes và role guards
+│   ├── src/App.css
+│   ├── tests/
+│   └── .env.example
+├── scripts/
+│   ├── demo-images/               # Manifest, công cụ và kiểm thử ảnh demo
+│   ├── sanitize-demo-seed.mjs
+│   ├── sanitize-demo-seed.test.mjs
+│   ├── test-fe-routes.mjs
+│   └── test-isolated-mysql.ps1
+├── DatMonAnOnline.slnx
+├── .gitignore
 └── README.md
 ```
 
-## Yêu cầu môi trường
+`bin/`, `obj/`, `FE/dist/`, `node_modules/`, `.build-check/` và private uploads không thuộc source cần commit. Không xóa cả `.build-check/` như cache thông thường: workspace local có thể dùng nó để lưu backup và MySQL test datadir.
 
-Cài các công cụ sau trước khi chạy:
+## Cài đặt và chạy local
 
-- Git.
-- .NET SDK 10.
-- Node.js `^20.19.0` hoặc `>=22.12.0`.
-- npm (được cài cùng Node.js).
-- MySQL 8.x. Có thể dùng MySQL trong XAMPP nếu cấu hình tương thích.
-- Công cụ import SQL: phpMyAdmin, MySQL Workbench hoặc MySQL CLI.
+### 1. Chuẩn bị môi trường
 
-Kiểm tra phiên bản:
+- .NET SDK **10**.
+- **MySQL 8.0.16 trở lên** để CHECK được thực thi; các kiểm thử MySQL của dự án dùng 8.0.45.
+- Node.js đáp ứng Vite: `^20.19.0 || >=22.12.0`. Nên dùng **Node.js 24** để chạy cả các test Node đang import TypeScript trực tiếp.
+- npm, Git và MySQL CLI hoặc MySQL Workbench.
+- Edge headless chỉ cần cho browser tests; Pillow chỉ cần nếu tạo/chuyển đổi lại ảnh nguồn.
+
+Không mặc định dịch vụ database đi kèm XAMPP là MySQL 8.0; hãy kiểm tra phiên bản thực tế. MariaDB chưa được xác minh tương thích với bộ SQL này.
 
 ```powershell
 dotnet --version
@@ -180,82 +132,51 @@ npm --version
 mysql --version
 ```
 
-## Cài đặt và chạy dự án
+Clone repository bằng URL do nhóm cung cấp, rồi mở terminal tại thư mục gốc `DatMonAnOnline`.
 
-### 1. Lấy source code
+### 2. Khởi tạo database mới
 
-```powershell
-git clone <repository-url>
-cd DatMonAnOnline
-```
+**Chỉ dùng hai lệnh dưới cho môi trường mới, chưa có database `DatMonAnOnline`.** Tắt API khi import. Script dùng tên database cố định; đây không phải lệnh nâng cấp hoặc cập nhật database đang sử dụng.
 
-Nếu đã có source thì chỉ cần mở terminal tại thư mục gốc dự án.
-
-### 2. Tạo database
-
-Khởi động MySQL, sau đó import duy nhất file:
-
-```text
-DatMonAnOnline.API/Database/Database.sql
-```
-
-Cách dễ nhất với phpMyAdmin:
-
-1. Mở phpMyAdmin.
-2. Chọn **Import**.
-3. Chọn `DatMonAnOnline.API/Database/Database.sql`.
-4. Bấm **Import/Go** và chờ hoàn tất.
-
-> Cảnh báo: `Database.sql` tự xóa database `DatMonAnOnline` cũ rồi tạo lại từ đầu. Hãy sao lưu dữ liệu cần giữ trước khi import.
-
-Hoặc dùng MySQL CLI trong Command Prompt:
-
-```bat
-mysql -u root -p < DatMonAnOnline.API\Database\Database.sql
-```
-
-> Tên database trong connection string phải trùng tên database vừa import. File schema hiện tạo database `DatMonAnOnline`.
-
-### 3. Cấu hình secret local và kết nối MySQL
-
-Không ghi JWT secret hoặc mật khẩu MySQL vào `appsettings.json`. Tạo user riêng cho ứng dụng bằng tài khoản quản trị MySQL:
-
-```sql
-CREATE USER 'foodie_app'@'localhost' IDENTIFIED BY '<mat-khau-manh>';
-GRANT SELECT, INSERT, UPDATE, DELETE ON DatMonAnOnline.* TO 'foodie_app'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-Sau đó lưu cấu hình local bằng .NET User Secrets:
+Chạy lần lượt từ thư mục gốc; chỉ chạy lệnh thứ hai nếu lệnh thứ nhất thành công:
 
 ```powershell
-cd .\DatMonAnOnline.API
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=DatMonAnOnline;Uid=foodie_app;Pwd=<mat-khau-manh>;"
-dotnet user-secrets set "Jwt:Secret" "<chuoi-ngau-nhien-it-nhat-32-byte>"
-cd ..
+mysql --default-character-set=utf8mb4 -u root -p --execute="source DatMonAnOnline.API/Database/Database.sql"
+mysql --default-character-set=utf8mb4 -u root -p --execute="source DatMonAnOnline.API/Database/SeedDemo.sql"
 ```
 
-Secret cũ từng nằm trong source không được tái sử dụng. Mỗi môi trường phải dùng một secret khác nhau.
+- `Database.sql` dùng `CREATE DATABASE`, không có `DROP DATABASE`; database đã tồn tại sẽ báo lỗi.
+- `SeedDemo.sql` có `START TRANSACTION`/`COMMIT`, sử dụng ID và mã cố định. Nó **không phải script upsert/idempotent**; chạy lại sẽ gặp lỗi khóa trùng.
+- Không dùng `--force`, không tiếp tục chạy các câu còn lại khi import lỗi. Nếu chạy trong phiên Workbench còn mở, rollback transaction đang dang dở trước khi xử lý.
+- Seed hiện tại có sẵn **16 tài khoản demo tổng hợp**. Đây là dữ liệu của file seed hiện hành, không phải bước tạo tài khoản production.
+- Nếu chỉ cần schema để tự nhập dữ liệu, bỏ qua lệnh seed.
 
-### 4. Chạy backend
+### 3. Cấu hình backend bằng User Secrets
 
-Mở terminal thứ nhất tại thư mục gốc:
+Chạy từ thư mục gốc; thay các placeholder bằng cấu hình riêng của máy:
 
 ```powershell
-dotnet restore .\DatMonAnOnline.API\DatMonAnOnline.API.csproj
-dotnet run --project .\DatMonAnOnline.API\DatMonAnOnline.API.csproj
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=DatMonAnOnline;Uid=<db-user>;Pwd=<db-password>;" --project DatMonAnOnline.API
+dotnet user-secrets set "Jwt:Secret" "<chuoi-ngau-nhien-it-nhat-32-byte>" --project DatMonAnOnline.API
 ```
 
-Backend mặc định chạy tại:
+UserSecretsId đã có trong project; không cần chạy `user-secrets init`. Tài khoản MySQL chạy API nên có quyền đọc/ghi dữ liệu cần thiết; dùng tài khoản có quyền DDL riêng cho bước cài schema. Không commit connection string, JWT secret hoặc mật khẩu SMTP.
 
-```text
-http://localhost:5038
+### 4. Chạy API
+
+```powershell
+dotnet restore DatMonAnOnline.API/DatMonAnOnline.API.csproj
+dotnet run --project DatMonAnOnline.API/DatMonAnOnline.API.csproj --launch-profile http
 ```
 
-Trong Development:
+| Thành phần | Địa chỉ local |
+|---|---|
+| API | `http://localhost:5038/api` |
+| OpenAPI JSON | `http://localhost:5038/openapi/v1.json` |
+| Scalar | `http://localhost:5038/scalar/v1` |
+| SignalR | `http://localhost:5038/hubs/thong-bao` |
 
-- OpenAPI JSON: `http://localhost:5038/openapi/v1.json`
-- Scalar API UI: `http://localhost:5038/scalar/v1`
+Profile `http` đặt môi trường Development. Profile `https` dùng `https://localhost:7198` và HTTP 5038; nếu chọn HTTPS, cần chứng chỉ development được tin cậy và cấu hình FE tương ứng.
 
 ### 5. Chạy frontend
 
@@ -267,351 +188,263 @@ npm ci
 npm run dev
 ```
 
-Mở trình duyệt tại:
+Mở `http://localhost:5173`. Development mặc định gọi API tại `http://localhost:5038/api`.
 
-```text
-http://localhost:5173
+Nếu API ở URL khác, tạo `FE/.env.local` theo [mẫu](FE/.env.example):
+
+```dotenv
+VITE_API_URL=http://localhost:5038/api
 ```
 
-Frontend hiện gọi API ở `http://localhost:5038/api`, được khai báo trong `FE/src/services/api.ts`.
+Khởi động lại Vite sau khi đổi env. Biến `VITE_*` được đưa vào bundle trình duyệt, **không dùng để lưu secret**.
 
-### 6. Kiểm tra nhanh
+### 6. Chuẩn bị hồ sơ và đăng nhập demo
 
-1. Mở trang chủ và kiểm tra danh sách nhà hàng.
-2. Đăng ký một tài khoản khách hàng.
-3. Thêm món vào giỏ, đăng nhập và chuyển sang thanh toán.
-4. Tạo địa chỉ giao hàng.
-5. Đặt thử đơn COD.
-6. Đăng nhập role quán để xác nhận và chuyển trạng thái đơn.
+Ảnh món/quán có sẵn trong repository, nhưng **30 tệp hồ sơ/hợp đồng trong `App_Data` của workspace local không được Git tracking**. Clone source và import SQL không tự tạo các PDF này.
 
-Database có thể chứa dữ liệu mẫu, nhưng README không cố định tài khoản/mật khẩu demo. Hãy dùng tài khoản do nhóm cung cấp hoặc đăng ký tài khoản mới.
+Để demo việc xem/thẩm định hồ sơ trên máy mới, cần bộ tài liệu mẫu không nhạy cảm do nhóm bàn giao riêng, đúng đường dẫn ghi trong seed; hoặc thực hiện luồng upload, ký mô phỏng và duyệt qua ứng dụng. Không thay bằng giấy tờ thật trong repository hoặc bỏ validation.
+
+Dùng thông tin đăng nhập demo do nhóm cung cấp. Không sử dụng mật khẩu demo cho tài khoản thật. Bộ seed có ngày hợp đồng/voucher cố định: khi demo ở thời điểm khác, phải kiểm tra hiệu lực và xử lý theo workflow hiện có; không chỉnh đồng hồ máy để vượt điều kiện.
 
 ## Cấu hình
 
-### Backend
-
-Các cấu hình quan trọng nằm trong `DatMonAnOnline.API/appsettings.json`:
-
-| Cấu hình | Ý nghĩa |
+| Khóa | Mục đích |
 |---|---|
-| `ConnectionStrings:DefaultConnection` | Kết nối MySQL |
-| `Jwt:Secret` | Khóa ký JWT, tối thiểu 32 byte và không commit |
-| `Jwt:Issuer` | Đơn vị phát hành token |
-| `Jwt:Audience` | Ứng dụng/API nhận token |
-| `Email:Smtp:Host` | SMTP server |
-| `Email:Smtp:Port` | Cổng SMTP, thường là 587 |
-| `Email:Smtp:EnableSsl` | Bật TLS/SSL |
-| `Email:Smtp:UserName` | Tài khoản SMTP |
-| `Email:Smtp:Password` | Mật khẩu/app password |
-| `Email:Smtp:FromAddress` | Địa chỉ người gửi |
-| `Email:Smtp:FromName` | Tên hiển thị người gửi |
+| `ConnectionStrings:DefaultConnection` | Kết nối MySQL; bắt buộc |
+| `Jwt:Secret` | Khóa ký tối thiểu 32 byte; bắt buộc cấp ngoài source |
+| `Jwt:Issuer`, `Jwt:Audience` | Mặc định `Foodie.Api`, `Foodie.Web` |
+| `DoiSoat:BatDauApDung` | Mốc đơn hàng áp dụng snapshot tài chính; không tự dịch mốc để đưa đơn cũ vào đối soát |
+| `Cors:AllowedOrigins` | Danh sách origin chính xác; Development mặc định localhost 5173 và 5174 |
+| `ReverseProxy:KnownProxies` | IP proxy được tin cậy khi xử lý forwarded headers |
+| `AllowedHosts` | Host được phép; cấu hình cụ thể khi public |
+| `Email:Smtp:Host`, `Port`, `EnableSsl` | Kết nối SMTP |
+| `Email:Smtp:UserName`, `Password` | Xác thực SMTP nếu dịch vụ yêu cầu |
+| `Email:Smtp:FromAddress`, `FromName` | Thông tin người gửi |
+| `VITE_API_URL` | API base của FE, có hậu tố `/api` |
 
-### Email quên mật khẩu
+Có thể dùng biến môi trường với dấu `__`, ví dụ `ConnectionStrings__DefaultConnection`, `Jwt__Secret`, `Cors__AllowedOrigins__0`.
 
-Trong `Development`, API trả thêm `maXacNhanThuNghiem`. Nhờ đó có thể test quên mật khẩu mà không cần email thật.
+**Quên mật khẩu:** source hiện không trả OTP thử nghiệm ra response, kể cả Development. Cần SMTP hoạt động để nhận mã; có thể dùng SMTP local phục vụ kiểm thử. Môi trường ngoài Development kiểm tra cấu hình SMTP khi khởi động. Không ghi OTP hoặc token vào log.
 
-Trong `Production`, API không trả mã ra response và yêu cầu SMTP hợp lệ. Nên dùng biến môi trường:
+Token hiện được cấp với thời hạn một ngày. Backend còn kiểm tra trạng thái tài khoản, role và phiên bản mật khẩu; khóa tài khoản/đổi mật khẩu có thể làm phiên cũ mất hiệu lực trước hạn.
 
-```powershell
-$env:ASPNETCORE_ENVIRONMENT="Production"
-$env:ConnectionStrings__DefaultConnection="Server=<db-host>;Port=3306;Database=DatMonAnOnline;Uid=foodie_app;Pwd=<mat-khau-manh>;SslMode=Required;"
-$env:Jwt__Secret="<secret-production-ngau-nhien-it-nhat-32-byte>"
-$env:Email__Smtp__Host="smtp.gmail.com"
-$env:Email__Smtp__Port="587"
-$env:Email__Smtp__EnableSsl="true"
-$env:Email__Smtp__UserName="your-email@gmail.com"
-$env:Email__Smtp__Password="your-app-password"
-$env:Email__Smtp__FromAddress="your-email@gmail.com"
-$env:Email__Smtp__FromName="Đặt Món Ăn"
+## Database và dữ liệu demo
 
-dotnet run --no-launch-profile `
-  --project .\DatMonAnOnline.API\DatMonAnOnline.API.csproj `
-  --urls http://localhost:5038
-```
+Schema do [Database.sql](DatMonAnOnline.API/Database/Database.sql) định nghĩa; EF mapping ở [DatMonAnOnlineContext.cs](DatMonAnOnline.API/Models/DatMonAnOnlineContext.cs). Repository hiện không có bộ EF Migrations để chạy `dotnet ef database update`.
 
-Với Gmail, nên bật xác minh hai bước và dùng **App Password**, không dùng mật khẩu Gmail chính.
+Thư mục `Database/` chỉ có `Database.sql` và `SeedDemo.sql`. Những thay đổi về giới hạn voucher, lịch sử đối soát và loại giao dịch thu nhập đơn được tích hợp trong schema cài mới. **Không có bộ script nâng cấp hoàn chỉnh cho database cũ trong thư mục hiện tại**; phải đối chiếu và chuẩn bị migration tăng dần riêng trước khi nâng cấp, không import installer lên dữ liệu đang dùng.
 
-### CORS và port
+Các số liệu sau được đếm từ **nội dung seed**, không phải kết quả chạy lại seed trên database thật trong lần cập nhật README:
 
-Backend đang cho phép frontend từ:
+| Dữ liệu | Số lượng |
+|---|---:|
+| Tài khoản demo | 16: 1 Admin, 10 Quán, 5 Khách hàng |
+| Nhà hàng / hồ sơ pháp lý / hợp đồng | 10 mỗi loại |
+| Danh mục món | 32 |
+| Món ăn | 124 |
+| Nhóm topping / topping | 45 / 155 |
+| Đơn hoàn thành | 30 |
+| Đơn bổ sung ở trạng thái chờ, xác nhận, chuẩn bị, giao, hủy | 5 |
+| Đánh giá món / nhà hàng | 20 / 20 |
+| Kỳ đối soát | 10 |
+| Ảnh WebP | 134: 10 bìa + 124 món |
 
-- `http://localhost:5173`
-- `http://localhost:5174`
+Seed còn có địa chỉ, voucher, lịch sử trạng thái, thanh toán, ví/ledger, thông báo và chi tiết đối soát. Không coi seed là bản sao production hoặc bằng chứng tất cả tình huống nghiệp vụ đã được kiểm thử.
 
-Nếu frontend chạy port/domain khác, cập nhật policy `AllowFrontend` trong `Program.cs`.
+## Quy tắc nghiệp vụ
 
-### Ảnh đại diện
+### Giỏ, checkout và đơn hàng
 
-- Chấp nhận JPEG, PNG và WebP.
-- Kích thước tối đa 5 MB.
-- Backend kiểm tra cả MIME type và chữ ký file.
-- File được lưu tại `DatMonAnOnline.API/wwwroot/uploads/avatars`.
-- Khi deploy, thư mục upload cần quyền ghi và volume lưu trữ bền vững.
+- Giỏ tách theo khách và nhà hàng; topping phải thuộc nhóm được phép của món.
+- Backend tính lại giá, phí giao hàng, voucher và tổng thanh toán tại checkout.
+- Sau khi lấy khóa, checkout kiểm tra lại nhà hàng đang nhận đơn, tài khoản chủ quán, duyệt và hợp đồng hiệu lực.
+- Thời hạn giữ giỏ checkout được lưu ở `giohang.GiuCheckoutDenUtc`; không phải trạng thái chỉ nằm trong RAM.
+- Đơn lưu snapshot tên món, topping, giá và các khoản phí/giảm giá.
+- Trạng thái xử lý: `ChoXacNhan → DaXacNhan → DangChuanBi → DangGiao → HoanThanh`.
+- API hủy thông thường chỉ nhận đơn ở bước chờ/đã xác nhận theo quyền. Đơn online chưa trả tiền được background service kiểm tra để tự hủy sau 15 phút.
+- Các luồng ghi tiền/đơn dùng transaction, row lock và kiểm tra trạng thái; request hỗ trợ idempotency dùng header `Idempotency-Key`. Khi retry cùng yêu cầu, FE tái sử dụng key.
 
-## Database
+### Thanh toán, ví và khuyến mãi
 
-### Nguồn schema
+- `COD`: ghi nhận thu tiền khi hoàn thành đơn; không hoàn ví cho khoản COD chưa thu.
+- `FoodPay` là tên phương thức trong DB/API của ví Foodie.
+- `Momo`, `VNPay`, `ZaloPay`: xác nhận kết quả mô phỏng, không kết nối cổng thật.
+- Hủy hợp lệ đơn online đã trả tiền sẽ hoàn về Foodie. Ví và ledger phải được cập nhật cùng transaction; không sửa số dư trực tiếp.
+- Giới hạn voucher toàn hệ thống và mỗi khách được kiểm tra tại backend. Khi hủy hợp lệ, chỉ trả lượt còn trong khoảng hiệu lực theo quy tắc hiện tại.
+- VND dùng số nguyên và `MidpointRounding.AwayFromZero`: 0,5 làm tròn ra xa 0; với số tiền dương là làm tròn lên. Không tính lại snapshot lịch sử chỉ vì công thức hoặc cấu hình mới.
 
-Source hiện tại dùng file sau làm nguồn khởi tạo database:
+### Hợp đồng, đánh giá và đối soát
 
-```text
-DatMonAnOnline.API/Database/Database.sql
-```
+- Nhà hàng phải được duyệt và có hợp đồng `HieuLuc` trong khoảng ngày hợp lệ để nhận đơn mới. Đơn đã tạo hợp lệ tiếp tục theo quy trình xử lý.
+- Chỉ khách sở hữu đơn `HoanThanh` được đánh giá món thuộc đơn đó; kiểm tra số sao, nội dung và chống trùng theo đơn.
+- Chỉ tạo đối soát đến hết ngày đã kết thúc theo giờ Việt Nam (`Asia/Ho_Chi_Minh`).
+- Không tạo kỳ chồng lấn cho cùng quán; một đơn không được thuộc hai kỳ.
+- Công thức tổng kỳ: **số tiền cần đối soát = tổng nhà hàng được hưởng − tổng nhà hàng đã nhận/thu**, gồm COD và khoản đã ghi vào ví theo logic hiện hành.
+- Số dương: hệ thống còn phải trả quán. Số âm: quán còn phải trả hệ thống. Số 0: không phát sinh công nợ.
+- Kỳ tranh chấp phải được giải quyết trước thanh toán; lịch sử lưu người thao tác, trạng thái, thời gian, mã giao dịch và ghi chú.
+- `DaThanhToan` chỉ là ghi nhận hoàn tất **mô phỏng**; không có chuyển khoản ngân hàng.
 
-Đây là dự án database-first; repository hiện không có thư mục EF Core `Migrations` hoặc `DatabaseMigrations`. Không chạy `dotnet ef database update` nếu chưa tự tạo migration tương ứng.
+## API và realtime
 
-`Database.sql` là nguồn database duy nhất của dự án. File đã gồm schema, dữ liệu mẫu, ví điện tử, idempotency, trạng thái OTP/rate-limit dùng chung, ràng buộc mã giao dịch và hồ sơ pháp lý. Không cần chạy thêm script SQL nào khác.
+Routes chi tiết và DTO xem tại Scalar khi chạy Development. Những nhóm chính:
 
-Khi cần làm mới database: sao lưu dữ liệu cần giữ, dừng backend, import lại `Database.sql`, sau đó khởi động backend. Việc import sẽ xóa toàn bộ dữ liệu cũ.
-
-### Các nhóm bảng chính
-
-| Nhóm | Bảng tiêu biểu |
+| Nhóm | Route |
 |---|---|
-| Tài khoản | `taikhoan`, `role`, `khachhang`, `nhahang` |
-| Danh mục món | `danhmuc`, `monan`, `nhomtopping`, `topping`, `monan_nhomtopping` |
-| Giỏ hàng | `giohang`, `chitietgiohang`, `chitietgiohang_topping` |
-| Đơn hàng | `donhang`, `chitietdonhang`, `chitietdonhang_topping`, `lichsutrangthaidonhang` |
-| Thanh toán và ví | `phuongthucthanhtoan`, `thanhtoan`, `hoantien`, `vi`, `giaodichvi` |
-| Khuyến mãi | `khuyenmai`, `khachhang_khuyenmai` |
-| Khác | `diachi`, `thongbao`, `danhgiamonan`, `danhgianhahang` |
+| Xác thực | `/api/auth` |
+| Nhà hàng / món / danh mục | `/api/nha-hang`, `/api/mon-an`, `/api/danh-muc` |
+| Topping | `/api/nhom-topping`, `/api/topping` |
+| Giỏ / địa chỉ | `/api/gio-hang`, `/api/dia-chi` |
+| Đơn / thanh toán / ví | `/api/don-hang`, `/api/thanh-toan`, `/api/vi` |
+| Khuyến mãi | `/api/khuyen-mai` |
+| Đánh giá | `/api/danh-gia-mon-an`, `/api/danh-gia-nha-hang`; đọc qua món/quán |
+| Hồ sơ / hợp đồng quán | `/api/nha-hang/ho-so-phap-ly`, `/api/nha-hang/hop-dong` |
+| Đối soát | `/api/admin/doi-soat`, `/api/nha-hang/doi-soat` |
+| Quản trị | `/api/admin` |
+| Thông báo / hub | `/api/thong-bao`, `/hubs/thong-bao` |
 
-### Phương thức và trạng thái chuẩn
+Request được bảo vệ dùng `Authorization: Bearer <token>`. Quyền còn phụ thuộc vai trò và chủ sở hữu bản ghi; route guard FE không thay thế authorization backend.
 
-Phương thức thanh toán:
+Thông báo được lưu DB; SignalR giúp giao diện cập nhật realtime, không bảo đảm phát lại mọi sự kiện bị lỡ. Sau reconnect, FE tải lại dữ liệu liên quan qua API. Hệ thống hiện chưa cấu hình SignalR backplane cho nhiều API instance.
 
-- `COD`
-- `Momo`
-- `VNPay`
-- `ZaloPay`
-- `FoodPay` (thanh toán bằng số dư trong bảng `vi`)
+## Ảnh và hồ sơ pháp lý
 
-Mỗi `taikhoan` có tối đa một dòng trong `vi`. Không sửa số dư trực tiếp; mọi lần cộng/trừ phải đồng thời tạo một dòng `giaodichvi` trong cùng transaction database.
+- 10 bìa và 124 ảnh món AI nằm trong `wwwroot/uploads/restaurants/` và `wwwroot/uploads/foods/`, dùng tiền tố `demo-v1-`.
+- Ảnh WebP được chuẩn bị sẵn, tổng khoảng **9,80 MiB**; không cần mạng ngoài để tải bộ ảnh khi demo local.
+- Bìa: 1280×720; món: 800×600. Nguồn, prompt và checksum nằm trong [manifest](scripts/demo-images/manifest.json).
+- FE giải quyết URL qua API base và hiển thị SVG dự phòng khi ảnh lỗi.
+- Nhà hàng chọn file để upload ảnh bìa, xem trước rồi lưu hồ sơ. Backend kiểm tra ảnh và tạo file mới, không ghi đè ảnh demo hoặc tự xóa ảnh người dùng.
+- `App_Data/HopDong/` và `App_Data/HoSoPhapLy/` là dữ liệu riêng tư, phục vụ qua API kiểm tra quyền; không chuyển vào `wwwroot`.
 
-Trạng thái đơn theo thứ tự:
+Xem [hướng dẫn ảnh demo](scripts/demo-images/README.md) để kiểm tra ảnh, chuyển đổi ảnh nguồn hoặc dùng công cụ gắn ảnh vào database local. Không chạy công cụ với `--apply` nếu chưa chủ động chọn database demo cần cập nhật.
 
-1. `ChoXacNhan`
-2. `DaXacNhan`
-3. `DangChuanBi`
-4. `DangGiao`
-5. `HoanThanh`
-6. `DaHuy`
+## Build và kiểm thử
 
-Không tự ý đổi chuỗi trạng thái trong database nếu chưa cập nhật cả backend và frontend.
-
-## API và phân quyền
-
-Base URL:
-
-```text
-http://localhost:5038/api
-```
-
-### Các nhóm endpoint
-
-| Nhóm | Route chính | Quyền |
-|---|---|---|
-| Xác thực | `/api/auth/*` | Công khai hoặc đã đăng nhập |
-| Nhà hàng công khai | `/api/nha-hang`, `/api/nha-hang/{id}` | Công khai |
-| Hồ sơ nhà hàng | `/api/nha-hang/ho-so` | `Quan` |
-| Danh mục | `/api/danh-muc/*` | GET công khai, ghi dữ liệu: `Quan` |
-| Món ăn | `/api/mon-an/*` | GET công khai, ghi dữ liệu: `Quan` |
-| Topping | `/api/topping/*`, `/api/nhom-topping/*` | `Quan` cho quản lý |
-| Giỏ hàng | `/api/gio-hang/*` | `KhachHang` |
-| Địa chỉ | `/api/dia-chi/*` | `KhachHang` |
-| Đặt hàng | `/api/don-hang/*` | Theo chủ sở hữu và role |
-| Đơn của quán | `/api/nha-hang/don-hang` | `Quan` |
-| Thanh toán | `/api/thanh-toan/*` | Theo chủ sở hữu và role |
-| Voucher | `/api/khuyen-mai/*` | Tùy endpoint |
-| Đánh giá | `/api/danh-gia-*` | Khách đã mua; GET công khai |
-| Thông báo | `/api/thong-bao/*` | Đã đăng nhập |
-| Quản trị | `/api/admin/*` | `Admin` |
-| Realtime hub | `/hubs/thong-bao` | Đã đăng nhập |
-
-### Phân trang
-
-Các API danh sách lớn dùng LINQ trên `IQueryable` và nhận:
-
-```text
-pageNumber=1&pageSize=12
-```
-
-- `pageNumber` bắt đầu từ 1.
-- `pageSize` từ 1 đến 100.
-- Response gồm `items`, `pageNumber`, `pageSize`, `totalItems`, `totalPages`, `hasPreviousPage`, `hasNextPage`.
-
-### Ví dụ đăng nhập
-
-```bash
-curl -X POST http://localhost:5038/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","matKhau":"your-password"}'
-```
-
-Gọi endpoint cần đăng nhập:
-
-```bash
-curl "http://localhost:5038/api/don-hang/cua-toi?pageNumber=1&pageSize=8" \
-  -H "Authorization: Bearer <token>"
-```
-
-## Quy tắc nghiệp vụ quan trọng
-
-### Tài khoản và bảo mật
-
-- Mật khẩu được hash bằng PBKDF2-SHA256 với salt riêng và 100.000 vòng lặp.
-- JWT có hiệu lực 24 giờ.
-- Backend kiểm tra tài khoản còn hoạt động và kiểm tra version mật khẩu ở mỗi request.
-- Đổi/reset mật khẩu làm toàn bộ token cũ mất hiệu lực.
-- Sai đăng nhập 5 lần sẽ khóa thử đăng nhập trong 15 phút.
-- Login giới hạn 10 request/phút/IP.
-- Yêu cầu OTP giới hạn 3 request/15 phút/IP.
-- Xác nhận OTP giới hạn 10 request/10 phút/IP.
-- OTP gồm 6 số, có hiệu lực 10 phút và bị hủy sau 5 lần nhập sai.
-- Response quên mật khẩu không tiết lộ email có tồn tại hay không.
-
-### Giỏ hàng
-
-- Có thể thêm món khi chưa đăng nhập.
-- Giỏ khách được lưu trong `localStorage` với TTL 5 phút không hoạt động.
-- Giỏ tài khoản cũng hết hạn sau 5 phút không hoạt động.
-- Khi đã vào checkout, giỏ được giữ tối đa 30 phút để người dùng nhập thông tin.
-- Các món giống nhau chỉ gộp khi món, topping và ghi chú hoàn toàn giống nhau.
-- Mỗi giỏ thuộc một nhà hàng; dữ liệu giá được backend tính lại.
-
-### Voucher
-
-- Khách phải lưu voucher trước thì voucher mới xuất hiện trong kho/chọn nhanh khi checkout.
-- Checkout chỉ hiển thị voucher hệ thống và voucher đúng nhà hàng đang đặt.
-- Vẫn có thể nhập mã được chia sẻ thủ công.
-- Backend kiểm tra phạm vi áp dụng, thời hạn, số lượng, giá trị đơn tối thiểu và giới hạn giảm.
-- Voucher của đơn online quá hạn được hoàn lại lượt sử dụng khi hệ thống tự hủy đơn.
-
-### Thanh toán
-
-- COD được thu khi giao và được đánh dấu thành công khi đơn hoàn thành.
-- Khi đơn hoàn thành, hệ thống tự động ghi có phần còn phải trả vào ví nhà hàng: đơn online nhận toàn bộ doanh thu thuần; COD chỉ nhận phần hệ thống còn nợ sau số tiền mặt quán đã thu.
-- Giao dịch thu nhập đơn hàng dùng mã tham chiếu duy nhất theo đơn và được ghi trong cùng transaction với trạng thái hoàn thành, nên yêu cầu lặp không thể cộng tiền hai lần.
-- Khi API khởi động, tác vụ phục hồi một lần chỉ xử lý đơn hoàn thành từ mốc áp dụng, chưa đối soát và chưa có giao dịch thu nhập; tác vụ dùng cùng khóa và mã tham chiếu nên an toàn khi chạy nhiều instance.
-- Khi tạo kỳ đối soát, tiền COD và tiền đã tự động cộng ví đều được tính là nhà hàng đã nhận để không thanh toán trùng.
-- Momo, VNPay và ZaloPay hiện là **thanh toán mô phỏng**, chưa kết nối cổng thật.
-- Đơn online chưa thanh toán không được chuyển trạng thái bởi quán.
-- Đơn online chờ thanh toán quá 15 phút được background service tự hủy.
-- Người dùng có thể thử lại/đổi phương thức sau một giao dịch thất bại theo quy tắc backend.
-
-### Lịch sử đơn hàng
-
-- Tên nhà hàng, món và topping được snapshot lúc đặt để hóa đơn cũ không thay đổi khi dữ liệu thực đơn bị sửa.
-- Mọi lần đổi trạng thái được ghi vào lịch sử.
-- Lịch sử có thể do tài khoản thao tác hoặc do hệ thống tự động tạo.
-
-## Kiểm tra trước khi commit
-
-### Backend
+Chạy từ thư mục gốc, trừ nhóm lệnh FE:
 
 ```powershell
-dotnet build .\DatMonAnOnline.API\DatMonAnOnline.API.csproj
-```
+dotnet build DatMonAnOnline.API/DatMonAnOnline.API.csproj -c Release
 
-### Frontend
-
-```powershell
 cd FE
+npm ci
 npm run lint
 npm run build
+cd ..
+
+node --test FE/tests/api-url.test.mjs FE/tests/settlement-date.test.mjs scripts/sanitize-demo-seed.test.mjs
+node scripts/demo-images/verify.mjs
+node scripts/test-fe-routes.mjs
 ```
 
-Hiện repository chưa có project test tự động riêng. Sau khi build, nên kiểm thử thủ công ít nhất các luồng:
+Browser test cần FE đã build và Edge; có thể chỉ định đường dẫn trình duyệt qua `FOODIE_TEST_BROWSER`. Nó dùng API giả lập, không phải kiểm thử E2E với database đang chạy.
 
-- Đăng ký/đăng nhập/quên mật khẩu.
-- Thêm giỏ khi chưa đăng nhập và đồng bộ sau đăng nhập.
-- Đặt COD và thanh toán QR mô phỏng.
-- Quán nhận đơn và chuyển trạng thái.
-- Hủy đơn, hoàn lượt voucher và hiển thị lịch sử.
-- Phân trang ở cả ba role.
-- Thông báo SignalR.
-
-## Lỗi thường gặp
-
-### Frontend báo `Failed to fetch`
-
-- Kiểm tra backend có chạy ở `http://localhost:5038` không.
-- Kiểm tra `API_URL` trong `FE/src/services/api.ts`.
-- Kiểm tra frontend có chạy ở port được CORS cho phép không.
-
-### API trả 401
-
-- Token thiếu, hết hạn, tài khoản bị khóa hoặc mật khẩu đã đổi.
-- Đăng xuất, đăng nhập lại và thử lại.
-- Kiểm tra role có quyền gọi endpoint hay không.
-
-### API trả 500 hoặc báo thiếu bảng/cột
-
-- Kiểm tra connection string có trỏ đúng database không.
-- Import lại `Database.sql` vào database mới để đối chiếu.
-- Không hiển thị stack trace database trực tiếp cho người dùng ở Production.
-
-### Không kết nối được MySQL
-
-- Kiểm tra MySQL đang chạy.
-- Kiểm tra port, username, password và tên database.
-- Với XAMPP, port có thể khác 3306 nếu máy đã cài một MySQL khác.
-
-### Quên mật khẩu không gửi email
-
-- Development dùng `maXacNhanThuNghiem`, không gửi SMTP thật.
-- Production cần đủ biến `Email__Smtp__*`.
-- Kiểm tra App Password, cổng 587 và TLS nếu dùng Gmail.
-
-### Ảnh đại diện không hiện
-
-- Backend phải đang chạy vì ảnh được phục vụ từ `wwwroot` của API.
-- Kiểm tra quyền ghi thư mục `wwwroot/uploads/avatars`.
-- Chỉ dùng JPEG, PNG hoặc WebP không quá 5 MB.
-
-### Console báo lỗi `M_ID` trong `200.js`
-
-Đây thường là script được extension Urban VPN chèn vào trang, không phải file của dự án. Hãy tắt extension cho `localhost`, mở cửa sổ InPrivate hoặc gỡ extension rồi tải lại bằng `Ctrl + F5`.
-
-### Port đang được sử dụng
-
-Đổi port backend:
+Kiểm thử upload/ảnh bằng Kestrel và EF InMemory:
 
 ```powershell
-dotnet run --project .\DatMonAnOnline.API\DatMonAnOnline.API.csproj --urls http://localhost:5040
+dotnet test scripts/demo-images/Verification/Verification.csproj -c Release
+node scripts/demo-images/browser-test.mjs
 ```
 
-Sau đó phải cập nhật `API_URL` ở frontend và CORS ở backend cho đồng bộ.
+Bộ test backend chính:
 
-## Lưu ý khi triển khai thật
+```powershell
+dotnet test DatMonAnOnline.slnx -c Release
+```
 
-Phiên bản hiện tại phù hợp cho đồ án và môi trường local. Trước khi dùng Production cần xử lý thêm:
+**Tồn đọng đã xác nhận:** [project test](DatMonAnOnline.Tests/DatMonAnOnline.Tests.csproj) còn tham chiếu `Database/20261023_AddPromotionPerCustomerLimit.sql`, nhưng file này không còn trong cây hiện tại. Lệnh build solution/test sẽ gặp **MSB3030** trước khi chạy tests. API project riêng vẫn build được. Cần xử lý tài nguyên migration/test tương thích trong task riêng; không xóa test để che lỗi.
 
-- Không để JWT secret trong source; chuyển sang biến môi trường hoặc secret manager.
-- Không commit connection string, mật khẩu database và SMTP.
-- Bật HTTPS thật và cấu hình domain CORS chính xác.
-- Đổi `API_URL` hard-code thành biến môi trường Vite như `VITE_API_URL`.
-- Tích hợp SDK/webhook chính thức của Momo, VNPay hoặc ZaloPay; xác minh chữ ký và chống xử lý giao dịch lặp.
-- Dùng Redis/distributed cache nếu chạy nhiều API instance. OTP và giữ giỏ checkout hiện nằm trong memory của một process.
-- Lưu avatar trên object storage hoặc volume bền vững khi chạy container/cloud.
-- Thiết lập backup database, log tập trung và giám sát background service.
-- Bổ sung automated test cho auth, quyền truy cập, voucher, thanh toán và chuyển trạng thái đơn.
-- Rà soát lại dữ liệu mẫu trước khi public repository.
+Sau khi giải quyết blocker, có thể chạy integration tests bằng:
+
+```powershell
+powershell -NoProfile -File scripts/test-isolated-mysql.ps1 -Filter ""
+```
+
+Script này hiện dành cho Windows với MySQL 8.0 ở đường dẫn cài đặt ghi trong script. Nó dùng cổng loopback **13487**, datadir riêng trong `.build-check/` và database test tách biệt. Không đổi cấu hình test sang database đang dùng. Không bật `FOODIE_RUN_MYSQL_TESTS=1` nếu chưa chuẩn bị đúng instance cách ly; tests không bật cờ sẽ bị skip.
+
+Kết quả kiểm tra gần nhất sau đợt cleanup:
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Build API Release | PASS |
+| Build FE / ESLint | PASS |
+| Node unit tests | 10/10 PASS |
+| Browser smoke test routing | 6/6 PASS; chạy ngoài sandbox khi trình duyệt không khởi động trong sandbox |
+| Manifest, file ảnh và đường dẫn seed | 134/134 PASS, đúng 2 SQL |
+| Full .NET tests | Chưa chạy được do MSB3030 nêu trên |
+| Import lại schema/seed trên MySQL sạch | Chưa chạy lại trong đợt cleanup/cập nhật README |
+
+Build PASS không đồng nghĩa toàn bộ nghiệp vụ đã PASS. Các lệnh trên là hướng dẫn kiểm tra, không phải chứng nhận tất cả test đã chạy thành công.
+
+## Kịch bản demo
+
+1. Khách xem danh sách quán, thực đơn, ảnh món và topping.
+2. Đăng nhập khách, chọn địa chỉ và lưu voucher còn hiệu lực.
+3. Đặt đơn COD; chuyển sang tài khoản quán để xác nhận, chuẩn bị, giao và hoàn thành.
+4. Khách đánh giá đơn đã hoàn thành, kiểm tra thông báo.
+5. Thử một đơn thanh toán mô phỏng; hủy ở trạng thái được phép rồi kiểm tra khoản hoàn Foodie.
+6. Với tài khoản đủ số dư, đặt bằng ví và kiểm tra lịch sử cộng/trừ.
+7. Admin xem tài chính, hợp đồng và đối soát; dùng dữ liệu hoàn thành của **ngày đã kết thúc**, chưa thuộc kỳ khác.
+8. Quán xác nhận hoặc tranh chấp kỳ; Admin giải quyết và ghi nhận thanh toán mô phỏng.
+
+Trước khi demo, kiểm tra hợp đồng còn hiệu lực, quán đang mở và voucher phù hợp. Các đơn seed đã nằm trong kỳ đối soát sẽ không được chọn lại khi tạo kỳ mới.
+
+## Xử lý lỗi thường gặp
+
+| Hiện tượng | Kiểm tra |
+|---|---|
+| API không khởi động vì thiếu cấu hình | Cấp connection string và JWT secret qua User Secrets/env; MySQL phải chạy vì API AutoDetect phiên bản lúc khởi động. |
+| Database đã tồn tại khi import | Dừng import. Không chạy tiếp seed lên DB đang dùng; chọn môi trường MySQL demo riêng hoặc chuẩn bị nâng cấp có kiểm soát. |
+| Seed báo trùng khóa | Seed dành cho DB sạch và dùng ID cố định; không dùng `--force` hoặc xóa dữ liệu để né lỗi. |
+| 500, thiếu bảng/cột voucher hoặc đối soát | Kiểm tra schema thực tế và DB mà API kết nối. Không import lại installer lên DB có dữ liệu. |
+| Không hiện nhà hàng/không đặt được | Kiểm tra duyệt, tài khoản chủ quán, hợp đồng, giờ mở cửa, chế độ hoạt động và trạng thái bán món/topping. |
+| 401/403 | Kiểm tra phiên đăng nhập, role, tài khoản bị khóa/đổi mật khẩu và chủ sở hữu dữ liệu; đăng nhập lại khi phiên mất hiệu lực. |
+| Không nhận mã đặt lại mật khẩu | Kiểm tra SMTP; API hiện không trả mã thử nghiệm trong response. |
+| CORS hoặc Failed to fetch | Đồng bộ `VITE_API_URL`, URL API đang chạy và `Cors:AllowedOrigins`; origin không chứa path hoặc dấu `/` cuối. |
+| Ảnh 404 | Kiểm tra file trong `wwwroot/uploads`, path seed/DB và cấu hình API base; chạy `node scripts/demo-images/verify.mjs`. |
+| File pháp lý không tìm thấy sau clone | SQL chỉ lưu đường dẫn; cần bộ PDF demo riêng hoặc thực hiện luồng hồ sơ qua ứng dụng. |
+| Không tạo được đối soát | Chỉ chọn ngày đã kết thúc theo giờ Việt Nam; kiểm tra mốc áp dụng, kỳ trùng và đơn đã đối soát. |
+| Test .NET lỗi MSB3030 | Xem blocker migration ở phần Build và kiểm thử; đây không phải lỗi kết nối MySQL. |
+| `npm run preview` không gọi được API | Bản production mặc định dùng `/api`; preview không tự proxy backend. Cần API base lúc build và CORS tương ứng hoặc reverse proxy cùng origin. |
+
+## Public GitHub và triển khai
+
+### Public source
+
+- Review `git status`, staged diff và file untracked; không dùng số lượng file thay đổi làm tiêu chí commit an toàn.
+- Không commit secret, file `.env.local`, private uploads, `App_Data`, database backup hoặc cache IDE.
+- Ảnh demo và manifest được phép nằm trong source; ảnh upload cá nhân được ignore.
+- Các lần kiểm tra trước đã ghi nhận credential và giấy tờ trong lịch sử Git cũ. **Working tree sạch/.gitignore không loại bỏ nội dung đã commit.** Chủ sở hữu cần xác minh thu hồi credential, chọn phương án xuất bản source/lịch sử phù hợp và kiểm tra lại trước public.
+- Tài khoản/credential demo không được tái sử dụng ở môi trường chứa dữ liệu thật.
+- Repository hiện chưa có file LICENSE; không tự suy diễn giấy phép cho toàn bộ source. Thông tin nguồn ảnh demo nằm trong manifest.
+
+### Triển khai website demo
+
+Build backend và frontend:
+
+```powershell
+dotnet publish DatMonAnOnline.API/DatMonAnOnline.API.csproj -c Release -o .build-check/publish-api
+
+cd FE
+npm ci
+npm run build
+cd ..
+```
+
+- Cấp `ASPNETCORE_ENVIRONMENT=Production`, connection string, JWT secret, SMTP, `AllowedHosts` và danh sách proxy tin cậy qua môi trường triển khai.
+- Dùng HTTPS; API đã có HTTPS redirection và HSTS ngoài Development. Cấu hình forwarded headers đúng IP reverse proxy.
+- Nếu cùng domain: phục vụ `FE/dist`, proxy `/api`, `/hubs` và `/uploads` tới API; bật WebSocket và SPA fallback cho routes FE.
+- Nếu API khác domain: đặt `VITE_API_URL=https://api.example.invalid/api` **trước khi build** và khai báo origin HTTPS chính xác ở backend.
+- Lưu bền vững MySQL, public uploads và private `App_Data`; kiểm tra quyền ghi và quy trình backup/restore.
+- Mặc định các endpoint thanh toán vẫn là mô phỏng. Public website phải thể hiện rõ phạm vi demo và không sử dụng tiền/dữ liệu thật.
+- Khi mở rộng nhiều instance, cần đánh giá SignalR backplane, hàng đợi email và các trạng thái theo process; chưa có cấu hình triển khai phân tán hoàn chỉnh.
+- Theo dõi log, lỗi background job và các giao dịch cần phục hồi; không ghi token/OTP/secret vào log.
+
+Không coi bản hiện tại đã sẵn sàng public production: còn blocker test, việc chuẩn bị hồ sơ demo trên máy mới và việc xử lý lịch sử nhạy cảm cần hoàn tất.
 
 ## Đóng góp
 
-Quy trình đề xuất:
-
-1. Tạo branch theo chức năng hoặc lỗi.
-2. Không sửa/xóa API hoặc schema ngoài phạm vi task nếu chưa trao đổi với nhóm.
-3. Build backend, lint và build frontend trước khi commit.
-4. Commit ngắn gọn, mô tả đúng thay đổi.
-5. Nếu thay đổi database, cập nhật `Database.sql` và README trong cùng commit.
-
-Ví dụ commit:
-
-```text
-feat: bổ sung kho voucher và chọn voucher khi thanh toán
-fix: sửa truy vấn phân trang danh sách đơn hàng khách hàng
-docs: cập nhật hướng dẫn cài đặt và vận hành dự án
-```
+1. Tạo branch cho thay đổi; giữ nguyên API contract và nghiệp vụ ngoài phạm vi task.
+2. Với đơn/tiền/voucher/đối soát, kiểm tra transaction, concurrency, retry/idempotency và quyền sở hữu.
+3. Thay đổi database hiện có cần migration tăng dần đã kiểm thử; không dùng installer hoặc seed để nâng cấp.
+4. Chạy build, lint và tests liên quan; báo rõ FAIL/SKIP/NOT TESTED.
+5. Review diff, tài nguyên ảnh và dữ liệu nhạy cảm trước commit.
+6. Cập nhật README khi đổi cách cài đặt, cấu hình hoặc giới hạn của dự án.

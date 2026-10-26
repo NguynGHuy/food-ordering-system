@@ -96,6 +96,7 @@ namespace DatMonAnOnline.API.Controllers
 
             taiKhoan.TrangThai = false;
             await _context.SaveChangesAsync();
+            DatMonAnOnline.API.Hubs.NotificationHub.RevokeLocalSessions(taiKhoan.MaTaiKhoan);
 
             return Ok(new { message = "Khóa tài khoản thành công." });
         }

@@ -1,8 +1,34 @@
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace DatMonAnOnline.API.Security;
+
+public static class TrustedProxyHeaders
+{
+    public static void Configure(ForwardedHeadersOptions options, IEnumerable<string> proxies)
+    {
+        var addresses = proxies.Select(value =>
+        {
+            if (!IPAddress.TryParse(value, out var address) ||
+                address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any))
+                throw new InvalidOperationException("ReverseProxy:KnownProxies chỉ nhận địa chỉ IP cụ thể.");
+            return address;
+        }).Distinct().ToArray();
+
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
+        foreach (var address in addresses) options.KnownProxies.Add(address);
+        // Empty trust list must NOT mean trusting every client.
+        options.ForwardedHeaders = addresses.Length == 0 ? ForwardedHeaders.None :
+            ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.RequireHeaderSymmetry = true;
+    }
+}
 
 public static class AuthRateLimitPolicies
 {

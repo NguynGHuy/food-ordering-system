@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getRestaurants } from "../services/restaurantService";
@@ -14,18 +15,6 @@ import {
   Star,
   UtensilsCrossed,
 } from "lucide-react";
-// interface Restaurant {
-//     maNhaHang: number;
-//     tenNhaHang: string;
-//     moTa?: string;
-//     diaChiQuan?: string;
-//     anhBia?: string | null;
-//     danhGiaTrungBinh?: number;
-//     phiShipMacDinh?: number;
-//     gioMoCua?: string;
-//     gioDongCua?: string;
-//     trangThaiHoatDong?: string;
-// }
 
 function isRestaurantOpen(restaurant: Restaurant): boolean {
   return restaurant.dangMoCua;
@@ -143,7 +132,7 @@ function Home() {
         <div className="home-hero-visual">
           <div className="home-hero-image-card">
             {heroRestaurant?.anhBia ? (
-              <img
+              <MediaImage kind="restaurant"
                 src={heroRestaurant.anhBia}
                 alt={heroRestaurant.tenNhaHang}
               />
@@ -237,7 +226,7 @@ function Home() {
 
                     <div className="restaurant-image">
                       {restaurant.anhBia ? (
-                        <img
+                        <MediaImage kind="restaurant"
                           src={restaurant.anhBia}
                           alt={restaurant.tenNhaHang}
                         />

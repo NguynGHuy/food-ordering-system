@@ -1,3 +1,5 @@
+using System.Data;
+using DatMonAnOnline.API.Common;
 using DatMonAnOnline.API.Models;
 using DatMonAnOnline.API.Options;
 using Microsoft.AspNetCore.Authorization;
@@ -29,7 +31,8 @@ public class AdminTaiChinhController : ControllerBase
         [FromQuery] DateOnly? denNgay,
         CancellationToken cancellationToken)
     {
-        if (tuNgay.HasValue && denNgay.HasValue && tuNgay > denNgay)
+        if (tuNgay.HasValue && denNgay.HasValue && tuNgay > denNgay ||
+            tuNgay?.Year < 1000 || denNgay?.Year < 1000 || denNgay == DateOnly.MaxValue)
         {
             return BadRequest(new
             {
@@ -39,6 +42,11 @@ public class AdminTaiChinhController : ControllerBase
 
         var start = tuNgay?.ToDateTime(TimeOnly.MinValue);
         var endExclusive = denNgay?.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        // All aggregate/detail queries must share one InnoDB consistent read view.
+        // Read committed/autocommit can mix a count before completion with totals after it.
+        await using var snapshot = await _context.Database.BeginTransactionAsync(
+            IsolationLevel.RepeatableRead, cancellationToken);
 
         // Doanh thu nền tảng được ghi nhận ngay khi đơn hoàn thành. Các cột
         // PhiNenTang/GiamGiaHeThong là snapshot bất biến tại lúc đặt đơn, vì vậy
@@ -63,7 +71,7 @@ public class AdminTaiChinhController : ControllerBase
                 order.ThoiGianGiaoThucTe!.Value < endExclusive.Value);
         }
 
-        var completedOrders = await orderQuery
+        var completedOrders = orderQuery
             .Select(order => new
             {
                 order.MaDonHang,
@@ -76,6 +84,7 @@ public class AdminTaiChinhController : ControllerBase
                 order.ThanhTien,
                 order.PhiNenTang,
                 order.GiamGiaHeThong,
+                IsReconciled = order.Chitietdoisoats.Any(),
                 MaDoiSoat = order.Chitietdoisoats
                     .Select(detail => (int?)detail.MaDoiSoat)
                     .FirstOrDefault(),
@@ -88,8 +97,7 @@ public class AdminTaiChinhController : ControllerBase
                         TenPhuongThuc = payment.MaPhuongThucNavigation.TenPhuongThuc
                     })
                     .FirstOrDefault()
-            })
-            .ToListAsync(cancellationToken);
+            });
 
         // Không đưa đơn có dữ liệu thanh toán hỏng vào báo cáo tài chính.
         // Số lượng lỗi được trả riêng để Admin biết cần kiểm tra thay vì âm thầm
@@ -101,17 +109,24 @@ public class AdminTaiChinhController : ControllerBase
                 order.LatestPayment.SoTien == order.ThanhTien &&
                 order.PhiNenTang >= 0 &&
                 order.GiamGiaHeThong >= 0)
-            .ToList();
+            ;
 
-        var invalidOrderCount = completedOrders.Count - validOrders.Count;
-        var tongPhiNenTang = validOrders.Sum(order => order.PhiNenTang);
-        var tongChiPhiKhuyenMaiHeThong = validOrders.Sum(order => order.GiamGiaHeThong);
+        // Aggregate in SQL; only the recent 20 rows are materialized below.
+        var totalOrderCount = await orderQuery.CountAsync(cancellationToken);
+        var orderStats = await validOrders.GroupBy(_ => 1).Select(group => new
+        {
+            Count = group.Count(),
+            Fees = group.Sum(order => order.PhiNenTang),
+            Discounts = group.Sum(order => order.GiamGiaHeThong),
+            PendingCount = group.Count(order => !order.IsReconciled),
+            PendingRevenue = group.Sum(order => !order.IsReconciled ? order.PhiNenTang - order.GiamGiaHeThong : 0m),
+            SettledRevenue = group.Sum(order => order.IsReconciled ? order.PhiNenTang - order.GiamGiaHeThong : 0m)
+        }).SingleOrDefaultAsync(cancellationToken);
+        var invalidOrderCount = totalOrderCount - (orderStats?.Count ?? 0);
+        var tongPhiNenTang = orderStats?.Fees ?? 0m;
+        var tongChiPhiKhuyenMaiHeThong = orderStats?.Discounts ?? 0m;
         var doanhThuThuan = tongPhiNenTang - tongChiPhiKhuyenMaiHeThong;
-        var ordersPendingReconciliation = validOrders
-            .Where(order => !order.MaDoiSoat.HasValue)
-            .ToList();
-
-        var recentRevenueOrders = validOrders
+        var recentRevenueOrders = await validOrders
             .OrderByDescending(order => order.ThoiGianGiaoThucTe)
             .ThenByDescending(order => order.MaDonHang)
             .Take(20)
@@ -129,11 +144,11 @@ public class AdminTaiChinhController : ControllerBase
                 DoanhThuThuan = order.PhiNenTang - order.GiamGiaHeThong,
                 PhuongThucThanhToan = order.LatestPayment!.TenPhuongThuc,
                 order.MaDoiSoat,
-                TrangThaiDoiSoat = order.MaDoiSoat.HasValue
+                TrangThaiDoiSoat = order.IsReconciled
                     ? "DaDuaVaoKy"
                     : "ChuaDoiSoat"
             })
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         var periodQuery = _context.Doisoatnhahangs
             .AsNoTracking()
@@ -145,7 +160,7 @@ public class AdminTaiChinhController : ControllerBase
         if (denNgay.HasValue)
             periodQuery = periodQuery.Where(period => period.TuNgay <= denNgay.Value);
 
-        var periods = await periodQuery
+        var periods = periodQuery
             .Select(period => new
             {
                 period.MaDoiSoat,
@@ -160,17 +175,19 @@ public class AdminTaiChinhController : ControllerBase
                 period.TrangThai,
                 period.MaGiaoDichDoiSoat,
                 period.NgayThanhToan
-            })
-            .ToListAsync(cancellationToken);
+            });
 
-        var paidPeriods = periods
-            .Where(period => period.TrangThai == "DaThanhToan")
-            .ToList();
-        var unpaidPeriods = periods
-            .Where(period => period.TrangThai != "DaThanhToan")
-            .ToList();
+        var periodStats = await periods.GroupBy(_ => 1).Select(group => new
+        {
+            Count = group.Count(),
+            PaidCount = group.Count(period => period.TrangThai == "DaThanhToan"),
+            PaidToRestaurant = group.Sum(period => period.TrangThai == "DaThanhToan" && period.SoTienCanDoiSoat > 0 ? period.SoTienCanDoiSoat : 0m),
+            ReceivedFromRestaurant = group.Sum(period => period.TrangThai == "DaThanhToan" && period.SoTienCanDoiSoat < 0 ? -period.SoTienCanDoiSoat : 0m),
+            OwedToRestaurant = group.Sum(period => period.TrangThai != "DaThanhToan" && period.SoTienCanDoiSoat > 0 ? period.SoTienCanDoiSoat : 0m),
+            OwedByRestaurant = group.Sum(period => period.TrangThai != "DaThanhToan" && period.SoTienCanDoiSoat < 0 ? -period.SoTienCanDoiSoat : 0m)
+        }).SingleOrDefaultAsync(cancellationToken);
 
-        var recentPeriods = periods
+        var recentPeriods = await periods
             .OrderByDescending(period => period.NgayThanhToan)
             .ThenByDescending(period => period.MaDoiSoat)
             .Take(10)
@@ -197,43 +214,34 @@ public class AdminTaiChinhController : ControllerBase
                         : period.TrangThai == "DaThanhToan" ? "ChuyenKhoan" : null,
                 period.NgayThanhToan
             })
-            .ToList();
+            .ToListAsync(cancellationToken);
+
+        await snapshot.CommitAsync(cancellationToken);
 
         return Ok(new
         {
             tuNgay,
             denNgay,
-            tongSoKy = periods.Count,
-            soKyDaThanhToan = paidPeriods.Count,
-            soKyChoXuLy = unpaidPeriods.Count,
-            tongSoDon = validOrders.Count,
+            tongSoKy = periodStats?.Count ?? 0,
+            soKyDaThanhToan = periodStats?.PaidCount ?? 0,
+            soKyChoXuLy = (periodStats?.Count ?? 0) - (periodStats?.PaidCount ?? 0),
+            tongSoDon = orderStats?.Count ?? 0,
             soDonDuLieuKhongHopLe = invalidOrderCount,
             tongPhiNenTang,
             tongChiPhiKhuyenMaiHeThong,
             doanhThuThuan,
             // Ghi nhận theo nguyên tắc dồn tích tại thời điểm đơn hoàn thành.
             doanhThuDaGhiNhan = doanhThuThuan,
-            doanhThuDaDoiSoat = validOrders
-                .Where(order => order.MaDoiSoat.HasValue)
-                .Sum(order => order.PhiNenTang - order.GiamGiaHeThong),
-            doanhThuChoDoiSoat = ordersPendingReconciliation
-                .Sum(order => order.PhiNenTang - order.GiamGiaHeThong),
-            soDonChoDoiSoat = ordersPendingReconciliation.Count,
-            daThanhToanChoNhaHang = paidPeriods
-                .Where(period => period.SoTienCanDoiSoat > 0)
-                .Sum(period => period.SoTienCanDoiSoat),
-            daThuTuNhaHang = paidPeriods
-                .Where(period => period.SoTienCanDoiSoat < 0)
-                .Sum(period => -period.SoTienCanDoiSoat),
-            conPhaiTraNhaHang = unpaidPeriods
-                .Where(period => period.SoTienCanDoiSoat > 0)
-                .Sum(period => period.SoTienCanDoiSoat),
-            conPhaiThuNhaHang = unpaidPeriods
-                .Where(period => period.SoTienCanDoiSoat < 0)
-                .Sum(period => -period.SoTienCanDoiSoat),
+            doanhThuDaDoiSoat = orderStats?.SettledRevenue ?? 0m,
+            doanhThuChoDoiSoat = orderStats?.PendingRevenue ?? 0m,
+            soDonChoDoiSoat = orderStats?.PendingCount ?? 0,
+            daThanhToanChoNhaHang = periodStats?.PaidToRestaurant ?? 0m,
+            daThuTuNhaHang = periodStats?.ReceivedFromRestaurant ?? 0m,
+            conPhaiTraNhaHang = periodStats?.OwedToRestaurant ?? 0m,
+            conPhaiThuNhaHang = periodStats?.OwedByRestaurant ?? 0m,
             cacDonDoanhThuGanDay = recentRevenueOrders,
             cacKyGanDay = recentPeriods,
-            capNhatLuc = DateTime.Now
+            capNhatLuc = VietnamBusinessTime.Now()
         });
     }
 }

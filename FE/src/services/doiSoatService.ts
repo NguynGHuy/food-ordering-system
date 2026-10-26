@@ -13,6 +13,7 @@ export interface DoiSoatSummary {
     tongGiamGiaHeThong: number;
     tongPhiShip: number;
     tongPhiNenTang: number;
+    tongTienHoan: number;
     tongTienNhaHangNhan: number;
     tongTienNhaHangDaThu: number;
     soTienCanDoiSoat: number;
@@ -26,7 +27,20 @@ export interface DoiSoatDetail extends DoiSoatSummary {
     ghiChu?: string | null;
     ngayXacNhan?: string | null;
     ngayThanhToan?: string | null;
+    lichSu: DoiSoatAuditEntry[];
     chiTiet: DoiSoatOrderDetail[];
+}
+
+export interface DoiSoatAuditEntry {
+    maLichSuDoiSoat: number;
+    hanhDong: string;
+    trangThaiTruoc?: string | null;
+    trangThaiSau: string;
+    maGiaoDich?: string | null;
+    ghiChu?: string | null;
+    thoiGian: string;
+    maTaiKhoan: number;
+    vaiTroNguoiThucHien: string;
 }
 
 export interface DoiSoatOrderDetail {
@@ -89,15 +103,32 @@ export function getAdminDoiSoatDetail(id: number) {
 export async function payDoiSoat(
     id: number,
     maGiaoDich: string,
-    hinhThucThanhToan: "ChuyenKhoan" | "ViNhaHang" = "ChuyenKhoan"
+    hinhThucThanhToan: "ChuyenKhoan" | "ViNhaHang" = "ChuyenKhoan",
+    ghiChu = ""
 ) {
     const path = `/admin/doi-soat/${id}/thanh-toan`;
-    const data = { maGiaoDich: maGiaoDich.trim() || null, hinhThucThanhToan };
+    const data = {
+        maGiaoDich: maGiaoDich.trim() || null,
+        hinhThucThanhToan,
+        ghiChu: ghiChu.trim() || null,
+    };
     return runIdempotentRequest(`PUT ${path}`, data, (key) =>
         apiFetch(path, {
             method: "PUT",
             headers: { ...authHeaders(), "Idempotency-Key": key },
             body: JSON.stringify(data)
+        })
+    );
+}
+
+export async function resolveDoiSoatDispute(id: number, ghiChu: string) {
+    const path = `/admin/doi-soat/${id}/giai-quyet-tranh-chap`;
+    const data = { ghiChu: ghiChu.trim() };
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: { ...authHeaders(), "Idempotency-Key": key },
+            body: JSON.stringify(data),
         })
     );
 }
@@ -117,6 +148,19 @@ export async function confirmDoiSoat(id: number) {
         apiFetch(path, {
             method: "PUT",
             headers: { ...authHeaders(), "Idempotency-Key": key }
+        })
+    );
+}
+
+
+export async function openDoiSoatDispute(id: number, lyDo: string) {
+    const path = `/nha-hang/doi-soat/${id}/tranh-chap`;
+    const data = { lyDo: lyDo.trim() };
+    return runIdempotentRequest(`PUT ${path}`, data, (key) =>
+        apiFetch(path, {
+            method: "PUT",
+            headers: { ...authHeaders(), "Idempotency-Key": key },
+            body: JSON.stringify(data),
         })
     );
 }

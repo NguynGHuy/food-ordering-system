@@ -1,5 +1,10 @@
 using System.Buffers.Binary;
 using System.Text;
+using System.Diagnostics;
+using System.IO.Compression;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Filters;
+using UglyToad.PdfPig.Tokens;
 
 namespace DatMonAnOnline.API.Common;
 
@@ -8,14 +13,10 @@ public static class LegalDocumentValidator
     private const int MaxImageDimension = 10_000;
     private const long MaxImagePixels = 40_000_000;
 
-    private static readonly string[] DangerousPdfTokens =
+    private static readonly HashSet<string> DangerousPdfNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/JavaScript",
-        "/JS",
-        "/Launch",
-        "/EmbeddedFile",
-        "/OpenAction",
-        "/AA"
+        "JavaScript", "JS", "Launch", "EmbeddedFile", "EmbeddedFiles", "OpenAction", "AA",
+        "RichMedia", "XFA", "SubmitForm", "ImportData", "GoToR", "GoToE", "Rendition", "Movie", "Sound"
     };
 
     public static bool HasExpectedContentType(
@@ -64,7 +65,7 @@ public static class LegalDocumentValidator
     {
         error = "";
 
-        if (data.Length < 16 || !data[..5].SequenceEqual("%PDF-"u8))
+        if (data.Length < 16 || data.Length > 5 * 1024 * 1024 || !data[..5].SequenceEqual("%PDF-"u8))
         {
             error = "Tệp PDF không có cấu trúc hợp lệ.";
             return false;
@@ -79,44 +80,101 @@ public static class LegalDocumentValidator
             return false;
         }
 
-        var text = Encoding.ASCII.GetString(data);
-
-        if (DangerousPdfTokens.Any(token => ContainsPdfName(text, token)))
+        try
         {
-            error = "Tệp PDF chứa nội dung chủ động không được phép.";
+            var clock = Stopwatch.StartNew();
+            // Parse names/references/object streams, not raw text: #xx escapes and
+            // compressed dictionaries must receive exactly the same checks.
+            using var document = PdfDocument.Open(data.ToArray(), new ParsingOptions
+            {
+                UseLenientParsing = false,
+                MaxStackDepth = 64,
+                FilterProvider = new StructuralFilters(clock)
+            });
+            if (document.NumberOfPages is < 1 or > 200 || document.Structure.Trailer.EncryptionToken != null ||
+                document.Structure.CrossReferenceTable.ObjectOffsets.Count > 10000)
+                throw new InvalidDataException("Unsupported PDF size/encryption.");
+
+            var visitedTokens = 0;
+            foreach (var reference in document.Structure.CrossReferenceTable.ObjectOffsets.Keys)
+            {
+                var stack = new Stack<(IToken Token, int Depth)>();
+                stack.Push((document.Structure.GetObject(reference).Data, 0));
+                while (stack.TryPop(out var next))
+                {
+                    if (++visitedTokens > 100000 || next.Depth > 64 || clock.Elapsed > TimeSpan.FromSeconds(3))
+                        throw new InvalidDataException("PDF inspection limit exceeded.");
+                    switch (next.Token)
+                    {
+                        case NameToken name when DangerousPdfNames.Contains(name.Data):
+                            error = "Tệp PDF chứa nội dung chủ động không được phép.";
+                            return false;
+                        case DictionaryToken dictionary:
+                            foreach (var pair in dictionary.Data)
+                            {
+                                if (DangerousPdfNames.Contains(pair.Key))
+                                {
+                                    error = "Tệp PDF chứa nội dung chủ động không được phép.";
+                                    return false;
+                                }
+                                stack.Push((pair.Value, next.Depth + 1));
+                            }
+                            break;
+                        case ArrayToken array:
+                            foreach (var item in array.Data) stack.Push((item, next.Depth + 1));
+                            break;
+                        case StreamToken stream:
+                            // Do not render/decompress images or page content; inspect their dictionaries.
+                            stack.Push((stream.StreamDictionary, next.Depth + 1));
+                            break;
+                    }
+                }
+            }
+            return true;
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException and not OperationCanceledException)
+        {
+            error = "PDF bị hỏng, mã hóa, quá phức tạp hoặc dùng cấu trúc chưa được hỗ trợ. Vui lòng xuất lại PDF tĩnh.";
             return false;
         }
-
-        return true;
     }
 
-    private static bool ContainsPdfName(string content, string name)
+    // Only structural streams need decoding. Fail closed for unsupported codecs;
+    // Flate is preflighted with bounded streaming before the library allocates its output.
+    private sealed class StructuralFilters(Stopwatch clock) : BaseFilterProvider(new Dictionary<string, IFilter>
     {
-        var start = 0;
+        ["FlateDecode"] = new BoundedFlate(clock),
+        ["Fl"] = new BoundedFlate(clock),
+        ["ASCIIHexDecode"] = new AsciiHexDecodeFilter(),
+        ["AHx"] = new AsciiHexDecodeFilter(),
+        ["ASCII85Decode"] = new Ascii85Filter(),
+        ["A85"] = new Ascii85Filter()
+    });
 
-        while (start < content.Length)
+    private sealed class BoundedFlate(Stopwatch clock) : IFilter
+    {
+        private long _decodedBytes;
+        public bool IsSupported => true;
+        public Memory<byte> Decode(Memory<byte> input, DictionaryToken dictionary, IFilterProvider provider, int index)
         {
-            var index = content.IndexOf(
-                name,
-                start,
-                StringComparison.OrdinalIgnoreCase);
-
-            if (index < 0)
-                return false;
-
-            var end = index + name.Length;
-            if (end == content.Length || IsPdfDelimiter(content[end]))
-                return true;
-
-            start = end;
+            var parameters = DecodeParameterResolver.GetFilterParameters(dictionary, index);
+            foreach (var name in new[] { "Colors", "BitsPerComponent", "Columns" })
+                if (parameters.Data.TryGetValue(name, out var token) &&
+                    (token is not NumericToken number || number.Data < 1 || number.Data > (name == "Columns" ? 65536 : 32)))
+                    throw new InvalidDataException("Unsupported PDF predictor.");
+            using var source = new MemoryStream(input.ToArray(), writable: false);
+            using var decoded = new ZLibStream(source, CompressionMode.Decompress);
+            Span<byte> buffer = stackalloc byte[4096];
+            int count;
+            while ((count = decoded.Read(buffer)) > 0)
+            {
+                _decodedBytes += count;
+                if (_decodedBytes > 16 * 1024 * 1024 || clock.Elapsed > TimeSpan.FromSeconds(3))
+                    throw new InvalidDataException("PDF decompression limit exceeded.");
+            }
+            return new FlateFilter().Decode(input, dictionary, provider, index);
         }
-
-        return false;
     }
-
-    private static bool IsPdfDelimiter(char value)
-        => char.IsWhiteSpace(value) || value is '(' or ')' or '<' or '>' or
-            '[' or ']' or '{' or '}' or '/' or '%';
 
     private static bool TryValidatePng(
         ReadOnlySpan<byte> data,

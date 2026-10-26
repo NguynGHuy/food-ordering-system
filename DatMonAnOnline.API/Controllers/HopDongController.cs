@@ -248,6 +248,7 @@ public class HopDongController : ControllerBase
             await _context.Database.BeginTransactionAsync();
 
         string? duongDanTepMoi = null;
+        var commitAttempted = false;
 
         try
         {
@@ -374,6 +375,7 @@ public class HopDongController : ControllerBase
                 response,
                 StatusCodes.Status201Created);
 
+            commitAttempted = true;
             await transaction.CommitAsync();
 
             await _realtime.GuiDuLieuThayDoiAsync(
@@ -385,9 +387,9 @@ public class HopDongController : ControllerBase
         }
         catch
         {
-            await transaction.RollbackAsync();
+            if (!commitAttempted) await transaction.RollbackAsync();
 
-            if (duongDanTepMoi != null &&
+            if (!commitAttempted && duongDanTepMoi != null &&
                 System.IO.File.Exists(duongDanTepMoi))
             {
                 System.IO.File.Delete(duongDanTepMoi);

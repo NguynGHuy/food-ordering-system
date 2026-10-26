@@ -41,6 +41,7 @@ namespace DatMonAnOnline.API.Controllers
                 GiamToiDa = req.GiamToiDa,
                 DonHangToiThieu = req.DonHangToiThieu,
                 SoLuong = req.SoLuong,
+                SoLuotToiDaMoiKhach = req.SoLuotToiDaMoiKhach,
                 NgayBatDau = req.NgayBatDau,
                 NgayKetThuc = req.NgayKetThuc,
                 MaNhaHang = null, // Khuyến mãi toàn hệ thống
@@ -111,6 +112,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.DonHangToiThieu,
                     x.SoLuong,
                     x.SoLuongDaDung,
+                    x.SoLuotToiDaMoiKhach,
                     x.NgayBatDau,
                     x.NgayKetThuc,
                     x.TrangThai

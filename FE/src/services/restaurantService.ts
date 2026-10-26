@@ -139,6 +139,14 @@ export async function updateRestaurantProfile(
     });
 }
 
+export async function uploadRestaurantCover(file: File): Promise<{ anhBia: string }> {
+    const body = new FormData();
+    body.append("file", file);
+    return apiFetch("/nha-hang/anh-bia", {
+        method: "POST", headers: getAuthHeaders(), body,
+    });
+}
+
 /* =========================================================
    QUÁN: CẬP NHẬT CHẾ ĐỘ HOẠT ĐỘNG
 ========================================================= */

@@ -20,18 +20,38 @@ public class AdminDoiSoatController : ControllerBase
     private readonly DatMonAnOnlineContext _context;
     private readonly IWalletService _walletService;
     private readonly IRealtimeNotificationService _realtime;
+    private readonly ILogger<AdminDoiSoatController> _logger;
     private readonly DateTime _batDauApDung;
+    private readonly TimeProvider _timeProvider;
 
     public AdminDoiSoatController(
         DatMonAnOnlineContext context,
         IWalletService walletService,
         IRealtimeNotificationService realtime,
-        IOptions<DoiSoatOptions> options)
+        ILogger<AdminDoiSoatController> logger,
+        IOptions<DoiSoatOptions> options,
+        TimeProvider? timeProvider = null)
     {
         _context = context;
         _walletService = walletService;
         _realtime = realtime;
+        _logger = logger;
         _batDauApDung = options.Value.BatDauApDung;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    private async Task NotifySafelyAsync(params Task[] notifications)
+    {
+        try
+        {
+            await Task.WhenAll(notifications);
+        }
+        catch (Exception ex)
+        {
+            // Realtime is only a refresh hint. The committed DB record remains
+            // the source of truth and will be loaded again after reconnect.
+            _logger.LogWarning(ex, "Không thể phát realtime cho thay đổi đối soát đã commit.");
+        }
     }
 
     [HttpGet]
@@ -47,7 +67,7 @@ public class AdminDoiSoatController : ControllerBase
                 x.TuNgay, x.DenNgay, x.TongSoDon, x.SoTienCanDoiSoat,
                 x.TongTienHang, x.TongGiamGiaNhaHang,
                 x.TongGiamGiaHeThong, x.TongPhiShip, x.TongPhiNenTang,
-                x.TongTienNhaHangNhan, x.TongTienNhaHangDaThu,
+                x.TongTienHoan, x.TongTienNhaHangNhan, x.TongTienNhaHangDaThu,
                 x.TrangThai, x.NgayTao
             }).ToPagedResultAsync(pagination);
 
@@ -118,6 +138,22 @@ public class AdminDoiSoatController : ControllerBase
                 x.NgayTao,
                 x.NgayXacNhan,
                 x.NgayThanhToan,
+                LichSu = x.Lichsudoisoats
+                    .OrderByDescending(ls => ls.ThoiGian)
+                    .ThenByDescending(ls => ls.MaLichSuDoiSoat)
+                    .Select(ls => new
+                    {
+                        ls.MaLichSuDoiSoat,
+                        ls.HanhDong,
+                        ls.TrangThaiTruoc,
+                        ls.TrangThaiSau,
+                        ls.MaGiaoDich,
+                        ls.GhiChu,
+                        ls.ThoiGian,
+                        ls.MaTaiKhoan,
+                        VaiTroNguoiThucHien = ls.MaTaiKhoanNavigation.MaRoleNavigation.TenRole
+                    })
+                    .ToList(),
                 ChiTiet = x.Chitietdoisoats
                     .OrderBy(ct => ct.MaChiTietDoiSoat)
                     .Select(ct => new
@@ -170,6 +206,15 @@ public class AdminDoiSoatController : ControllerBase
 
         [MaxLength(20)]
         public string HinhThucThanhToan { get; set; } = "ChuyenKhoan";
+
+        [MaxLength(500)]
+        public string? GhiChu { get; set; }
+    }
+
+    public class GiaiQuyetTranhChapRequest
+    {
+        [Required, MaxLength(500)]
+        public string GhiChu { get; set; } = null!;
     }
 
     [HttpPost("tao-ky")]
@@ -180,8 +225,9 @@ public class AdminDoiSoatController : ControllerBase
 
         // 1. Validation cơ bản
         if (req.MaNhaHang <= 0) return BadRequest(new { message = "Mã nhà hàng không hợp lệ." });
+        if (req.TuNgay.Year < 1000 || req.DenNgay.Year < 1000) return BadRequest(new { message = "Ngày đối soát không hợp lệ." });
         if (req.TuNgay > req.DenNgay) return BadRequest(new { message = "Từ ngày không được lớn hơn Đến ngày." });
-        if (req.DenNgay > DateOnly.FromDateTime(DateTime.Now)) return BadRequest(new { message = "Không thể đối soát cho tương lai." });
+        if (req.DenNgay >= DateOnly.FromDateTime(VietnamBusinessTime.Now(_timeProvider))) return BadRequest(new { message = "Chỉ được đối soát ngày đã kết thúc theo giờ Việt Nam (đến hết ngày hôm qua)." });
         if (req.DenNgay.DayNumber - req.TuNgay.DayNumber > 31) return BadRequest(new { message = "Khoảng thời gian đối soát tối đa là 31 ngày." });
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -201,8 +247,7 @@ public class AdminDoiSoatController : ControllerBase
         var isOverlap = await _context.Doisoatnhahangs.AnyAsync(x => 
             x.MaNhaHang == req.MaNhaHang && 
             x.TuNgay <= req.DenNgay && 
-            x.DenNgay >= req.TuNgay && 
-            x.TrangThai != "TranhChap");
+            x.DenNgay >= req.TuNgay);
 
         if (isOverlap) return Conflict(new { message = "Khoảng thời gian này đã bị trùng lấp với một kỳ đối soát khác của nhà hàng." });
 
@@ -219,6 +264,9 @@ public class AdminDoiSoatController : ControllerBase
                 x.ThoiGianGiaoThucTe.HasValue &&
                 x.ThoiGianGiaoThucTe.Value >= start &&
                 x.ThoiGianGiaoThucTe.Value < endExclusive &&
+                !x.Thanhtoans
+                    .SelectMany(t => t.Hoantiens)
+                    .Any(h => h.TrangThai == "ThanhCong") &&
                 !_context.Chitietdoisoats.Any(ct => ct.MaDonHang == x.MaDonHang))
             .OrderBy(x => x.ThoiGianGiaoThucTe)
             .ThenBy(x => x.MaDonHang)
@@ -234,6 +282,10 @@ public class AdminDoiSoatController : ControllerBase
                 x.PhiNenTang,
                 x.SoTienNhaHangNhan,
                 x.ThanhTien,
+                SoTienHoan = x.Thanhtoans
+                    .SelectMany(t => t.Hoantiens)
+                    .Where(h => h.TrangThai == "ThanhCong")
+                    .Sum(h => (decimal?)h.SoTienHoan) ?? 0m,
                 TienDaCongVaoVi = x.Giaodichvis
                     .Where(giaoDich =>
                         giaoDich.LoaiGiaoDich == WalletTransactionTypes.ThuNhapDonHang &&
@@ -263,7 +315,7 @@ public class AdminDoiSoatController : ControllerBase
         var doiSoat = new Doisoatnhahang
         {
             MaNhaHang = req.MaNhaHang, TuNgay = req.TuNgay, DenNgay = req.DenNgay,
-            TrangThai = "ChoXacNhan", NgayTao = DateTime.Now
+            TrangThai = "ChoXacNhan", NgayTao = VietnamBusinessTime.Now(_timeProvider)
         };
         _context.Doisoatnhahangs.Add(doiSoat);
         try
@@ -336,8 +388,9 @@ public class AdminDoiSoatController : ControllerBase
                 MaDoiSoat = doiSoat.MaDoiSoat, MaDonHang = dh.MaDonHang, MaNhaHang = dh.MaNhaHang,
                 TongTienHang = dh.TongTienHang, GiamGiaNhaHang = dh.GiamGiaNhaHang, GiamGiaHeThong = dh.GiamGiaHeThong,
                 PhiShip = dh.PhiShip, TyLePhiNenTang = dh.TyLePhiNenTang, PhiNenTang = dh.PhiNenTang,
+                SoTienHoan = dh.SoTienHoan,
                 SoTienNhaHangNhan = dh.SoTienNhaHangNhan, TienNhaHangDaThu = tienNhaHangDaThu,
-                NgayThem = DateTime.Now
+                NgayThem = VietnamBusinessTime.Now(_timeProvider)
             };
             _context.Chitietdoisoats.Add(chiTiet);
 
@@ -347,9 +400,20 @@ public class AdminDoiSoatController : ControllerBase
             doiSoat.TongGiamGiaHeThong += dh.GiamGiaHeThong;
             doiSoat.TongPhiShip += dh.PhiShip;
             doiSoat.TongPhiNenTang += dh.PhiNenTang;
+            doiSoat.TongTienHoan += dh.SoTienHoan;
             doiSoat.TongTienNhaHangNhan += dh.SoTienNhaHangNhan;
             doiSoat.TongTienNhaHangDaThu += tienNhaHangDaThu;
         }
+
+        _context.Lichsudoisoats.Add(new Lichsudoisoat
+        {
+            MaDoiSoat = doiSoat.MaDoiSoat,
+            MaTaiKhoan = maAdmin,
+            HanhDong = "TaoKy",
+            TrangThaiSau = "ChoXacNhan",
+            GhiChu = $"Tạo kỳ {req.TuNgay:yyyy-MM-dd} đến {req.DenNgay:yyyy-MM-dd}, gồm {doiSoat.TongSoDon} đơn.",
+            ThoiGian = VietnamBusinessTime.Now(_timeProvider)
+        });
 
         try
         {
@@ -372,7 +436,7 @@ public class AdminDoiSoatController : ControllerBase
 
         await transaction.CommitAsync();
 
-        await Task.WhenAll(
+        await NotifySafelyAsync(
             _realtime.GuiDuLieuThayDoiAsync(
                 nhaHang.MaTaiKhoan,
                 new[] { "doiSoat" },
@@ -393,12 +457,12 @@ public class AdminDoiSoatController : ControllerBase
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        var idem = await IdempotencyStore.CheckAsync(_context, Request, maAdmin, req);
-        if (idem.Result != null) return idem.Result;
-
         // Lock row DoiSoat
         var dsList = await _context.Doisoatnhahangs.FromSqlInterpolated($"SELECT * FROM doisoatnhahang WHERE MaDoiSoat = {id} FOR UPDATE").ToListAsync();
         var doiSoat = dsList.SingleOrDefault();
+
+        var idem = await IdempotencyStore.CheckAsync(_context, Request, maAdmin, req);
+        if (idem.Result != null) return idem.Result;
 
         if (doiSoat == null || doiSoat.TrangThai != "DaXacNhan") 
             return BadRequest(new { message = "Kỳ đối soát không tồn tại hoặc chưa được nhà hàng xác nhận." });
@@ -457,9 +521,31 @@ public class AdminDoiSoatController : ControllerBase
         }
 
         doiSoat.TrangThai = "DaThanhToan";
-        doiSoat.NgayThanhToan = DateTime.Now;
+        doiSoat.NgayThanhToan = VietnamBusinessTime.Now(_timeProvider);
         doiSoat.MaGiaoDichDoiSoat = maGiaoDich!;
         doiSoat.MaTaiKhoanDuyet = maAdmin;
+
+        var huongThanhToan = khongPhatSinh
+            ? "Không phát sinh công nợ."
+            : soTienCanDoiSoat > 0
+                ? $"Hệ thống ghi nhận đã trả nhà hàng {soTienCanDoiSoat:0} VND bằng {hinhThuc}."
+                : $"Hệ thống ghi nhận nhà hàng đã trả lại {Math.Abs(soTienCanDoiSoat):0} VND bằng {hinhThuc}.";
+
+        var auditNote = string.IsNullOrWhiteSpace(req.GhiChu)
+            ? huongThanhToan
+            : $"{huongThanhToan} {req.GhiChu.Trim()}";
+
+        _context.Lichsudoisoats.Add(new Lichsudoisoat
+        {
+            MaDoiSoat = id,
+            MaTaiKhoan = maAdmin,
+            HanhDong = "ThanhToan",
+            TrangThaiTruoc = "DaXacNhan",
+            TrangThaiSau = "DaThanhToan",
+            MaGiaoDich = maGiaoDich,
+            GhiChu = auditNote.Length <= 500 ? auditNote : auditNote[..500],
+            ThoiGian = VietnamBusinessTime.Now(_timeProvider)
+        });
         
         try
         {
@@ -480,7 +566,9 @@ public class AdminDoiSoatController : ControllerBase
                 ? "Đã chốt kỳ đối soát không phát sinh công nợ."
                 : congVaoVi
                 ? "Đã cộng tiền đối soát vào ví nhà hàng."
-                : "Đã cập nhật trạng thái thanh toán thành công."
+                : soTienCanDoiSoat > 0
+                    ? "Đã ghi nhận hệ thống thanh toán cho nhà hàng (mô phỏng)."
+                    : "Đã ghi nhận nhà hàng thanh toán lại cho hệ thống (mô phỏng)."
         });
 
         await transaction.CommitAsync();
@@ -489,7 +577,7 @@ public class AdminDoiSoatController : ControllerBase
             ? new[] { "doiSoat", "vi" }
             : new[] { "doiSoat" };
 
-        await Task.WhenAll(
+        await NotifySafelyAsync(
             _realtime.GuiDuLieuThayDoiAsync(
                 taiKhoanNhaHang.Value,
                 phamViNhaHang,
@@ -498,6 +586,71 @@ public class AdminDoiSoatController : ControllerBase
                 "Admin",
                 new[] { "doiSoat", "taiChinh" },
                 new { doiSoat.MaDoiSoat, hanhDong = "ThanhToan" }));
+
+        return result;
+    }
+
+    [HttpPut("{id:int}/giai-quyet-tranh-chap")]
+    public async Task<IActionResult> GiaiQuyetTranhChap(int id, [FromBody] GiaiQuyetTranhChapRequest req)
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(claim, out var maAdmin)) return Unauthorized();
+
+        var ghiChu = req.GhiChu?.Trim();
+        if (string.IsNullOrWhiteSpace(ghiChu))
+            return BadRequest(new { message = "Ghi chú giải quyết tranh chấp không được để trống." });
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        var rows = await _context.Doisoatnhahangs
+            .FromSqlInterpolated($"SELECT * FROM doisoatnhahang WHERE MaDoiSoat = {id} FOR UPDATE")
+            .ToListAsync();
+        var doiSoat = rows.SingleOrDefault();
+
+        var idem = await IdempotencyStore.CheckAsync(_context, Request, maAdmin, req);
+        if (idem.Result != null) return idem.Result;
+
+        if (doiSoat == null || doiSoat.TrangThai != "TranhChap")
+            return Conflict(new { message = "Kỳ đối soát không ở trạng thái tranh chấp." });
+
+        var taiKhoanNhaHang = await _context.Nhahangs
+            .Where(x => x.MaNhaHang == doiSoat.MaNhaHang)
+            .Select(x => (int?)x.MaTaiKhoan)
+            .SingleOrDefaultAsync();
+        if (!taiKhoanNhaHang.HasValue)
+            return Conflict(new { message = "Không tìm thấy tài khoản của nhà hàng." });
+
+        doiSoat.TrangThai = "DaXacNhan";
+        doiSoat.NgayXacNhan = VietnamBusinessTime.Now(_timeProvider);
+        doiSoat.MaTaiKhoanDuyet = maAdmin;
+
+        _context.Lichsudoisoats.Add(new Lichsudoisoat
+        {
+            MaDoiSoat = id,
+            MaTaiKhoan = maAdmin,
+            HanhDong = "GiaiQuyetTranhChap",
+            TrangThaiTruoc = "TranhChap",
+            TrangThaiSau = "DaXacNhan",
+            GhiChu = ghiChu,
+            ThoiGian = VietnamBusinessTime.Now(_timeProvider)
+        });
+
+        await _context.SaveChangesAsync();
+        var result = await IdempotencyStore.SaveSuccessAsync(_context, idem, new
+        {
+            message = "Đã giải quyết tranh chấp. Kỳ đối soát có thể được ghi nhận thanh toán."
+        });
+        await transaction.CommitAsync();
+
+        await NotifySafelyAsync(
+            _realtime.GuiDuLieuThayDoiAsync(
+                taiKhoanNhaHang.Value,
+                new[] { "doiSoat" },
+                new { doiSoat.MaDoiSoat, hanhDong = "GiaiQuyetTranhChap" }),
+            _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "doiSoat", "taiChinh" },
+                new { doiSoat.MaDoiSoat, hanhDong = "GiaiQuyetTranhChap" }));
 
         return result;
     }
@@ -510,13 +663,28 @@ public class QuanDoiSoatController : ControllerBase
 {
     private readonly DatMonAnOnlineContext _context;
     private readonly IRealtimeNotificationService _realtime;
+    private readonly ILogger<QuanDoiSoatController> _logger;
 
     public QuanDoiSoatController(
         DatMonAnOnlineContext context,
-        IRealtimeNotificationService realtime)
+        IRealtimeNotificationService realtime,
+        ILogger<QuanDoiSoatController> logger)
     {
         _context = context;
         _realtime = realtime;
+        _logger = logger;
+    }
+
+    private async Task NotifySafelyAsync(params Task[] notifications)
+    {
+        try
+        {
+            await Task.WhenAll(notifications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể phát realtime cho thay đổi đối soát đã commit.");
+        }
     }
 
     private async Task<int?> GetMaNhaHang()
@@ -546,6 +714,7 @@ public class QuanDoiSoatController : ControllerBase
                 x.TongGiamGiaHeThong,
                 x.TongPhiShip,
                 x.TongPhiNenTang,
+                x.TongTienHoan,
                 x.TongTienNhaHangNhan,
                 x.TongTienNhaHangDaThu,
                 x.SoTienCanDoiSoat,
@@ -585,6 +754,22 @@ public class QuanDoiSoatController : ControllerBase
                 x.NgayTao,
                 x.NgayXacNhan,
                 x.NgayThanhToan,
+                LichSu = x.Lichsudoisoats
+                    .OrderByDescending(ls => ls.ThoiGian)
+                    .ThenByDescending(ls => ls.MaLichSuDoiSoat)
+                    .Select(ls => new
+                    {
+                        ls.MaLichSuDoiSoat,
+                        ls.HanhDong,
+                        ls.TrangThaiTruoc,
+                        ls.TrangThaiSau,
+                        ls.MaGiaoDich,
+                        ls.GhiChu,
+                        ls.ThoiGian,
+                        ls.MaTaiKhoan,
+                        VaiTroNguoiThucHien = ls.MaTaiKhoanNavigation.MaRoleNavigation.TenRole
+                    })
+                    .ToList(),
                 ChiTiet = x.Chitietdoisoats
                     .OrderBy(ct => ct.MaChiTietDoiSoat)
                     .Select(ct => new
@@ -637,24 +822,35 @@ public class QuanDoiSoatController : ControllerBase
         var maNhaHang = await GetMaNhaHang();
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        var idem = await IdempotencyStore.CheckAsync(_context, Request, maTaiKhoan, new { id });
-        if (idem.Result != null) return idem.Result;
 
         var dsList = await _context.Doisoatnhahangs.FromSqlInterpolated($"SELECT * FROM doisoatnhahang WHERE MaDoiSoat = {id} AND MaNhaHang = {maNhaHang} FOR UPDATE").ToListAsync();
         var doiSoat = dsList.SingleOrDefault();
+
+        var idem = await IdempotencyStore.CheckAsync(_context, Request, maTaiKhoan, new { id });
+        if (idem.Result != null) return idem.Result;
 
         if (doiSoat == null || doiSoat.TrangThai != "ChoXacNhan") 
             return BadRequest(new { message = "Phiếu không hợp lệ hoặc đã được xác nhận." });
 
         doiSoat.TrangThai = "DaXacNhan";
-        doiSoat.NgayXacNhan = DateTime.Now;
+        doiSoat.NgayXacNhan = VietnamBusinessTime.Now();
+
+        _context.Lichsudoisoats.Add(new Lichsudoisoat
+        {
+            MaDoiSoat = id,
+            MaTaiKhoan = maTaiKhoan,
+            HanhDong = "XacNhan",
+            TrangThaiTruoc = "ChoXacNhan",
+            TrangThaiSau = "DaXacNhan",
+            GhiChu = "Nhà hàng xác nhận số liệu đối soát.",
+            ThoiGian = VietnamBusinessTime.Now()
+        });
         await _context.SaveChangesAsync();
 
         var result = await IdempotencyStore.SaveSuccessAsync(_context, idem, new { message = "Đã xác nhận số liệu đối soát." });
         await transaction.CommitAsync();
 
-        await Task.WhenAll(
+        await NotifySafelyAsync(
             _realtime.GuiDuLieuThayDoiAsync(
                 maTaiKhoan,
                 new[] { "doiSoat" },
@@ -663,6 +859,79 @@ public class QuanDoiSoatController : ControllerBase
                 "Admin",
                 new[] { "doiSoat", "taiChinh" },
                 new { doiSoat.MaDoiSoat, hanhDong = "XacNhan" }));
+
+        return result;
+    }
+
+    public class MoTranhChapRequest
+    {
+        [Required, MaxLength(500)]
+        public string LyDo { get; set; } = null!;
+    }
+
+    [HttpPut("{id:int}/tranh-chap")]
+    public async Task<IActionResult> MoTranhChap(int id, [FromBody] MoTranhChapRequest req)
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(claim, out var maTaiKhoan)) return Unauthorized();
+
+        var lyDo = req.LyDo?.Trim();
+        if (string.IsNullOrWhiteSpace(lyDo))
+            return BadRequest(new { message = "Lý do tranh chấp không được để trống." });
+
+        var maNhaHang = await GetMaNhaHang();
+        if (!maNhaHang.HasValue) return Unauthorized();
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        var rows = await _context.Doisoatnhahangs
+            .FromSqlInterpolated($"SELECT * FROM doisoatnhahang WHERE MaDoiSoat = {id} AND MaNhaHang = {maNhaHang.Value} FOR UPDATE")
+            .ToListAsync();
+        var doiSoat = rows.SingleOrDefault();
+
+        var idem = await IdempotencyStore.CheckAsync(_context, Request, maTaiKhoan, req);
+        if (idem.Result != null) return idem.Result;
+
+        if (doiSoat == null ||
+            (doiSoat.TrangThai != "ChoXacNhan" && doiSoat.TrangThai != "DaXacNhan"))
+        {
+            return Conflict(new
+            {
+                message = "Chỉ có thể mở tranh chấp trước khi kỳ đối soát được ghi nhận thanh toán."
+            });
+        }
+
+        var trangThaiTruoc = doiSoat.TrangThai;
+        doiSoat.TrangThai = "TranhChap";
+        doiSoat.NgayXacNhan = null;
+
+        _context.Lichsudoisoats.Add(new Lichsudoisoat
+        {
+            MaDoiSoat = id,
+            MaTaiKhoan = maTaiKhoan,
+            HanhDong = "MoTranhChap",
+            TrangThaiTruoc = trangThaiTruoc,
+            TrangThaiSau = "TranhChap",
+            GhiChu = lyDo,
+            ThoiGian = VietnamBusinessTime.Now()
+        });
+
+        await _context.SaveChangesAsync();
+        var result = await IdempotencyStore.SaveSuccessAsync(_context, idem, new
+        {
+            message = "Đã mở tranh chấp đối soát. Admin cần giải quyết trước khi thanh toán."
+        });
+        await transaction.CommitAsync();
+
+        await NotifySafelyAsync(
+            _realtime.GuiDuLieuThayDoiAsync(
+                maTaiKhoan,
+                new[] { "doiSoat" },
+                new { doiSoat.MaDoiSoat, hanhDong = "MoTranhChap" }),
+            _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "doiSoat", "taiChinh" },
+                new { doiSoat.MaDoiSoat, hanhDong = "MoTranhChap" }));
 
         return result;
     }

@@ -1,4 +1,6 @@
 import "./App.css";
+import { lazy, Suspense } from "react";
+import RouteLoadBoundary from "./components/RouteLoadBoundary";
 
 import {
     BrowserRouter,
@@ -11,47 +13,43 @@ import Header from "./components/Header";
 import LatestCartBar from "./components/LatestCartBar";
 
 import HomeEntry from "./pages/HomeEntry";
-import RestaurantDetail from "./pages/RestaurantDetail";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import AddressPage from "./pages/Address";
-import VoucherWallet from "./pages/VoucherWallet";
-import WalletHistory from "./pages/WalletHistory";
-
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-
-import Notifications from "./pages/Notifications";
-import Promotions from "./pages/Promotions";
-
-import AdminAccounts from "./pages/AdminAccounts";
-import AdminLayout from "./pages/AdminLayout";
-import AdminHome from "./pages/AdminHome";
-import AdminRestaurants from "./pages/AdminRestaurants";
-import AdminPromotions from "./pages/AdminPromotions";
-import AdminRestaurantContract from "./pages/AdminRestaurantContract";
-import AdminContracts from "./pages/AdminContracts";
-import AdminDoiSoat from "./pages/AdminDoiSoat";
-import AdminFinance from "./pages/AdminFinance";
-
-import QuanLayout from "./pages/RestaurantLayout";
-import QuanHome from "./pages/RestaurantHome";
-import RestaurantDoiSoat from "./pages/RestaurantDoiSoat";
-import RestaurantWallet from "./pages/RestaurantWallet";
-import QuanRestaurantInfo from "./pages/RestaurantInfo";
-import QuanRestaurantStatus from "./pages/RestaurantStatus";
-import RestaurantOrders from "./pages/RestaurantOrders";
-import RestaurantOrderDetail from "./pages/RestaurantOrderDetail";
-import RestaurantCategory from "./pages/RestaurantCategory";
-import RestaurantMenu from "./pages/RestaurantMenu";
-import RestaurantTopping from "./pages/RestaurantTopping";
-import Restaurants from "./pages/Restaurants";
-import RegisterRestaurant from "./pages/RegisterRestaurant";
-import RestaurantLegalProfile from "./pages/RestaurantLegalProfile";
-import RestaurantContract from "./pages/RestaurantContract";
+const RestaurantDetail = lazy(() => import("./pages/RestaurantDetail"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Profile = lazy(() => import("./pages/Profile"));
+const AddressPage = lazy(() => import("./pages/Address"));
+const VoucherWallet = lazy(() => import("./pages/VoucherWallet"));
+const WalletHistory = lazy(() => import("./pages/WalletHistory"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Promotions = lazy(() => import("./pages/Promotions"));
+const AdminAccounts = lazy(() => import("./pages/AdminAccounts"));
+const AdminLayout = lazy(() => import("./pages/AdminLayout"));
+const AdminHome = lazy(() => import("./pages/AdminHome"));
+const AdminRestaurants = lazy(() => import("./pages/AdminRestaurants"));
+const AdminPromotions = lazy(() => import("./pages/AdminPromotions"));
+const AdminRestaurantContract = lazy(() => import("./pages/AdminRestaurantContract"));
+const AdminContracts = lazy(() => import("./pages/AdminContracts"));
+const AdminDoiSoat = lazy(() => import("./pages/AdminDoiSoat"));
+const AdminFinance = lazy(() => import("./pages/AdminFinance"));
+const QuanLayout = lazy(() => import("./pages/RestaurantLayout"));
+const QuanHome = lazy(() => import("./pages/RestaurantHome"));
+const RestaurantDoiSoat = lazy(() => import("./pages/RestaurantDoiSoat"));
+const RestaurantWallet = lazy(() => import("./pages/RestaurantWallet"));
+const QuanRestaurantInfo = lazy(() => import("./pages/RestaurantInfo"));
+const QuanRestaurantStatus = lazy(() => import("./pages/RestaurantStatus"));
+const RestaurantOrders = lazy(() => import("./pages/RestaurantOrders"));
+const RestaurantOrderDetail = lazy(() => import("./pages/RestaurantOrderDetail"));
+const RestaurantCategory = lazy(() => import("./pages/RestaurantCategory"));
+const RestaurantMenu = lazy(() => import("./pages/RestaurantMenu"));
+const RestaurantTopping = lazy(() => import("./pages/RestaurantTopping"));
+const Restaurants = lazy(() => import("./pages/Restaurants"));
+const RegisterRestaurant = lazy(() => import("./pages/RegisterRestaurant"));
+const RestaurantLegalProfile = lazy(() => import("./pages/RestaurantLegalProfile"));
+const RestaurantContract = lazy(() => import("./pages/RestaurantContract"));
 
 
 import RealtimeBridge from "./components/RealtimeBridge";
@@ -101,6 +99,8 @@ function AppContent() {
 
         {!isAdminArea && !isQuanArea && <Header />}
 
+            <RouteLoadBoundary key={location.pathname}>
+            <Suspense fallback={<p className="admin-access-message" role="status">Đang tải trang...</p>}>
             <Routes>
 
                 {/* =========================
@@ -304,6 +304,8 @@ function AppContent() {
                 <Route path="*" element={<NotFound />} />
 
             </Routes>
+            </Suspense>
+            </RouteLoadBoundary>
             {showLatestCart && <LatestCartBar />}
             {!isAdminArea && !isQuanArea && <Footer />}
         </div>

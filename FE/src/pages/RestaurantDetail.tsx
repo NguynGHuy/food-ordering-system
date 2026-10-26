@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { useEffect, useCallback, useRef, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -546,7 +547,7 @@ function RestaurantDetail() {
         <section className="restaurant-detail-hero">
           <div className="restaurant-detail-image">
             {restaurant.anhBia ? (
-              <img src={restaurant.anhBia} alt={restaurant.tenNhaHang} />
+              <MediaImage kind="restaurant" src={restaurant.anhBia} alt={restaurant.tenNhaHang} />
             ) : (
               <div className="restaurant-detail-placeholder">
                 <UtensilsCrossed size={64} strokeWidth={1.5} />
@@ -826,7 +827,7 @@ function RestaurantDetail() {
                   <article className="customer-food-card">
                     <div className="customer-food-image">
                       {item.hinhAnh ? (
-                        <img
+                        <MediaImage
                           src={item.hinhAnh}
                           alt={item.tenMonAn}
                           loading="lazy"
@@ -951,6 +952,11 @@ function RestaurantDetail() {
             </button>
 
             <div className="food-option-header">
+              <MediaImage
+                src={selectedFood.hinhAnh}
+                alt={selectedFood.tenMonAn}
+                className="food-option-image"
+              />
               <span className="food-option-eyebrow">Tùy chọn món</span>
 
               <h2 id="food-option-title">{selectedFood.tenMonAn}</h2>

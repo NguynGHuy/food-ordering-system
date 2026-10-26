@@ -328,6 +328,34 @@ function AdminRestaurantContract() {
                     </section>
 
                     <section className="admin-contract-section">
+                        <h2>Lịch sử hợp đồng</h2>
+                        {data.lichSuHopDong.length === 0 ? (
+                            <p>Chưa có lịch sử hợp đồng.</p>
+                        ) : (
+                            <dl className="admin-contract-info">
+                                {data.lichSuHopDong.map((item) => {
+                                    const thamDinh = data.lichSuThamDinh.find(
+                                        (reviewItem) => reviewItem.maHopDong === item.maHopDong
+                                    );
+
+                                    return (
+                                        <div key={item.maHopDong}>
+                                            <dt>{item.soHopDong}</dt>
+                                            <dd>
+                                                {STATUS[item.trangThai] ?? item.trangThai}
+                                                {` · ${formatDate(item.ngayBatDau)}–${formatDate(item.ngayKetThuc)}`}
+                                                {thamDinh
+                                                    ? ` · ${thamDinh.ketQua === "DaDuyet" ? "Đã duyệt" : "Từ chối"} bởi Admin #${thamDinh.maTaiKhoanAdmin}`
+                                                    : ""}
+                                            </dd>
+                                        </div>
+                                    );
+                                })}
+                            </dl>
+                        )}
+                    </section>
+
+                    <section className="admin-contract-section">
                         <h2>Giấy tờ đính kèm</h2>
                         {fileError && <p className="auth-error" role="alert">{fileError}</p>}
 

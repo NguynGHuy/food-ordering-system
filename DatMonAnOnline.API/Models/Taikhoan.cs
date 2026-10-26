@@ -35,6 +35,8 @@ public partial class Taikhoan
 
     public virtual ICollection<Lichsutrangthaidonhang> Lichsutrangthaidonhangs { get; set; } = new List<Lichsutrangthaidonhang>();
 
+    public virtual ICollection<Lichsudoisoat> Lichsudoisoats { get; set; } = new List<Lichsudoisoat>();
+
     public virtual Role MaRoleNavigation { get; set; } = null!;
 
     public virtual Nhahang? Nhahang { get; set; }
