@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -51,6 +51,7 @@ function AddressPage() {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [form, setForm] = useState<AddressRequest>(EMPTY_FORM);
   const formRef = useRef<HTMLElement | null>(null);
+  const formScrollFrame = useRef<number | null>(null);
 
   const loadAddresses = useCallback(async (showLoading = false) => {
     try {
@@ -81,12 +82,25 @@ function AddressPage() {
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
-  const scrollToForm = () => {
-    window.setTimeout(
-      () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
-      50,
-    );
-  };
+  const cancelFormScroll = useCallback(() => {
+    if (formScrollFrame.current !== null) {
+      window.cancelAnimationFrame(formScrollFrame.current);
+      formScrollFrame.current = null;
+    }
+  }, []);
+
+  useEffect(() => cancelFormScroll, [cancelFormScroll]);
+
+  const scrollToForm = useCallback(() => {
+    cancelFormScroll();
+    formScrollFrame.current = window.requestAnimationFrame(() => {
+      formScrollFrame.current = null;
+      // Wait for React to mount the form, without a long animated page scroll.
+      formRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+      // Focus the section without opening the mobile keyboard or scrolling again.
+      formRef.current?.focus({ preventScroll: true });
+    });
+  }, [cancelFormScroll]);
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -98,6 +112,7 @@ function AddressPage() {
 
   const closeForm = () => {
     if (saving) return;
+    cancelFormScroll();
     setShowForm(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -117,12 +132,13 @@ function AddressPage() {
     }));
   };
 
-  const handleSetDefault = async (id: number) => {
+  const handleSetDefault = useCallback(async (id: number) => {
     try {
       setBusyAction(`default-${id}`);
       setError("");
       await setDefaultAddress(id);
       await loadAddresses();
+      window.dispatchEvent(new Event("address-updated"));
       setNotice("Đã đặt địa chỉ giao hàng mặc định.");
     } catch (actionError) {
       setError(
@@ -133,9 +149,9 @@ function AddressPage() {
     } finally {
       setBusyAction(null);
     }
-  };
+  }, [loadAddresses]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = useCallback(async (id: number) => {
     if (!window.confirm("Bạn có chắc muốn xóa địa chỉ này không?")) return;
 
     try {
@@ -143,6 +159,7 @@ function AddressPage() {
       setError("");
       await deleteAddress(id);
       await loadAddresses();
+      window.dispatchEvent(new Event("address-updated"));
       setNotice("Địa chỉ đã được xóa thành công.");
     } catch (actionError) {
       setError(
@@ -153,9 +170,9 @@ function AddressPage() {
     } finally {
       setBusyAction(null);
     }
-  };
+  }, [loadAddresses]);
 
-  const handleEdit = (address: Address) => {
+  const handleEdit = useCallback((address: Address) => {
     setEditingId(address.maDiaChi);
     setForm({
       tenNguoiNhan: address.tenNguoiNhan,
@@ -167,7 +184,7 @@ function AddressPage() {
     setShowForm(true);
     setError("");
     scrollToForm();
-  };
+  }, [scrollToForm]);
 
   const handleSave = async () => {
     setError("");
@@ -207,6 +224,7 @@ function AddressPage() {
       setEditingId(null);
       setForm(EMPTY_FORM);
       await loadAddresses();
+      window.dispatchEvent(new Event("address-updated"));
       setNotice(
         isEditing
           ? "Địa chỉ đã được cập nhật thành công."
@@ -224,6 +242,46 @@ function AddressPage() {
       setSaving(false);
     }
   };
+
+  // Editing a field must not rerender every saved address and its icons.
+  const addressCards = useMemo(() => addresses.map((address, index) => (
+    <ScrollReveal
+      key={address.maDiaChi}
+      className="address-card-reveal"
+      delay={(index % 4) * 70}
+    >
+      <article className={`address-card${address.macDinh ? " is-default" : ""}`}>
+        <div className="address-card-accent" aria-hidden="true" />
+        <div className="address-card-main">
+          <span className="address-card-marker"><MapPin size={22} /></span>
+          <div className="address-card-content">
+            <div className="address-card-header">
+              <div>
+                <strong>{address.tenNguoiNhan}</strong>
+                <span className="address-phone"><Phone size={14} /> {address.soDienThoaiNhan}</span>
+              </div>
+              {address.macDinh && <span className="default-badge"><Star size={13} fill="currentColor" /> Mặc định</span>}
+            </div>
+            <p className="address-text">{address.diaChiCuThe}</p>
+            {address.ghiChu && <p className="address-note"><MessageSquareText size={14} /> {address.ghiChu}</p>}
+          </div>
+        </div>
+
+        <footer className="address-actions">
+          {!address.macDinh && (
+            <button type="button" className="address-action-default" onClick={() => void handleSetDefault(address.maDiaChi)} disabled={busyAction !== null}>
+              {busyAction === `default-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Star size={15} />} Đặt mặc định
+            </button>
+          )}
+          <span className="address-actions-spacer" />
+          <button type="button" onClick={() => handleEdit(address)} disabled={busyAction !== null}><Pencil size={15} /> Sửa</button>
+          <button type="button" className="address-action-delete" onClick={() => void handleDelete(address.maDiaChi)} disabled={busyAction !== null}>
+            {busyAction === `delete-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Trash2 size={15} />} Xóa
+          </button>
+        </footer>
+      </article>
+    </ScrollReveal>
+  )), [addresses, busyAction, handleDelete, handleEdit, handleSetDefault]);
 
   return (
     <main className="address-page address-page-polished">
@@ -277,7 +335,7 @@ function AddressPage() {
         </div>
 
         {showForm && (
-          <section ref={formRef} className="address-form" aria-labelledby="address-form-title">
+          <section ref={formRef} className="address-form" tabIndex={-1} aria-labelledby="address-form-title">
             <div className="address-form-heading">
               <span><Home size={21} /></span>
               <div>
@@ -362,44 +420,7 @@ function AddressPage() {
             </div>
           ) : (
             <div className="address-list">
-              {addresses.map((address, index) => (
-                <ScrollReveal
-                  key={address.maDiaChi}
-                  className="address-card-reveal"
-                  delay={(index % 4) * 70}
-                >
-                  <article className={`address-card${address.macDinh ? " is-default" : ""}`}>
-                    <div className="address-card-accent" aria-hidden="true" />
-                    <div className="address-card-main">
-                      <span className="address-card-marker"><MapPin size={22} /></span>
-                      <div className="address-card-content">
-                        <div className="address-card-header">
-                          <div>
-                            <strong>{address.tenNguoiNhan}</strong>
-                            <span className="address-phone"><Phone size={14} /> {address.soDienThoaiNhan}</span>
-                          </div>
-                          {address.macDinh && <span className="default-badge"><Star size={13} fill="currentColor" /> Mặc định</span>}
-                        </div>
-                        <p className="address-text">{address.diaChiCuThe}</p>
-                        {address.ghiChu && <p className="address-note"><MessageSquareText size={14} /> {address.ghiChu}</p>}
-                      </div>
-                    </div>
-
-                    <footer className="address-actions">
-                      {!address.macDinh && (
-                        <button type="button" className="address-action-default" onClick={() => void handleSetDefault(address.maDiaChi)} disabled={busyAction !== null}>
-                          {busyAction === `default-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Star size={15} />} Đặt mặc định
-                        </button>
-                      )}
-                      <span className="address-actions-spacer" />
-                      <button type="button" onClick={() => handleEdit(address)} disabled={busyAction !== null}><Pencil size={15} /> Sửa</button>
-                      <button type="button" className="address-action-delete" onClick={() => void handleDelete(address.maDiaChi)} disabled={busyAction !== null}>
-                        {busyAction === `delete-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Trash2 size={15} />} Xóa
-                      </button>
-                    </footer>
-                  </article>
-                </ScrollReveal>
-              ))}
+              {addressCards}
             </div>
           )}
         </section>

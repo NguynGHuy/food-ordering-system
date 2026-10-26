@@ -800,21 +800,27 @@ function RestaurantDetail() {
           ) : monAns.length === 0 ? (
             <div className="customer-menu-state">
               <div className="customer-menu-empty-icon">
-                <UtensilsCrossed size={28} />
+                {searchTerm ? <SearchX size={30} /> : <UtensilsCrossed size={30} />}
               </div>
 
-              <h3>Nhà hàng chưa có món ăn</h3>
-              <p>Thực đơn đang được cập nhật.</p>
-            </div>
-          ) : monAns.length === 0 ? (
-            <div className="customer-menu-state">
-              <div className="customer-menu-empty-icon">
-                <SearchX size={28} />
-              </div>
-
-              <h3>Không tìm thấy món phù hợp</h3>
-
-              <p>Hãy thử từ khóa hoặc danh mục khác.</p>
+              <h3>{searchTerm ? "Không tìm thấy món phù hợp" : "Nhà hàng chưa có món ăn"}</h3>
+              <p>
+                {searchTerm
+                  ? `Không tìm thấy món nào với từ khóa "${searchTerm}".`
+                  : "Thực đơn của quán đang được cập nhật."}
+              </p>
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="customer-menu-reset-search"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setMenuPageNumber(1);
+                  }}
+                >
+                  Xóa tìm kiếm & xem tất cả
+                </button>
+              )}
             </div>
           ) : (
             <div className="customer-menu-grid">

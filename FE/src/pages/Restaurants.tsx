@@ -1,6 +1,6 @@
 import MediaImage from "../components/MediaImage";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getRestaurants } from "../services/restaurantService";
 import type { Restaurant } from "../services/restaurantService";
 import ScrollReveal from "../components/ScrollReveal";
@@ -23,6 +23,7 @@ import {
 function isRestaurantOpen(restaurant: Restaurant): boolean {
   return restaurant.dangMoCua;
 }
+
 function getRestaurantStatusLabel(restaurant: Restaurant): string {
   if (restaurant.dangMoCua) {
     return "Đang mở";
@@ -38,18 +39,16 @@ function getRestaurantStatusLabel(restaurant: Restaurant): string {
 
   return "Đã đóng";
 }
+
 function Restaurants() {
   const PAGE_SIZE = 12;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("search") || "";
+  const filter = (searchParams.get("filter") as "all" | "open" | "rating") || "all";
+
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  const [search, setSearch] = useState("");
-
-  const [filter, setFilter] = useState<"all" | "open" | "rating">("all");
-
   const [pageNumber, setPageNumber] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -93,110 +92,128 @@ function Restaurants() {
     };
   }, [filter, pageNumber, search]);
 
+  const handleSearchChange = (value: string) => {
+    setPageNumber(1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value.trim()) {
+          next.set("search", value.trim());
+        } else {
+          next.delete("search");
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const handleFilterChange = (newFilter: "all" | "open" | "rating") => {
+    setPageNumber(1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (newFilter !== "all") {
+          next.set("filter", newFilter);
+        } else {
+          next.delete("filter");
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const handleResetFilters = () => {
+    setPageNumber(1);
+    setSearchParams({}, { replace: true });
+  };
+
   return (
     <main className="restaurants-page">
-      {/* HERO */}
+      {/* HERO SECTION */}
       <section className="restaurants-hero">
         <div className="restaurants-hero-content">
           <div className="restaurants-eyebrow">
-            <Store size={16} strokeWidth={2} />
-
-            <span>Khám phá nhà hàng</span>
+            <Store size={16} strokeWidth={2.2} />
+            <span>Khám phá ẩm thực</span>
           </div>
 
           <h1>Hôm nay bạn muốn ăn gì?</h1>
 
           <p>
-            Tìm kiếm nhà hàng yêu thích theo tên hoặc địa chỉ và bắt đầu đặt
-            món.
+            Tìm kiếm nhà hàng yêu thích theo tên hoặc địa chỉ để bắt đầu thưởng thức món ngon.
           </p>
 
           <div className="restaurants-search">
             <Search
-              size={20}
-              strokeWidth={2}
+              size={19}
+              strokeWidth={2.2}
               className="restaurants-search-icon"
             />
 
             <input
               type="text"
-              placeholder="Tìm tên nhà hàng hoặc địa chỉ..."
+              placeholder="Tìm tên quán ăn, địa chỉ..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              aria-label="Tìm kiếm nhà hàng"
             />
 
             {search && (
               <button
                 type="button"
                 className="restaurants-search-clear"
-                onClick={() => setSearch("")}
+                onClick={() => handleSearchChange("")}
                 aria-label="Xóa từ khóa tìm kiếm"
               >
-                <X size={17} strokeWidth={2} />
+                <X size={16} strokeWidth={2.2} />
               </button>
             )}
           </div>
         </div>
       </section>
 
-      {/* CONTENT */}
+      {/* CONTENT LISTING */}
       <section className="restaurants-content">
-        <ScrollReveal className="restaurants-toolbar-reveal" delay={80}>
+        <ScrollReveal className="restaurants-toolbar-reveal" delay={60}>
           <div className="restaurants-toolbar">
-            <div>
-              <h2>Nhà hàng dành cho bạn</h2>
-
+            <div className="restaurants-toolbar-left">
+              <h2>Danh sách nhà hàng</h2>
               {!loading && !error && (
                 <p>
-                  {totalItems} nhà hàng
-                  {search && <> phù hợp với "{search}"</>}
+                  Có <strong>{totalItems}</strong> nhà hàng
+                  {search && <> phù hợp với từ khóa "<strong>{search}</strong>"</>}
                 </p>
               )}
             </div>
 
+            {/* FILTERS */}
             <div className="restaurant-filters">
               <button
                 type="button"
-                className={`restaurant-filter ${
-                  filter === "all" ? "active" : ""
-                }`}
-                onClick={() => {
-                  setFilter("all");
-                  setPageNumber(1);
-                }}
+                className={`restaurant-filter ${filter === "all" ? "active" : ""}`}
+                onClick={() => handleFilterChange("all")}
               >
-                <SlidersHorizontal size={15} strokeWidth={2} />
-
+                <SlidersHorizontal size={14} strokeWidth={2} />
                 <span>Tất cả</span>
               </button>
 
               <button
                 type="button"
-                className={`restaurant-filter ${
-                  filter === "open" ? "active" : ""
-                }`}
-                onClick={() => {
-                  setFilter("open");
-                  setPageNumber(1);
-                }}
+                className={`restaurant-filter ${filter === "open" ? "active" : ""}`}
+                onClick={() => handleFilterChange("open")}
               >
-                <CircleDot size={15} strokeWidth={2} />
-
+                <CircleDot size={14} strokeWidth={2.2} className="text-emerald-500" />
                 <span>Đang mở</span>
               </button>
 
               <button
                 type="button"
-                className={`restaurant-filter ${
-                  filter === "rating" ? "active" : ""
-                }`}
-                onClick={() => {
-                  setFilter("rating");
-                  setPageNumber(1);
-                }}
+                className={`restaurant-filter ${filter === "rating" ? "active" : ""}`}
+                onClick={() => handleFilterChange("rating")}
               >
-                <Star size={15} strokeWidth={2} />
-
+                <Star size={14} strokeWidth={2} className="text-amber-500" fill="currentColor" />
                 <span>Đánh giá cao</span>
               </button>
             </div>
@@ -204,61 +221,64 @@ function Restaurants() {
         </ScrollReveal>
 
         {loading && (
-          <RestaurantCardSkeleton count={9} className="restaurants-grid" />
+          <RestaurantCardSkeleton count={PAGE_SIZE} className="restaurants-grid" />
         )}
 
-        {/* ERROR */}
+        {/* ERROR STATE */}
         {!loading && error && (
           <div className="restaurants-error">
             <div className="restaurants-error-icon">!</div>
-
-            <h3>Không thể tải nhà hàng</h3>
-
+            <h3>Không thể tải danh sách nhà hàng</h3>
             <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="restaurants-retry-btn"
+            >
+              Thử lại
+            </button>
           </div>
         )}
 
-        {/* EMPTY */}
+        {/* EMPTY STATE */}
         {!loading && !error && restaurants.length === 0 && (
           <div className="restaurants-empty">
             <div className="restaurants-empty-icon">
-              <SearchX size={28} strokeWidth={1.8} />
+              <SearchX size={32} strokeWidth={1.8} />
             </div>
 
-            <h3>Không tìm thấy nhà hàng</h3>
+            <h3>Không tìm thấy nhà hàng nào</h3>
+            <p>
+              {search
+                ? `Không có kết quả nào cho "${search}". Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.`
+                : "Hiện chưa có nhà hàng nào trong hệ thống."}
+            </p>
 
-            <p>Thử tìm kiếm bằng tên nhà hàng hoặc địa chỉ khác.</p>
-
-            {search && (
+            {(search || filter !== "all") && (
               <button
                 type="button"
-                onClick={() => {
-                  setSearch("");
-                  setFilter("all");
-                }}
+                onClick={handleResetFilters}
+                className="restaurants-empty-reset"
               >
-                Xem tất cả nhà hàng
+                Xóa bộ lọc & xem tất cả
               </button>
             )}
           </div>
         )}
 
-        {/* RESTAURANTS */}
+        {/* RESTAURANTS GRID */}
         {!loading && !error && restaurants.length > 0 && (
           <div className="restaurants-grid">
             {restaurants.map((restaurant, index) => {
               const isOpen = isRestaurantOpen(restaurant);
-
               const statusLabel = getRestaurantStatusLabel(restaurant);
-
               const rating = restaurant.danhGiaTrungBinh ?? 0;
-
               const shippingFee = restaurant.phiShipMacDinh ?? 0;
 
               return (
                 <ScrollReveal
                   key={restaurant.maNhaHang}
-                  delay={(index % 4) * 70}
+                  delay={(index % 4) * 60}
                   className="restaurant-reveal-item"
                 >
                   <Link
@@ -266,24 +286,20 @@ function Restaurants() {
                     className="restaurant-modern-card"
                   >
                     {/* IMAGE */}
-
                     <div className="restaurant-card-image">
                       {restaurant.anhBia ? (
-                        <MediaImage kind="restaurant"
+                        <MediaImage
+                          kind="restaurant"
                           src={restaurant.anhBia}
                           alt={restaurant.tenNhaHang}
                         />
                       ) : (
                         <div className="restaurant-card-placeholder">
-                          <ImageIcon size={48} strokeWidth={1.3} />
-
+                          <ImageIcon size={44} strokeWidth={1.4} />
                           <span>Chưa có ảnh</span>
                         </div>
                       )}
-                      <span
-                        className="restaurant-image-shine"
-                        aria-hidden="true"
-                      />
+                      <span className="restaurant-image-shine" aria-hidden="true" />
 
                       <div
                         className={
@@ -293,60 +309,55 @@ function Restaurants() {
                         }
                       >
                         <span className="restaurant-status-dot" />
-
                         {statusLabel}
                       </div>
 
                       <div className="restaurant-rating-badge">
-                        <Star size={15} fill="currentColor" strokeWidth={1.8} />
-
-                        {rating.toFixed(1)}
+                        <Star size={13} fill="currentColor" strokeWidth={1.8} />
+                        {rating > 0 ? rating.toFixed(1) : "Mới"}
                       </div>
                     </div>
 
                     {/* INFO */}
-
                     <div className="restaurant-card-info">
                       <div className="restaurant-card-title-row">
                         <h3>{restaurant.tenNhaHang}</h3>
-
                         <span className="restaurant-arrow">
-                          <ArrowRight size={16} strokeWidth={2} />
+                          <ArrowRight size={15} strokeWidth={2.2} />
                         </span>
                       </div>
 
-                      {restaurant.moTa && (
+                      {restaurant.moTa ? (
                         <p className="restaurant-card-description">
                           {restaurant.moTa}
+                        </p>
+                      ) : (
+                        <p className="restaurant-card-description placeholder">
+                          Nhà hàng đối tác chính thức của Foodie
                         </p>
                       )}
 
                       <div className="restaurant-card-meta">
                         <div className="restaurant-meta-item">
-                          <MapPin size={16} strokeWidth={1.9} />
-
+                          <MapPin size={15} strokeWidth={2} />
                           <span className="restaurant-meta-text">
                             {restaurant.diaChiQuan || "Chưa cập nhật địa chỉ"}
                           </span>
                         </div>
 
                         <div className="restaurant-meta-item">
-                          <Bike size={17} strokeWidth={1.9} />
-
+                          <Bike size={16} strokeWidth={2} />
                           <span>
                             {shippingFee > 0
-                              ? `Phí giao hàng ${shippingFee.toLocaleString(
-                                  "vi-VN",
-                                )}đ`
-                              : "Miễn phí giao hàng"}
+                              ? `Phí giao: ${shippingFee.toLocaleString("vi-VN")}đ`
+                              : "Freeship"}
                           </span>
                         </div>
                       </div>
 
                       <div className="restaurant-card-footer">
                         <span>Xem thực đơn</span>
-
-                        <ArrowRight size={16} strokeWidth={2} />
+                        <ArrowRight size={15} strokeWidth={2.2} />
                       </div>
                     </div>
                   </Link>
@@ -356,6 +367,7 @@ function Restaurants() {
           </div>
         )}
 
+        {/* PAGINATION */}
         {!loading && !error && totalPages > 1 && (
           <Pagination
             pageNumber={pageNumber}
