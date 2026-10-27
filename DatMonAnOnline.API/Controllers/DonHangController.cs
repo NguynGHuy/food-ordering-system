@@ -820,7 +820,7 @@ namespace DatMonAnOnline.API.Controllers
                     .Select(payment => payment.TrangThaiThanhToan)
                     .FirstOrDefault() != "ThatBai"));
 
-            var today = DateTime.Today;
+            var today = VietnamBusinessTime.Now(_timeProvider).Date;
             var tomorrow = today.AddDays(1);
 
             var summaryQuery = query.TagWith("CVBENCH_ORDER_SUMMARY");
@@ -829,7 +829,7 @@ namespace DatMonAnOnline.API.Controllers
                 .Select(d => new
                 {
                     TrangThai = d.MaTrangThaiNavigation!.TenTrangThai,
-                    d.ThoiGianDat,
+                    d.ThoiGianGiaoThucTe,
                     d.ThanhTien
                 })
                 .GroupBy(_ => 1)
@@ -846,14 +846,16 @@ namespace DatMonAnOnline.API.Controllers
                             : 0),
                     completedToday = group.Sum(d =>
                         d.TrangThai == "HoanThanh" &&
-                        d.ThoiGianDat >= today &&
-                        d.ThoiGianDat < tomorrow
+                        d.ThoiGianGiaoThucTe.HasValue &&
+                        d.ThoiGianGiaoThucTe.Value >= today &&
+                        d.ThoiGianGiaoThucTe.Value < tomorrow
                             ? 1
                             : 0),
                     revenueToday = group.Sum(d =>
                         d.TrangThai == "HoanThanh" &&
-                        d.ThoiGianDat >= today &&
-                        d.ThoiGianDat < tomorrow
+                        d.ThoiGianGiaoThucTe.HasValue &&
+                        d.ThoiGianGiaoThucTe.Value >= today &&
+                        d.ThoiGianGiaoThucTe.Value < tomorrow
                             ? d.ThanhTien
                             : 0m)
                 })

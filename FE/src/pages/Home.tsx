@@ -272,58 +272,56 @@ function Home() {
           3. FEATURED RESTAURANTS
       ========================= */}
       <section className="restaurant-section">
-        <ScrollReveal className="section-heading-reveal" delay={60}>
-          <div className="section-header">
-            <div>
-              <div className="section-header-eyebrow">
-                <Flame size={16} className="text-orange-500" />
-                <span>Được yêu thích nhất</span>
-              </div>
-              <h2>Nhà hàng nổi bật</h2>
-              <p>Khám phá các quán ăn có lượt đánh giá cao và thực đơn đa dạng</p>
+        <div className="section-header">
+          <div>
+            <div className="section-header-eyebrow">
+              <Flame size={16} className="text-orange-500" />
+              <span>Được yêu thích nhất</span>
             </div>
-
-            <Link to="/nha-hang" className="view-all-link">
-              <span>Xem tất cả nhà hàng</span>
-              <ArrowRight size={17} strokeWidth={2} />
-            </Link>
+            <h2>Nhà hàng nổi bật</h2>
+            <p>Khám phá các quán ăn có lượt đánh giá cao và thực đơn đa dạng</p>
           </div>
 
-          {/* Quick Filter Tabs */}
-          <div className="home-restaurant-filter-tabs">
-            <button
-              type="button"
-              className={`home-filter-tab ${activeFilter === "all" ? "active" : ""}`}
-              onClick={() => setActiveFilter("all")}
-            >
-              Tất cả ({restaurants.length})
-            </button>
-            <button
-              type="button"
-              className={`home-filter-tab ${activeFilter === "open" ? "active" : ""}`}
-              onClick={() => setActiveFilter("open")}
-            >
-              <span className="status-dot-mini open" />
-              Đang mở cửa
-            </button>
-            <button
-              type="button"
-              className={`home-filter-tab ${activeFilter === "rating" ? "active" : ""}`}
-              onClick={() => setActiveFilter("rating")}
-            >
-              <Star size={13} fill="currentColor" />
-              Đánh giá 4.5+
-            </button>
-            <button
-              type="button"
-              className={`home-filter-tab ${activeFilter === "freeship" ? "active" : ""}`}
-              onClick={() => setActiveFilter("freeship")}
-            >
-              <Bike size={14} />
-              Freeship
-            </button>
-          </div>
-        </ScrollReveal>
+          <Link to="/nha-hang" className="view-all-link">
+            <span>Xem tất cả nhà hàng</span>
+            <ArrowRight size={17} strokeWidth={2} />
+          </Link>
+        </div>
+
+        {/* Quick Filter Tabs */}
+        <div className="home-restaurant-filter-tabs">
+          <button
+            type="button"
+            className={`home-filter-tab ${activeFilter === "all" ? "active" : ""}`}
+            onClick={() => setActiveFilter("all")}
+          >
+            Tất cả ({restaurants.length})
+          </button>
+          <button
+            type="button"
+            className={`home-filter-tab ${activeFilter === "open" ? "active" : ""}`}
+            onClick={() => setActiveFilter("open")}
+          >
+            <span className="status-dot-mini open" />
+            Đang mở cửa
+          </button>
+          <button
+            type="button"
+            className={`home-filter-tab ${activeFilter === "rating" ? "active" : ""}`}
+            onClick={() => setActiveFilter("rating")}
+          >
+            <Star size={13} fill="currentColor" />
+            Đánh giá 4.5+
+          </button>
+          <button
+            type="button"
+            className={`home-filter-tab ${activeFilter === "freeship" ? "active" : ""}`}
+            onClick={() => setActiveFilter("freeship")}
+          >
+            <Bike size={14} />
+            Freeship
+          </button>
+        </div>
 
         {loading && (
           <RestaurantCardSkeleton count={8} className="restaurant-grid" />
@@ -357,7 +355,7 @@ function Home() {
               return (
                 <ScrollReveal
                   key={restaurant.maNhaHang}
-                  delay={(index % 4) * 60}
+                  delay={index < 4 ? index * 75 : (index % 4) * 85}
                   className="restaurant-reveal-item"
                 >
                   <Link
@@ -456,37 +454,45 @@ function Home() {
       ========================= */}
       <section className="home-trust-section">
         <div className="home-trust-grid">
-          <div className="home-trust-card">
-            <div className="home-trust-icon">
-              <UtensilsCrossed size={22} strokeWidth={2.2} />
+          <ScrollReveal delay={0} className="home-trust-reveal-item">
+            <div className="home-trust-card">
+              <div className="home-trust-icon">
+                <UtensilsCrossed size={22} strokeWidth={2.2} />
+              </div>
+              <h4>Thực đơn đa dạng</h4>
+              <p>Hàng trăm món ăn từ quán cơm gia đình đến thương hiệu nổi tiếng.</p>
             </div>
-            <h4>Thực đơn đa dạng</h4>
-            <p>Hàng trăm món ăn từ quán cơm gia đình đến thương hiệu nổi tiếng.</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="home-trust-card">
-            <div className="home-trust-icon">
-              <Bike size={22} strokeWidth={2.2} />
+          <ScrollReveal delay={90} className="home-trust-reveal-item">
+            <div className="home-trust-card">
+              <div className="home-trust-icon">
+                <Bike size={22} strokeWidth={2.2} />
+              </div>
+              <h4>Giao hàng nhanh chóng</h4>
+              <p>Đội ngũ đối tác tận tâm, đảm bảo món ăn nóng hổi, nguyên vẹn.</p>
             </div>
-            <h4>Giao hàng nhanh chóng</h4>
-            <p>Đội ngũ đối tác tận tâm, đảm bảo món ăn nóng hổi, nguyên vẹn.</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="home-trust-card">
-            <div className="home-trust-icon">
-              <Wallet size={22} strokeWidth={2.2} />
+          <ScrollReveal delay={180} className="home-trust-reveal-item">
+            <div className="home-trust-card">
+              <div className="home-trust-icon">
+                <Wallet size={22} strokeWidth={2.2} />
+              </div>
+              <h4>Thanh toán linh hoạt</h4>
+              <p>Tích hợp tiền mặt COD, Ví Foodie tiện lợi và quét mã QR ngân hàng.</p>
             </div>
-            <h4>Thanh toán linh hoạt</h4>
-            <p>Tích hợp tiền mặt COD, Ví Foodie tiện lợi và quét mã QR ngân hàng.</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="home-trust-card">
-            <div className="home-trust-icon">
-              <CheckCircle2 size={22} strokeWidth={2.2} />
+          <ScrollReveal delay={270} className="home-trust-reveal-item">
+            <div className="home-trust-card">
+              <div className="home-trust-icon">
+                <CheckCircle2 size={22} strokeWidth={2.2} />
+              </div>
+              <h4>Chất lượng đảm bảo</h4>
+              <p>Nhà hàng được xác thực thông tin và kiểm duyệt pháp lý minh bạch.</p>
             </div>
-            <h4>Chất lượng đảm bảo</h4>
-            <p>Nhà hàng được xác thực thông tin và kiểm duyệt pháp lý minh bạch.</p>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
     </main>

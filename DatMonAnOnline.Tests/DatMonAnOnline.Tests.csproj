@@ -15,6 +15,5 @@
     </PackageReference>
     <ProjectReference Include="../DatMonAnOnline.API/DatMonAnOnline.API.csproj" />
     <None Include="../DatMonAnOnline.API/Database/Database.sql" Link="Database.sql" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../DatMonAnOnline.API/Database/20261023_AddPromotionPerCustomerLimit.sql" Link="PromotionMigration.sql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

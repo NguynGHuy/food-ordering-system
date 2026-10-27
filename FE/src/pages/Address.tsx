@@ -30,7 +30,6 @@ import {
 } from "../services/addressService";
 
 import type { Address, AddressRequest } from "../services/addressService";
-import ScrollReveal from "../components/ScrollReveal";
 
 const EMPTY_FORM: AddressRequest = {
   tenNguoiNhan: "",
@@ -40,6 +39,174 @@ const EMPTY_FORM: AddressRequest = {
   macDinh: false,
 };
 
+interface AddressFormEditorProps {
+  initialData: AddressRequest;
+  isEditing: boolean;
+  saving: boolean;
+  onSubmit: (formData: AddressRequest) => Promise<void>;
+  onClose: () => void;
+}
+
+/**
+ * Form nhập liệu địa chỉ tách biệt để cách ly state nhập gõ phím.
+ * Gõ từng ký tự KHÔNG gây re-render toàn bộ trang và danh sách card.
+ */
+function AddressFormEditor({
+  initialData,
+  isEditing,
+  saving,
+  onSubmit,
+  onClose,
+}: AddressFormEditorProps) {
+  const [form, setForm] = useState<AddressRequest>(initialData);
+  const [localError, setLocalError] = useState("");
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // Focus ngay vào ô tên người nhận mà không giật cuộn trang
+    nameInputRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = event.target;
+    setForm((current) => ({
+      ...current,
+      [name]:
+        type === "checkbox"
+          ? (event.target as HTMLInputElement).checked
+          : value,
+    }));
+    if (localError) setLocalError("");
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.tenNguoiNhan.trim()) {
+      setLocalError("Vui lòng nhập tên người nhận.");
+      nameInputRef.current?.focus();
+      return;
+    }
+    if (!form.soDienThoaiNhan.trim()) {
+      setLocalError("Vui lòng nhập số điện thoại.");
+      return;
+    }
+    if (!/^[0-9]{10,11}$/.test(form.soDienThoaiNhan.trim())) {
+      setLocalError("Số điện thoại phải có 10-11 chữ số.");
+      return;
+    }
+    if (!form.diaChiCuThe.trim()) {
+      setLocalError("Vui lòng nhập địa chỉ cụ thể.");
+      return;
+    }
+
+    void onSubmit({
+      ...form,
+      tenNguoiNhan: form.tenNguoiNhan.trim(),
+      soDienThoaiNhan: form.soDienThoaiNhan.trim(),
+      diaChiCuThe: form.diaChiCuThe.trim(),
+      ghiChu: form.ghiChu?.trim() || null,
+    });
+  };
+
+  return (
+    <form className="address-form" onSubmit={handleSubmit} aria-labelledby="address-form-title">
+      <div className="address-form-heading">
+        <span><Home size={21} /></span>
+        <div>
+          <h2 id="address-form-title">
+            {isEditing ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
+          </h2>
+          <p>Điền thông tin để tài xế có thể giao món chính xác.</p>
+        </div>
+        <button type="button" aria-label="Đóng biểu mẫu" onClick={onClose} disabled={saving}>
+          <X size={19} />
+        </button>
+      </div>
+
+      {localError && (
+        <div className="address-notice address-notice-error" role="alert" style={{ marginBottom: "16px" }}>
+          <CircleAlert size={18} />
+          <span>{localError}</span>
+        </div>
+      )}
+
+      <div className="address-form-grid">
+        <label className="address-field">
+          <span><UserRound size={15} /> Tên người nhận</span>
+          <input
+            ref={nameInputRef}
+            type="text"
+            name="tenNguoiNhan"
+            autoComplete="name"
+            placeholder="Ví dụ: Nguyễn Văn An"
+            value={form.tenNguoiNhan}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="address-field">
+          <span><Phone size={15} /> Số điện thoại</span>
+          <input
+            type="tel"
+            inputMode="numeric"
+            name="soDienThoaiNhan"
+            autoComplete="tel"
+            placeholder="Ví dụ: 0901234567"
+            value={form.soDienThoaiNhan}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="address-field address-field-full">
+          <span><MapPin size={15} /> Địa chỉ cụ thể</span>
+          <input
+            type="text"
+            name="diaChiCuThe"
+            autoComplete="street-address"
+            placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
+            value={form.diaChiCuThe}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="address-field address-field-full">
+          <span><MessageSquareText size={15} /> Ghi chú cho tài xế</span>
+          <textarea
+            name="ghiChu"
+            rows={3}
+            placeholder="Ví dụ: Gọi trước khi giao, giao tại sảnh..."
+            value={form.ghiChu || ""}
+            onChange={handleChange}
+          />
+        </label>
+      </div>
+
+      <label className="address-default-toggle">
+        <input
+          type="checkbox"
+          name="macDinh"
+          checked={form.macDinh}
+          onChange={handleChange}
+        />
+        <span className="address-toggle-box"><Check size={13} /></span>
+        <span>
+          <strong>Đặt làm địa chỉ mặc định</strong>
+          <small>Địa chỉ này sẽ được ưu tiên khi bạn thanh toán.</small>
+        </span>
+      </label>
+
+      <div className="address-form-actions">
+        <button type="button" className="address-secondary-button" onClick={onClose} disabled={saving}>
+          Hủy
+        </button>
+        <button type="submit" className="address-primary-button" disabled={saving}>
+          {saving ? <LoaderCircle className="address-spin" size={17} /> : <Check size={17} />}
+          {saving ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Lưu địa chỉ"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function AddressPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,11 +214,10 @@ function AddressPage() {
   const [notice, setNotice] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [form, setForm] = useState<AddressRequest>(EMPTY_FORM);
-  const formRef = useRef<HTMLElement | null>(null);
-  const formScrollFrame = useRef<number | null>(null);
+  const formSectionRef = useRef<HTMLDivElement | null>(null);
+  const formScrollFrameRef = useRef<number | null>(null);
 
   const loadAddresses = useCallback(async (showLoading = false) => {
     try {
@@ -71,9 +237,19 @@ function AddressPage() {
   }, []);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => void loadAddresses(true), 0);
+    const timer = window.setTimeout(() => {
+      void loadAddresses(true);
+    }, 0);
 
-    return () => window.clearTimeout(timeout);
+    const handleAddressSync = () => {
+      void loadAddresses(false);
+    };
+    window.addEventListener("address-updated", handleAddressSync);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("address-updated", handleAddressSync);
+    };
   }, [loadAddresses]);
 
   useEffect(() => {
@@ -82,55 +258,49 @@ function AddressPage() {
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
-  const cancelFormScroll = useCallback(() => {
-    if (formScrollFrame.current !== null) {
-      window.cancelAnimationFrame(formScrollFrame.current);
-      formScrollFrame.current = null;
+  useEffect(() => () => {
+    if (formScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(formScrollFrameRef.current);
     }
   }, []);
 
-  useEffect(() => cancelFormScroll, [cancelFormScroll]);
+  const revealFormIfNeeded = useCallback(() => {
+    if (formScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(formScrollFrameRef.current);
+    }
 
-  const scrollToForm = useCallback(() => {
-    cancelFormScroll();
-    formScrollFrame.current = window.requestAnimationFrame(() => {
-      formScrollFrame.current = null;
-      // Wait for React to mount the form, without a long animated page scroll.
-      formRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
-      // Focus the section without opening the mobile keyboard or scrolling again.
-      formRef.current?.focus({ preventScroll: true });
+    formScrollFrameRef.current = window.requestAnimationFrame(() => {
+      formScrollFrameRef.current = null;
+      const formSection = formSectionRef.current;
+      if (!formSection) return;
+
+      const rect = formSection.getBoundingClientRect();
+      if (rect.top < 70 || rect.bottom > window.innerHeight) {
+        formSection.scrollIntoView({ behavior: "auto", block: "nearest" });
+      }
     });
-  }, [cancelFormScroll]);
+  }, []);
 
   const openCreateForm = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
+    setEditingAddress(null);
     setError("");
     setShowForm(true);
-    scrollToForm();
+    revealFormIfNeeded();
   };
 
-  const closeForm = () => {
-    if (saving) return;
-    cancelFormScroll();
-    setShowForm(false);
-    setEditingId(null);
-    setForm(EMPTY_FORM);
+  const handleEdit = useCallback((address: Address) => {
+    setEditingAddress(address);
     setError("");
-  };
+    setShowForm(true);
+    revealFormIfNeeded();
+  }, [revealFormIfNeeded]);
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value, type } = event.target;
-    setForm((current) => ({
-      ...current,
-      [name]:
-        type === "checkbox"
-          ? (event.target as HTMLInputElement).checked
-          : value,
-    }));
-  };
+  const closeForm = useCallback(() => {
+    if (saving) return;
+    setShowForm(false);
+    setEditingAddress(null);
+    setError("");
+  }, [saving]);
 
   const handleSetDefault = useCallback(async (id: number) => {
     try {
@@ -172,57 +342,20 @@ function AddressPage() {
     }
   }, [loadAddresses]);
 
-  const handleEdit = useCallback((address: Address) => {
-    setEditingId(address.maDiaChi);
-    setForm({
-      tenNguoiNhan: address.tenNguoiNhan,
-      soDienThoaiNhan: address.soDienThoaiNhan,
-      diaChiCuThe: address.diaChiCuThe,
-      ghiChu: address.ghiChu || "",
-      macDinh: address.macDinh,
-    });
-    setShowForm(true);
+  const handleSaveAddress = async (formData: AddressRequest) => {
     setError("");
-    scrollToForm();
-  }, [scrollToForm]);
-
-  const handleSave = async () => {
-    setError("");
-
-    if (!form.tenNguoiNhan.trim()) {
-      setError("Vui lòng nhập tên người nhận.");
-      return;
-    }
-    if (!form.soDienThoaiNhan.trim()) {
-      setError("Vui lòng nhập số điện thoại.");
-      return;
-    }
-    if (!/^[0-9]{10,11}$/.test(form.soDienThoaiNhan.trim())) {
-      setError("Số điện thoại phải có 10-11 chữ số.");
-      return;
-    }
-    if (!form.diaChiCuThe.trim()) {
-      setError("Vui lòng nhập địa chỉ cụ thể.");
-      return;
-    }
-
     try {
       setSaving(true);
-      const request: AddressRequest = {
-        ...form,
-        tenNguoiNhan: form.tenNguoiNhan.trim(),
-        soDienThoaiNhan: form.soDienThoaiNhan.trim(),
-        diaChiCuThe: form.diaChiCuThe.trim(),
-        ghiChu: form.ghiChu?.trim() || null,
-      };
-      const isEditing = editingId !== null;
+      const isEditing = editingAddress !== null;
 
-      if (isEditing) await updateAddress(editingId, request);
-      else await createAddress(request);
+      if (isEditing) {
+        await updateAddress(editingAddress.maDiaChi, formData);
+      } else {
+        await createAddress(formData);
+      }
 
       setShowForm(false);
-      setEditingId(null);
-      setForm(EMPTY_FORM);
+      setEditingAddress(null);
       await loadAddresses();
       window.dispatchEvent(new Event("address-updated"));
       setNotice(
@@ -234,7 +367,7 @@ function AddressPage() {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : editingId !== null
+          : editingAddress !== null
             ? "Không thể cập nhật địa chỉ."
             : "Không thể thêm địa chỉ.",
       );
@@ -243,51 +376,88 @@ function AddressPage() {
     }
   };
 
-  // Editing a field must not rerender every saved address and its icons.
-  const addressCards = useMemo(() => addresses.map((address, index) => (
-    <ScrollReveal
-      key={address.maDiaChi}
-      className="address-card-reveal"
-      delay={(index % 4) * 70}
-    >
-      <article className={`address-card${address.macDinh ? " is-default" : ""}`}>
-        <div className="address-card-accent" aria-hidden="true" />
-        <div className="address-card-main">
-          <span className="address-card-marker"><MapPin size={22} /></span>
-          <div className="address-card-content">
-            <div className="address-card-header">
-              <div>
-                <strong>{address.tenNguoiNhan}</strong>
-                <span className="address-phone"><Phone size={14} /> {address.soDienThoaiNhan}</span>
-              </div>
-              {address.macDinh && <span className="default-badge"><Star size={13} fill="currentColor" /> Mặc định</span>}
-            </div>
-            <p className="address-text">{address.diaChiCuThe}</p>
-            {address.ghiChu && <p className="address-note"><MessageSquareText size={14} /> {address.ghiChu}</p>}
-          </div>
-        </div>
+  const initialFormData = useMemo<AddressRequest>(() => {
+    if (!editingAddress) return EMPTY_FORM;
+    return {
+      tenNguoiNhan: editingAddress.tenNguoiNhan,
+      soDienThoaiNhan: editingAddress.soDienThoaiNhan,
+      diaChiCuThe: editingAddress.diaChiCuThe,
+      ghiChu: editingAddress.ghiChu || "",
+      macDinh: editingAddress.macDinh,
+    };
+  }, [editingAddress]);
 
-        <footer className="address-actions">
-          {!address.macDinh && (
-            <button type="button" className="address-action-default" onClick={() => void handleSetDefault(address.maDiaChi)} disabled={busyAction !== null}>
-              {busyAction === `default-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Star size={15} />} Đặt mặc định
-            </button>
+  // Card danh sách địa chỉ hiển thị tức thì, không bị ScrollReveal và delay animation trì hoãn
+  const addressCards = useMemo(() => addresses.map((address) => (
+    <article
+      key={address.maDiaChi}
+      className={`address-card${address.macDinh ? " is-default" : ""}`}
+    >
+      <div className="address-card-accent" aria-hidden="true" />
+      <div className="address-card-main">
+        <span className="address-card-marker"><MapPin size={22} /></span>
+        <div className="address-card-content">
+          <div className="address-card-header">
+            <div>
+              <strong>{address.tenNguoiNhan}</strong>
+              <span className="address-phone"><Phone size={14} /> {address.soDienThoaiNhan}</span>
+            </div>
+            {address.macDinh && (
+              <span className="default-badge">
+                <Star size={13} fill="currentColor" /> Mặc định
+              </span>
+            )}
+          </div>
+          <p className="address-text">{address.diaChiCuThe}</p>
+          {address.ghiChu && (
+            <p className="address-note"><MessageSquareText size={14} /> {address.ghiChu}</p>
           )}
-          <span className="address-actions-spacer" />
-          <button type="button" onClick={() => handleEdit(address)} disabled={busyAction !== null}><Pencil size={15} /> Sửa</button>
-          <button type="button" className="address-action-delete" onClick={() => void handleDelete(address.maDiaChi)} disabled={busyAction !== null}>
-            {busyAction === `delete-${address.maDiaChi}` ? <LoaderCircle className="address-spin" size={15} /> : <Trash2 size={15} />} Xóa
+        </div>
+      </div>
+
+      <footer className="address-actions">
+        {!address.macDinh && (
+          <button
+            type="button"
+            className="address-action-default"
+            onClick={() => void handleSetDefault(address.maDiaChi)}
+            disabled={busyAction !== null}
+          >
+            {busyAction === `default-${address.maDiaChi}` ? (
+              <LoaderCircle className="address-spin" size={15} />
+            ) : (
+              <Star size={15} />
+            )}
+            Đặt mặc định
           </button>
-        </footer>
-      </article>
-    </ScrollReveal>
+        )}
+        <span className="address-actions-spacer" />
+        <button
+          type="button"
+          onClick={() => handleEdit(address)}
+          disabled={busyAction !== null}
+        >
+          <Pencil size={15} /> Sửa
+        </button>
+        <button
+          type="button"
+          className="address-action-delete"
+          onClick={() => void handleDelete(address.maDiaChi)}
+          disabled={busyAction !== null}
+        >
+          {busyAction === `delete-${address.maDiaChi}` ? (
+            <LoaderCircle className="address-spin" size={15} />
+          ) : (
+            <Trash2 size={15} />
+          )}
+          Xóa
+        </button>
+      </footer>
+    </article>
   )), [addresses, busyAction, handleDelete, handleEdit, handleSetDefault]);
 
   return (
     <main className="address-page address-page-polished">
-      <div className="address-page-glow address-page-glow-one" aria-hidden="true" />
-      <div className="address-page-glow address-page-glow-two" aria-hidden="true" />
-
       <div className="address-container">
         <Link to="/ho-so" className="address-top-back">
           <ArrowLeft size={16} /> Hồ sơ của tôi
@@ -335,56 +505,16 @@ function AddressPage() {
         </div>
 
         {showForm && (
-          <section ref={formRef} className="address-form" tabIndex={-1} aria-labelledby="address-form-title">
-            <div className="address-form-heading">
-              <span><Home size={21} /></span>
-              <div>
-                <h2 id="address-form-title">
-                  {editingId !== null ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
-                </h2>
-                <p>Điền thông tin để tài xế có thể giao món chính xác.</p>
-              </div>
-              <button type="button" aria-label="Đóng biểu mẫu" onClick={closeForm} disabled={saving}>
-                <X size={19} />
-              </button>
-            </div>
-
-            <div className="address-form-grid">
-              <label className="address-field">
-                <span><UserRound size={15} /> Tên người nhận</span>
-                <input type="text" name="tenNguoiNhan" autoComplete="name" placeholder="Ví dụ: Nguyễn Văn An" value={form.tenNguoiNhan} onChange={handleChange} />
-              </label>
-              <label className="address-field">
-                <span><Phone size={15} /> Số điện thoại</span>
-                <input type="tel" inputMode="numeric" name="soDienThoaiNhan" autoComplete="tel" placeholder="Ví dụ: 0901234567" value={form.soDienThoaiNhan} onChange={handleChange} />
-              </label>
-              <label className="address-field address-field-full">
-                <span><MapPin size={15} /> Địa chỉ cụ thể</span>
-                <input type="text" name="diaChiCuThe" autoComplete="street-address" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." value={form.diaChiCuThe} onChange={handleChange} />
-              </label>
-              <label className="address-field address-field-full">
-                <span><MessageSquareText size={15} /> Ghi chú cho tài xế</span>
-                <textarea name="ghiChu" rows={3} placeholder="Ví dụ: Gọi trước khi giao, giao tại sảnh..." value={form.ghiChu || ""} onChange={handleChange} />
-              </label>
-            </div>
-
-            <label className="address-default-toggle">
-              <input type="checkbox" name="macDinh" checked={form.macDinh} onChange={handleChange} />
-              <span className="address-toggle-box"><Check size={13} /></span>
-              <span>
-                <strong>Đặt làm địa chỉ mặc định</strong>
-                <small>Địa chỉ này sẽ được ưu tiên khi bạn thanh toán.</small>
-              </span>
-            </label>
-
-            <div className="address-form-actions">
-              <button type="button" className="address-secondary-button" onClick={closeForm} disabled={saving}>Hủy</button>
-              <button type="button" className="address-primary-button" onClick={() => void handleSave()} disabled={saving}>
-                {saving ? <LoaderCircle className="address-spin" size={17} /> : <Check size={17} />}
-                {saving ? "Đang lưu..." : editingId !== null ? "Lưu thay đổi" : "Lưu địa chỉ"}
-              </button>
-            </div>
-          </section>
+          <div ref={formSectionRef}>
+            <AddressFormEditor
+              key={editingAddress ? `edit-${editingAddress.maDiaChi}` : "create-new"}
+              initialData={initialFormData}
+              isEditing={editingAddress !== null}
+              saving={saving}
+              onSubmit={handleSaveAddress}
+              onClose={closeForm}
+            />
+          </div>
         )}
 
         <section className="address-saved-section" aria-labelledby="saved-address-title">

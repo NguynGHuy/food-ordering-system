@@ -11,6 +11,7 @@ import {
     Bike,
     Check,
     Clock3,
+    Copy,
     History,
     MapPin,
     MessageSquareText,
@@ -56,6 +57,13 @@ function formatMoney(value: number) {
     return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
 }
 
+function formatShortOrderCode(code: string | null | undefined): string {
+    if (!code) return "";
+    const clean = code.trim();
+    if (clean.length <= 11) return clean;
+    return `${clean.slice(0, 5)}...${clean.slice(-4)}`;
+}
+
 interface ReviewDish {
     maMonAn: number;
     tenMonAn: string;
@@ -97,7 +105,25 @@ function OrderDetail() {
     const [qrPaymentId, setQrPaymentId] = useState<number | null>(null);
     const [qrMethodName, setQrMethodName] = useState("");
     const [soDuVi, setSoDuVi] = useState(0);
+    const [copied, setCopied] = useState(false);
     const displayedOrderId = order?.maDonHang;
+
+    const handleCopyCode = async (code: string) => {
+        try {
+            await navigator.clipboard.writeText(code);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+        } catch {
+            const el = document.createElement("textarea");
+            el.value = code;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     useEffect(() => {
     const maDonHang = Number(id);
@@ -399,16 +425,48 @@ function OrderDetail() {
                                 </span>
 
                                 <div className="order-detail-title-row">
-                                    <h1>
-                                        {order.maDonHangHienThi}
-                                    </h1>
+                                    <div className="order-code-badge-group">
+                                        <h1 title={`Mã đơn đầy đủ: ${order.maDonHangHienThi}`}>
+                                            {formatShortOrderCode(order.maDonHangHienThi)}
+                                        </h1>
+                                        <button
+                                            type="button"
+                                            className="order-detail-copy-btn"
+                                            title="Sao chép mã đơn đầy đủ"
+                                            aria-label="Sao chép mã đơn"
+                                            onClick={() => void handleCopyCode(order.maDonHangHienThi)}
+                                        >
+                                            {copied ? (
+                                                <Check size={13} className="text-emerald-600" />
+                                            ) : (
+                                                <Copy size={13} />
+                                            )}
+                                            <span>{copied ? "Đã chép" : "Sao chép"}</span>
+                                        </button>
+                                    </div>
 
-                                    <span
-                                        className={`order-detail-status status-${order.trangThai}`}
-                                    >
-                                        {STATUS_LABEL[order.trangThai] ||
-                                            order.trangThai}
-                                    </span>
+                                    <div className="order-header-badges">
+                                        <span
+                                            className={`order-detail-status status-${order.trangThai}`}
+                                            title="Trạng thái xử lý đơn hàng"
+                                        >
+                                            <span className="badge-type-label">Đơn:</span>
+                                            {STATUS_LABEL[order.trangThai] || order.trangThai}
+                                        </span>
+
+                                        {latestPayment && (
+                                            <span
+                                                className={`order-detail-payment-badge state-${latestPayment.trangThaiThanhToan}`}
+                                                title={`Phương thức: ${latestPayment.tenPhuongThuc}`}
+                                            >
+                                                <Banknote size={13} />
+                                                <span className="badge-type-label">Thanh toán:</span>
+                                                {latestPayment.tenPhuongThuc.toUpperCase().includes("COD") && latestPayment.trangThaiThanhToan === "ChoThanhToan"
+                                                    ? "COD • Thu khi giao"
+                                                    : PAYMENT_LABEL[latestPayment.trangThaiThanhToan] || latestPayment.trangThaiThanhToan}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {statusHint && (
@@ -435,13 +493,16 @@ function OrderDetail() {
                         </div>
 
                         {order.trangThai === "DaHuy" ? (
-                            <div className="order-cancelled-panel">
-                                <span>
-                                    <XCircle size={20} />
+                            <div className="order-cancelled-panel" role="alert">
+                                <span className="order-cancelled-icon">
+                                    <XCircle size={22} />
                                 </span>
 
                                 <div>
-                                    <strong>Đơn hàng đã bị hủy</strong>
+                                    <div className="order-cancelled-title-row">
+                                        <strong>Đơn hàng đã bị hủy</strong>
+                                        <span className="order-cancelled-tag">Đã hủy</span>
+                                    </div>
 
                                     <p>
                                         {latestNote ||
@@ -451,53 +512,56 @@ function OrderDetail() {
                             </div>
                         ) : (
                             <div className="order-progress-wrap">
-                                <ol className="order-progress">
+                                <ol className="order-progress" aria-label="Tiến trình đơn hàng">
                                     {FLOW.map((step, index) => {
-                                        const reached =
-                                            currentIndex >= 0 &&
-                                            index <= currentIndex;
+                                        const isPassed =
+                                            order.trangThai === "HoanThanh"
+                                                ? true
+                                                : currentIndex >= 0 && index < currentIndex;
 
-                                        const passed =
-                                            currentIndex >= 0 &&
-                                            index < currentIndex;
+                                        const isCurrent =
+                                            order.trangThai !== "HoanThanh" && index === currentIndex;
 
-                                        const current =
-                                            index === currentIndex;
+                                        const isUpcoming =
+                                            currentIndex >= 0 && index > currentIndex;
 
                                         return (
                                             <li
                                                 key={step.code}
                                                 className={`order-progress-step${
-                                                    reached
-                                                        ? " is-reached"
-                                                        : ""
+                                                    isPassed ? " is-passed" : ""
                                                 }${
-                                                    passed
-                                                        ? " is-passed"
-                                                        : ""
+                                                    isCurrent ? " is-current" : ""
                                                 }${
-                                                    current
-                                                        ? " is-current"
-                                                        : ""
+                                                    isUpcoming ? " is-upcoming" : ""
                                                 }`}
                                             >
                                                 <div className="order-progress-marker">
-                                                    {reached ? (
-                                                        <Check size={14} />
+                                                    {isPassed ? (
+                                                        <Check size={14} strokeWidth={2.6} />
+                                                    ) : isCurrent ? (
+                                                        step.code === "DangGiao" ? (
+                                                            <Bike size={16} />
+                                                        ) : (
+                                                            <span className="order-current-step-num">
+                                                                {index + 1}
+                                                            </span>
+                                                        )
                                                     ) : (
-                                                        <span>
-                                                            {index + 1}
-                                                        </span>
-                                                    )}
-                                                    {current && step.code === "DangGiao" && (
-                                                        <span className="order-delivery-bike-badge" aria-label="Shipper đang giao món">
-                                                            <Bike size={18} />
-                                                        </span>
+                                                        <span>{index + 1}</span>
                                                     )}
                                                 </div>
 
                                                 <span className="order-progress-label">
                                                     {step.label}
+                                                </span>
+
+                                                <span className="order-progress-status-badge">
+                                                    {isPassed
+                                                        ? "Hoàn tất"
+                                                        : isCurrent
+                                                          ? "Đang xử lý"
+                                                          : "Chưa tới"}
                                                 </span>
                                             </li>
                                         );
@@ -619,9 +683,24 @@ function OrderDetail() {
                     <p>Theo dõi quá trình xử lý đơn</p>
                 </div>
 
-                <span className="order-detail-code">
-                    {order.maDonHangHienThi}
-                </span>
+                <div className="order-history-code-pill">
+                    <span className="order-detail-code" title={`Mã đơn đầy đủ: ${order.maDonHangHienThi}`}>
+                        {formatShortOrderCode(order.maDonHangHienThi)}
+                    </span>
+                    <button
+                        type="button"
+                        className="order-detail-copy-mini"
+                        title="Sao chép mã đơn"
+                        aria-label="Sao chép mã đơn"
+                        onClick={() => void handleCopyCode(order.maDonHangHienThi)}
+                    >
+                        {copied ? (
+                            <Check size={12} className="text-emerald-600" />
+                        ) : (
+                            <Copy size={12} />
+                        )}
+                    </button>
+                </div>
             </div>
 
             {history.length === 0 ? (
@@ -987,6 +1066,18 @@ function OrderDetail() {
                 <strong>{formatMoney(order.thanhTien)}</strong>
             </div>
 
+            <div className="order-qr-order-code">
+                <span>Mã đơn: <strong>{formatShortOrderCode(order.maDonHangHienThi)}</strong></span>
+                <button
+                    type="button"
+                    className="order-detail-copy-mini"
+                    title="Sao chép mã đơn"
+                    onClick={() => void handleCopyCode(order.maDonHangHienThi)}
+                >
+                    {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                </button>
+            </div>
+
             <div className="order-qr-code-frame">
                 <PaymentQr />
             </div>
@@ -1048,7 +1139,7 @@ function OrderDetail() {
                 <ShieldCheck size={14} />
 
                 <span>
-                    Đây là thanh toán mô phỏng phục vụ cho đồ án.
+                    Cổng thanh toán trực tuyến thử nghiệm (Sandbox mô phỏng).
                 </span>
             </div>
         </section>

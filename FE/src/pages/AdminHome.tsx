@@ -1,28 +1,35 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+    AlertTriangle,
     ArrowRight,
     Building2,
+    Calendar,
     CheckCircle2,
     Clock3,
+    FileText,
     MapPin,
     RefreshCw,
+    Scale,
+    ShieldCheck,
     ShoppingBag,
     Star,
     TicketPercent,
+    TrendingUp,
     UsersRound,
     WalletCards,
 } from "lucide-react";
 import {
     getAdminAccounts,
+    getAdminAnalytics,
     getAdminOverview,
     getPendingRestaurants,
     getTopRestaurants,
+    type AdminAnalyticsData,
+    type AdminOverview,
+    type TopRestaurant,
 } from "../services/adminService";
-import type {
-    AdminOverview,
-    TopRestaurant,
-} from "../services/adminService";
+import RevenueAreaChart from "../components/RevenueAreaChart";
 import useRealtimeRefresh from "../hooks/useRealtimeRefresh";
 
 interface DashboardData {
@@ -32,13 +39,27 @@ interface DashboardData {
     topRestaurants: TopRestaurant[];
 }
 
+const STATUS_COLOR_MAP: Record<string, { label: string; color: string; bg: string; text: string }> = {
+    ChoXacNhan: { label: "Chờ xác nhận", color: "#f59e0b", bg: "#fff8e6", text: "#b45309" },
+    DaXacNhan: { label: "Đã xác nhận", color: "#3b82f6", bg: "#eff6ff", text: "#1d4ed8" },
+    DangChuanBi: { label: "Đang chuẩn bị", color: "#8b5cf6", bg: "#f5f3ff", text: "#6d28d9" },
+    DangGiao: { label: "Đang giao", color: "#06b6d4", bg: "#ecfeff", text: "#0e7490" },
+    HoanThanh: { label: "Hoàn thành", color: "#10b981", bg: "#f0fdf4", text: "#15803d" },
+    DaHuy: { label: "Đã hủy", color: "#ef4444", bg: "#fef2f2", text: "#b91c1c" },
+};
+
 function formatMoney(value: number) {
     return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
 }
 
 function AdminHome() {
     const [data, setData] = useState<DashboardData | null>(null);
+    const [analytics, setAnalytics] = useState<AdminAnalyticsData | null>(null);
+    const [selectedDays, setSelectedDays] = useState<number>(7);
+    const selectedDaysRef = useRef<number>(7);
     const [loading, setLoading] = useState(true);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
+    const [analyticsError, setAnalyticsError] = useState("");
     const [error, setError] = useState("");
 
     const loadDashboard = useCallback(async () => {
@@ -46,12 +67,13 @@ function AdminHome() {
             setLoading(true);
             setError("");
 
-            const [overview, accounts, pending, topRestaurants] =
+            const [overview, accounts, pending, topRestaurants, analyticsData] =
                 await Promise.all([
                     getAdminOverview(),
                     getAdminAccounts({ pageNumber: 1, pageSize: 1 }),
                     getPendingRestaurants({ pageNumber: 1, pageSize: 1 }),
                     getTopRestaurants(),
+                    getAdminAnalytics(selectedDaysRef.current),
                 ]);
 
             setData({
@@ -62,6 +84,10 @@ function AdminHome() {
                     ? topRestaurants
                     : [],
             });
+            setAnalytics(analyticsData);
+            selectedDaysRef.current = analyticsData.days;
+            setSelectedDays(analyticsData.days);
+            setAnalyticsError("");
         } catch (err) {
             setError(
                 err instanceof Error
@@ -73,6 +99,27 @@ function AdminHome() {
         }
     }, []);
 
+    const handleFilterDays = async (days: number) => {
+        if (days === selectedDaysRef.current || analyticsLoading) return;
+
+        try {
+            setAnalyticsLoading(true);
+            setAnalyticsError("");
+            const res = await getAdminAnalytics(days);
+            setAnalytics(res);
+            selectedDaysRef.current = res.days;
+            setSelectedDays(res.days);
+        } catch (err) {
+            setAnalyticsError(
+                err instanceof Error
+                    ? err.message
+                    : "Không thể cập nhật kỳ báo cáo. Vui lòng thử lại."
+            );
+        } finally {
+            setAnalyticsLoading(false);
+        }
+    };
+
     useEffect(() => {
         const frameId = window.requestAnimationFrame(() => {
             void loadDashboard();
@@ -81,12 +128,15 @@ function AdminHome() {
         return () => window.cancelAnimationFrame(frameId);
     }, [loadDashboard]);
 
-    useRealtimeRefresh(["tongQuan", "nhaHang", "hopDong", "taiChinh"], loadDashboard);
+    useRealtimeRefresh(
+        ["tongQuan", "nhaHang", "hopDong", "taiChinh", "donHang", "doiSoat"],
+        loadDashboard
+    );
 
     if (loading) {
         return (
             <div className="admin-dashboard-loading">
-                <RefreshCw size={22} />
+                <RefreshCw size={22} className="spin-icon" />
                 <span>Đang tải dữ liệu hệ thống...</span>
             </div>
         );
@@ -109,7 +159,7 @@ function AdminHome() {
         {
             label: "Tổng tài khoản",
             value: data.accountCount.toLocaleString("vi-VN"),
-            description: "Tài khoản đang có trên hệ thống",
+            description: "Toàn bộ tài khoản trên hệ thống",
             icon: UsersRound,
             tone: "blue",
         },
@@ -123,21 +173,43 @@ function AdminHome() {
         {
             label: "Tổng đơn hàng",
             value: data.overview.tongDonHang.toLocaleString("vi-VN"),
-            description: "Đơn hàng đã được ghi nhận",
+            description: "Đơn hàng toàn thời gian",
             icon: ShoppingBag,
             tone: "orange",
         },
         {
             label: "Doanh thu hoàn thành",
             value: formatMoney(data.overview.tongDoanhThu),
-            description: "Tổng giá trị đơn đã hoàn thành",
+            description: "Tổng GMV đơn đã giao thành công",
             icon: WalletCards,
             tone: "purple",
         },
     ];
 
+    const chartPoints = (analytics?.doanhThuTheoNgay ?? []).map((item) => ({
+        label: item.ngayNgan,
+        fullDate: item.ngay,
+        value1: item.tongGiaTriDon,
+        value2: item.doanhThuNenTang,
+        count: item.soDonHoanThanh,
+    }));
+
+    const pendingTasks = analytics?.congViecCanXuLy ?? {
+        nhaHangChoDuyet: data.pendingCount,
+        hopDongSapHetHan: 0,
+        doiSoatTranhChap: 0,
+        doiSoatChoXacNhan: 0,
+    };
+
+    const hasPendingWork =
+        pendingTasks.nhaHangChoDuyet > 0 ||
+        pendingTasks.hopDongSapHetHan > 0 ||
+        pendingTasks.doiSoatTranhChap > 0 ||
+        pendingTasks.doiSoatChoXacNhan > 0;
+
     return (
         <div className="admin-dashboard">
+            {/* 1. WELCOME BANNER (PRESERVED) */}
             <section className="admin-dashboard-welcome">
                 <div>
                     <span className="admin-dashboard-eyebrow">
@@ -145,8 +217,7 @@ function AdminHome() {
                     </span>
                     <h1>Hoạt động kinh doanh</h1>
                     <p>
-                        Theo dõi số liệu và xử lý những công việc quản trị
-                        quan trọng.
+                        Theo dõi chỉ số thương mại, biểu đồ doanh thu và công việc quản trị quan trọng.
                     </p>
                 </div>
 
@@ -177,6 +248,7 @@ function AdminHome() {
                 </Link>
             </section>
 
+            {/* 2. ALL-TIME KPI CARDS (PRESERVED) */}
             <section className="admin-dashboard-stats">
                 {stats.map((stat) => {
                     const Icon = stat.icon;
@@ -200,6 +272,243 @@ function AdminHome() {
                 })}
             </section>
 
+            {/* TIME FILTER BAR */}
+            <div className="admin-analytics-toolbar">
+                <div className="admin-toolbar-info">
+                    <Calendar size={16} />
+                    <span>
+                        Kỳ báo cáo: <strong>{analytics?.rangeLabel || "Đang tải..."}</strong>
+                    </span>
+                    <small>(Múi giờ Việt Nam · Chỉ tính đơn hoàn thành)</small>
+                </div>
+
+                <div className="admin-time-pills">
+                    {[
+                        { label: "Hôm nay", days: 1 },
+                        { label: "7 ngày qua", days: 7 },
+                        { label: "30 ngày qua", days: 30 },
+                    ].map((pill) => (
+                        <button
+                            key={pill.days}
+                            type="button"
+                            className={`time-pill ${selectedDays === pill.days ? "is-active" : ""}`}
+                            onClick={() => void handleFilterDays(pill.days)}
+                            disabled={analyticsLoading}
+                        >
+                            {pill.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {analyticsError && (
+                <p className="dashboard-analytics-error" role="alert">
+                    {analyticsError}
+                </p>
+            )}
+
+            {/* 3. CHARTS ROW: REVENUE TREND + STATUS BREAKDOWN */}
+            <div className="admin-analytics-grid">
+                {/* Revenue Trend Chart */}
+                <section className="admin-dashboard-panel admin-chart-panel">
+                    <header className="admin-dashboard-panel-header">
+                        <div>
+                            <span>Doanh số hệ thống</span>
+                            <h2>Biểu đồ doanh thu theo thời gian</h2>
+                        </div>
+                        <div className="admin-chart-period-summary">
+                            <div>
+                                <small>Tổng GMV kỳ này</small>
+                                <strong>{formatMoney(analytics?.tongDoanhThuKyNay ?? 0)}</strong>
+                            </div>
+                            <div className="divider" />
+                            <div>
+                                <small>Phí nền tảng thực thu</small>
+                                <strong className="platform-revenue">
+                                    {formatMoney(analytics?.tongDoanhThuNenTangKyNay ?? 0)}
+                                </strong>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="admin-chart-body">
+                        {analyticsLoading ? (
+                            <div className="admin-chart-loading" style={{ height: 250 }}>
+                                <RefreshCw size={20} className="spin-icon" />
+                                <span>Đang cập nhật biểu đồ...</span>
+                            </div>
+                        ) : (
+                            <RevenueAreaChart
+                                data={chartPoints}
+                                series1Name="Tổng giá trị đơn (GMV)"
+                                series2Name="Phí nền tảng thu được"
+                                series1Color="#f4511e"
+                                series2Color="#10b981"
+                                height={240}
+                            />
+                        )}
+                        <p className="admin-chart-caption">
+                            * Biểu đồ ghi nhận từ các đơn hàng đã hoàn thành trong kỳ. Phí nền tảng là khoản doanh thu thực tế được hệ thống đối soát theo tỷ lệ chiết khấu hợp đồng của từng nhà hàng.
+                        </p>
+                    </div>
+                </section>
+
+                {/* Order Status Distribution */}
+                <section className="admin-dashboard-panel admin-status-panel">
+                    <header className="admin-dashboard-panel-header">
+                        <div>
+                            <span>Tình trạng vận hành</span>
+                            <h2>Phân bố trạng thái đơn hàng</h2>
+                        </div>
+                        <span className="total-badge">
+                            {analytics?.tongDonKyNay ?? 0} đơn trong kỳ
+                        </span>
+                    </header>
+
+                    <div className="admin-status-body">
+                        {/* Multi-segment progress bar */}
+                        <div className="admin-status-bar" aria-label="Tỷ lệ trạng thái đơn hàng">
+                            {(analytics?.phanBoTrangThai ?? []).map((item) => {
+                                if (item.tyLe <= 0) return null;
+                                const meta = STATUS_COLOR_MAP[item.tenTrangThai] || { color: "#9ca3af" };
+                                return (
+                                    <div
+                                        key={item.maTrangThai}
+                                        className="status-bar-segment"
+                                        style={{
+                                            width: `${item.tyLe}%`,
+                                            background: meta.color,
+                                        }}
+                                        title={`${item.tenTrangThai}: ${item.soLuong} đơn (${item.tyLe}%)`}
+                                    />
+                                );
+                            })}
+                        </div>
+
+                        {/* Status Grid Cards */}
+                        <div className="admin-status-grid">
+                            {(analytics?.phanBoTrangThai ?? []).map((item) => {
+                                const meta = STATUS_COLOR_MAP[item.tenTrangThai] || {
+                                    label: item.tenTrangThai,
+                                    color: "#6b7280",
+                                    bg: "#f3f4f6",
+                                    text: "#374151",
+                                };
+                                return (
+                                    <div
+                                        key={item.maTrangThai}
+                                        className="admin-status-card"
+                                        style={{ background: meta.bg }}
+                                    >
+                                        <div className="status-card-header">
+                                            <span
+                                                className="status-dot"
+                                                style={{ background: meta.color }}
+                                            />
+                                            <span className="status-name" style={{ color: meta.text }}>
+                                                {meta.label}
+                                            </span>
+                                        </div>
+                                        <div className="status-card-data">
+                                            <strong style={{ color: meta.text }}>{item.soLuong}</strong>
+                                            <small>{item.tyLe}%</small>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {/* 4. OPERATIONAL TASKS ALERT ROW */}
+            <section className="admin-dashboard-panel admin-tasks-panel">
+                <header className="admin-dashboard-panel-header">
+                    <div>
+                        <span>Nhiệm vụ quản trị</span>
+                        <h2>Công việc cần xử lý ngay</h2>
+                    </div>
+                    {hasPendingWork ? (
+                        <span className="admin-urgent-tag">
+                            <AlertTriangle size={13} />
+                            Cần giải quyết
+                        </span>
+                    ) : (
+                        <span className="admin-clean-tag">
+                            <CheckCircle2 size={13} />
+                            Đã giải quyết xong
+                        </span>
+                    )}
+                </header>
+
+                <div className="admin-tasks-grid">
+                    <Link to="/admin/nha-hang" className="admin-task-card">
+                        <div className="task-icon pending-rest">
+                            <Building2 size={20} />
+                        </div>
+                        <div className="task-info">
+                            <strong>Nhà hàng chờ duyệt</strong>
+                            <p>Hồ sơ đăng ký mở quán mới</p>
+                        </div>
+                        <div className="task-badge">
+                            <span className={pendingTasks.nhaHangChoDuyet > 0 ? "has-count" : "zero"}>
+                                {pendingTasks.nhaHangChoDuyet}
+                            </span>
+                            <ArrowRight size={15} />
+                        </div>
+                    </Link>
+
+                    <Link to="/admin/hop-dong" className="admin-task-card">
+                        <div className="task-icon expiring-contract">
+                            <FileText size={20} />
+                        </div>
+                        <div className="task-info">
+                            <strong>Hợp đồng sắp hết hạn</strong>
+                            <p>Hiệu lực còn dưới 30 ngày</p>
+                        </div>
+                        <div className="task-badge">
+                            <span className={pendingTasks.hopDongSapHetHan > 0 ? "has-count" : "zero"}>
+                                {pendingTasks.hopDongSapHetHan}
+                            </span>
+                            <ArrowRight size={15} />
+                        </div>
+                    </Link>
+
+                    <Link to="/admin/doi-soat" className="admin-task-card">
+                        <div className="task-icon dispute">
+                            <Scale size={20} />
+                        </div>
+                        <div className="task-info">
+                            <strong>Đối soát đang tranh chấp</strong>
+                            <p>Quán mở yêu cầu khiếu nại</p>
+                        </div>
+                        <div className="task-badge">
+                            <span className={pendingTasks.doiSoatTranhChap > 0 ? "has-urgent" : "zero"}>
+                                {pendingTasks.doiSoatTranhChap}
+                            </span>
+                            <ArrowRight size={15} />
+                        </div>
+                    </Link>
+
+                    <Link to="/admin/doi-soat" className="admin-task-card">
+                        <div className="task-icon settlement">
+                            <TrendingUp size={20} />
+                        </div>
+                        <div className="task-info">
+                            <strong>Đối soát chờ xác nhận</strong>
+                            <p>Kỳ đối soát đang xử lý</p>
+                        </div>
+                        <div className="task-badge">
+                            <span className={pendingTasks.doiSoatChoXacNhan > 0 ? "has-count" : "zero"}>
+                                {pendingTasks.doiSoatChoXacNhan}
+                            </span>
+                            <ArrowRight size={15} />
+                        </div>
+                    </Link>
+                </div>
+            </section>
+
+            {/* 5. TOP RESTAURANTS & QUICK LINKS (PRESERVED) */}
             <div className="admin-dashboard-grid">
                 <section className="admin-dashboard-panel admin-ranking-panel">
                     <header className="admin-dashboard-panel-header">
@@ -219,8 +528,7 @@ function AdminHome() {
                             <Star size={25} />
                             <strong>Chưa có dữ liệu đánh giá</strong>
                             <p>
-                                Danh sách sẽ xuất hiện khi nhà hàng nhận được
-                                đánh giá từ khách hàng.
+                                Danh sách sẽ xuất hiện khi nhà hàng nhận được đánh giá từ khách hàng.
                             </p>
                         </div>
                     ) : (
@@ -323,6 +631,19 @@ function AdminHome() {
                             <span>
                                 <strong>Khuyến mãi hệ thống</strong>
                                 <small>Tạo và quản lý chương trình ưu đãi</small>
+                            </span>
+
+                            <ArrowRight size={16} />
+                        </Link>
+
+                        <Link to="/admin/tai-chinh">
+                            <span className="admin-work-icon finance">
+                                <ShieldCheck size={18} />
+                            </span>
+
+                            <span>
+                                <strong>Báo cáo tài chính</strong>
+                                <small>Theo dõi dòng tiền và đối soát nền tảng</small>
                             </span>
 
                             <ArrowRight size={16} />

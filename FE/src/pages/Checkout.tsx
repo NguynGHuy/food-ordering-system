@@ -12,6 +12,7 @@ import {
   ChevronRight,
   CircleCheck,
   CircleX,
+  Copy,
   PencilLine,
   QrCode,
   ReceiptText,
@@ -120,6 +121,13 @@ function formatCurrency(value: number) {
   return `${Number(value || 0).toLocaleString(
     "vi-VN",
   )} đ`;
+}
+
+function formatShortOrderCode(code: string | null | undefined): string {
+  if (!code) return "";
+  const clean = code.trim();
+  if (clean.length <= 11) return clean;
+  return `${clean.slice(0, 5)}...${clean.slice(-4)}`;
 }
 
 function estimateVoucherDiscount(voucher: CustomerVoucher, subtotal: number) {
@@ -237,6 +245,24 @@ function Checkout() {
   ] = useState<number | null>(null);
 
   const [soDuVi, setSoDuVi] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -939,13 +965,19 @@ function Checkout() {
             <CheckCircle2 size={18} />
 
             <div>
-              <strong>
-                Đơn{" "}
-                {
-                  donDaTao.maDonHangHienThi
-                }{" "}
-                đã được tạo
-              </strong>
+              <div className="checkout-created-code-row">
+                <strong>
+                  Đơn {formatShortOrderCode(donDaTao.maDonHangHienThi)} đã được tạo
+                </strong>
+                <button
+                  type="button"
+                  className="order-detail-copy-mini"
+                  title="Sao chép mã đơn đầy đủ"
+                  onClick={() => void handleCopyCode(donDaTao.maDonHangHienThi)}
+                >
+                  {copied ? <CircleCheck size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                </button>
+              </div>
 
               <p>
                 Địa chỉ, món ăn và mã
@@ -1292,6 +1324,20 @@ function Checkout() {
                   </strong>
                 </div>
 
+                {donDaTao && (
+                  <div className="qr-order-code-row">
+                    <span>Mã đơn: <strong>{formatShortOrderCode(donDaTao.maDonHangHienThi)}</strong></span>
+                    <button
+                      type="button"
+                      className="order-detail-copy-mini"
+                      title="Sao chép mã đơn đầy đủ"
+                      onClick={() => void handleCopyCode(donDaTao.maDonHangHienThi)}
+                    >
+                      {copied ? <CircleCheck size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                )}
+
                 <div className="qr-payment-steps">
                   <strong>Hoàn tất trong 3 bước</strong>
 
@@ -1303,7 +1349,7 @@ function Checkout() {
                 </div>
 
                 <p className="qr-demo-note">
-                  Đây là luồng thanh toán mô phỏng dùng trong đồ án.
+                  Cổng thanh toán trực tuyến thử nghiệm (Sandbox mô phỏng).
                   Đơn chưa thanh toán sẽ tự hủy sau 15 phút và hoàn lại lượt voucher.
                 </p>
 

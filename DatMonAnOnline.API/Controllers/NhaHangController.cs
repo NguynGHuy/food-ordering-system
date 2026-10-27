@@ -563,6 +563,159 @@ namespace DatMonAnOnline.API.Controllers
             });
         }
 
+
+        // =====================================================
+        // QUÁN: THỐNG KÊ DOANH THU & VẬN HÀNH CHO DASHBOARD
+        // =====================================================
+        [HttpGet("thong-ke/analytics")]
+        [Authorize(Roles = "Quan")]
+        public async Task<IActionResult> ThongKeAnalyticsQuan([FromQuery] int days = 7)
+        {
+            var maTaiKhoan = GetMaTaiKhoan();
+            if (maTaiKhoan == null)
+            {
+                return Unauthorized(new { message = "Token không hợp lệ." });
+            }
+
+            var nhaHang = await _context.Nhahangs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan.Value);
+
+            if (nhaHang == null)
+            {
+                return NotFound(new { message = "Không tìm thấy nhà hàng của tài khoản này." });
+            }
+
+            if (days != 1 && days != 7 && days != 30)
+            {
+                days = 7;
+            }
+
+            var now = VietnamBusinessTime.Now();
+            var today = now.Date;
+            var startDate = days == 1 ? today : today.AddDays(-(days - 1));
+            var endExclusive = today.AddDays(1);
+
+            // Doanh thu được ghi nhận theo thời điểm hoàn thành thực tế. Aggregate
+            // tại database để dashboard không tải toàn bộ đơn trong kỳ vào RAM.
+            var completedByDay = await _context.Donhangs
+                .AsNoTracking()
+                .Where(x =>
+                    x.MaNhaHang == nhaHang.MaNhaHang &&
+                    x.MaTrangThaiNavigation.TenTrangThai == "HoanThanh" &&
+                    x.ThoiGianGiaoThucTe.HasValue &&
+                    x.ThoiGianGiaoThucTe.Value >= startDate &&
+                    x.ThoiGianGiaoThucTe.Value < endExclusive)
+                .GroupBy(x => x.ThoiGianGiaoThucTe!.Value.Date)
+                .Select(group => new
+                {
+                    Ngay = group.Key,
+                    TongGiaTriDon = group.Sum(x => x.ThanhTien),
+                    ThuNhapNhaHang = group.Sum(x => x.SoTienNhaHangNhan),
+                    SoDonHoanThanh = group.Count()
+                })
+                .ToListAsync();
+
+            var completedByDate = completedByDay.ToDictionary(x => x.Ngay);
+
+            var dailyData = new List<object>();
+            int totalDays = days == 1 ? 1 : days;
+            for (int i = 0; i < totalDays; i++)
+            {
+                var curDate = startDate.AddDays(i);
+                completedByDate.TryGetValue(curDate, out var current);
+                dailyData.Add(new
+                {
+                    ngay = curDate.ToString("dd/MM/yyyy"),
+                    ngayNgan = curDate.ToString("dd/MM"),
+                    isoDate = curDate.ToString("yyyy-MM-dd"),
+                    tongGiaTriDon = current?.TongGiaTriDon ?? 0,
+                    thuNhapNhaHang = current?.ThuNhapNhaHang ?? 0,
+                    soDonHoanThanh = current?.SoDonHoanThanh ?? 0
+                });
+            }
+
+            // 2. Cảnh báo vận hành (Operational Alerts)
+            var donChoLau = await _context.Donhangs
+                .AsNoTracking()
+                .CountAsync(x =>
+                    x.MaNhaHang == nhaHang.MaNhaHang &&
+                    x.MaTrangThaiNavigation.TenTrangThai == "ChoXacNhan" &&
+                    x.ThoiGianDat <= now.AddMinutes(-15));
+
+            var monTamNgung = await _context.Monans
+                .AsNoTracking()
+                .CountAsync(x => x.MaNhaHang == nhaHang.MaNhaHang && x.TrangThai == false);
+
+            var voucherSapHetHan = await _context.Khuyenmais
+                .AsNoTracking()
+                .CountAsync(x =>
+                    x.MaNhaHang == nhaHang.MaNhaHang &&
+                    x.TrangThai == true &&
+                    x.NgayBatDau <= now &&
+                    x.NgayKetThuc >= now &&
+                    x.NgayKetThuc <= now.AddDays(3) &&
+                    x.SoLuongDaDung < x.SoLuong);
+
+            var hopDongHieuLuc = await _context.Hopdongnhahangs
+                .AsNoTracking()
+                .Where(x =>
+                    x.MaNhaHang == nhaHang.MaNhaHang &&
+                    x.TrangThai == "HieuLuc" &&
+                    x.NgayBatDau <= DateOnly.FromDateTime(today) &&
+                    x.NgayKetThuc >= DateOnly.FromDateTime(today))
+                .OrderByDescending(x => x.MaHopDong)
+                .FirstOrDefaultAsync();
+
+            bool hopDongSapHetHan = hopDongHieuLuc != null &&
+                hopDongHieuLuc.NgayKetThuc >= DateOnly.FromDateTime(today) &&
+                hopDongHieuLuc.NgayKetThuc <= DateOnly.FromDateTime(today).AddDays(30);
+
+            string? ngayHetHanHopDong = hopDongSapHetHan && hopDongHieuLuc != null
+                ? hopDongHieuLuc.NgayKetThuc.ToString("dd/MM/yyyy")
+                : null;
+
+            // 3. Đánh giá gần đây (3 - 5 đánh giá thực tế)
+            var recentReviews = await _context.Danhgianhahangs
+                .AsNoTracking()
+                .Where(x => x.MaNhaHang == nhaHang.MaNhaHang)
+                .OrderByDescending(x => x.NgayDanhGia)
+                .Take(5)
+                .Select(x => new
+                {
+                    x.MaDanhGia,
+                    x.SoSao,
+                    x.NoiDung,
+                    x.NgayDanhGia,
+                    TenKhachHang = x.MaKhachHangNavigation.HoTen,
+                    MaDonHangHienThi = x.MaDonHangNavigation.MaDonHangHienThi
+                })
+                .ToListAsync();
+
+            var rangeLabel = days == 1
+                ? $"Hôm nay ({today:dd/MM/yyyy})"
+                : $"{startDate:dd/MM/yyyy} – {today:dd/MM/yyyy} ({days} ngày)";
+
+            return Ok(new
+            {
+                days,
+                rangeLabel,
+                doanhThuTheoNgay = dailyData,
+                canhBao = new
+                {
+                    donChoLau,
+                    monTamNgung,
+                    voucherSapHetHan,
+                    hopDongSapHetHan,
+                    ngayHetHanHopDong
+                },
+                danhGiaMoiNhat = recentReviews,
+                tongGiaTriDonKyNay = completedByDay.Sum(x => x.TongGiaTriDon),
+                tongThuNhapKyNay = completedByDay.Sum(x => x.ThuNhapNhaHang),
+                tongDonKyNay = completedByDay.Sum(x => x.SoDonHoanThanh)
+            });
+        }
+
         private int? GetMaTaiKhoan()
         {
             var value = User.FindFirstValue(

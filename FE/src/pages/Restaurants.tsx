@@ -278,7 +278,7 @@ function Restaurants() {
               return (
                 <ScrollReveal
                   key={restaurant.maNhaHang}
-                  delay={(index % 4) * 60}
+                  delay={(index % 4) * 85}
                   className="restaurant-reveal-item"
                 >
                   <Link

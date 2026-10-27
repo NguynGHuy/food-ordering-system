@@ -439,6 +439,131 @@ namespace DatMonAnOnline.API.Controllers
 
             return Ok(new { tongNhaHang = tongQuan, tongDonHang = tongDon, tongDoanhThu });
         }
+        [HttpGet("thong-ke/analytics")]
+        public async Task<IActionResult> ThongKeAnalytics([FromQuery] int days = 7)
+        {
+            if (days != 1 && days != 7 && days != 30)
+            {
+                days = 7;
+            }
+
+            var now = VietnamBusinessTime.Now();
+            var today = now.Date;
+            var startDate = days == 1 ? today : today.AddDays(-(days - 1));
+            var endExclusive = today.AddDays(1);
+
+            // Doanh thu được ghi nhận theo thời điểm hoàn thành thực tế, không phải
+            // thời điểm khách đặt đơn. Aggregate tại database để không tải toàn bộ
+            // đơn trong kỳ vào bộ nhớ.
+            var completedByDay = await _context.Donhangs
+                .AsNoTracking()
+                .Where(x =>
+                    x.MaTrangThaiNavigation.TenTrangThai == "HoanThanh" &&
+                    x.ThoiGianGiaoThucTe.HasValue &&
+                    x.ThoiGianGiaoThucTe.Value >= startDate &&
+                    x.ThoiGianGiaoThucTe.Value < endExclusive)
+                .GroupBy(x => x.ThoiGianGiaoThucTe!.Value.Date)
+                .Select(group => new
+                {
+                    Ngay = group.Key,
+                    TongGiaTriDon = group.Sum(x => x.ThanhTien),
+                    DoanhThuNenTang = group.Sum(x => x.PhiNenTang),
+                    SoDonHoanThanh = group.Count()
+                })
+                .ToListAsync();
+
+            var completedByDate = completedByDay.ToDictionary(x => x.Ngay);
+
+            var dailyData = new List<object>();
+            int totalDays = days == 1 ? 1 : days;
+            for (int i = 0; i < totalDays; i++)
+            {
+                var curDate = startDate.AddDays(i);
+                completedByDate.TryGetValue(curDate, out var current);
+                dailyData.Add(new
+                {
+                    ngay = curDate.ToString("dd/MM/yyyy"),
+                    ngayNgan = curDate.ToString("dd/MM"),
+                    isoDate = curDate.ToString("yyyy-MM-dd"),
+                    tongGiaTriDon = current?.TongGiaTriDon ?? 0,
+                    doanhThuNenTang = current?.DoanhThuNenTang ?? 0,
+                    soDonHoanThanh = current?.SoDonHoanThanh ?? 0
+                });
+            }
+
+            // 2. Phân bố trạng thái đơn hàng trong kỳ
+            var statuses = await _context.Trangthaidonhangs
+                .AsNoTracking()
+                .OrderBy(s => s.ThuTu)
+                .Select(s => new { s.MaTrangThai, s.TenTrangThai })
+                .ToListAsync();
+
+            var orderStatusCounts = await _context.Donhangs
+                .AsNoTracking()
+                .Where(x => x.ThoiGianDat >= startDate && x.ThoiGianDat < endExclusive)
+                .GroupBy(x => x.MaTrangThai)
+                .Select(g => new { MaTrangThai = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.MaTrangThai, g => g.Count);
+
+            int totalPeriodOrders = orderStatusCounts.Values.Sum();
+
+            var phanBoTrangThai = statuses.Select(s =>
+            {
+                int count = orderStatusCounts.GetValueOrDefault(s.MaTrangThai, 0);
+                double tyLe = totalPeriodOrders > 0 ? Math.Round((double)count * 100 / totalPeriodOrders, 1) : 0;
+                return new
+                {
+                    s.MaTrangThai,
+                    s.TenTrangThai,
+                    soLuong = count,
+                    tyLe
+                };
+            }).ToList();
+
+            // 3. Công việc cần xử lý
+            var nhaHangChoDuyet = await _context.Nhahangs.CountAsync(x => x.TrangThaiDuyet == "ChoDuyet");
+
+            var hopDongSapHetHan = await _context.Hopdongnhahangs
+                .AsNoTracking()
+                .Where(x =>
+                    x.TrangThai == "HieuLuc" &&
+                    x.NgayBatDau <= DateOnly.FromDateTime(today) &&
+                    x.NgayKetThuc >= DateOnly.FromDateTime(today) &&
+                    x.NgayKetThuc <= DateOnly.FromDateTime(today).AddDays(30))
+                .Where(x => !_context.Hopdongnhahangs.Any(newer =>
+                    newer.MaNhaHang == x.MaNhaHang &&
+                    newer.TrangThai == "HieuLuc" &&
+                    newer.NgayBatDau <= DateOnly.FromDateTime(today) &&
+                    newer.NgayKetThuc >= DateOnly.FromDateTime(today) &&
+                    newer.MaHopDong > x.MaHopDong))
+                .CountAsync();
+
+            var doiSoatTranhChap = await _context.Doisoatnhahangs.CountAsync(x => x.TrangThai == "TranhChap");
+            var doiSoatChoXacNhan = await _context.Doisoatnhahangs.CountAsync(x => x.TrangThai == "ChoXacNhan");
+
+            var rangeLabel = days == 1
+                ? $"Hôm nay ({today:dd/MM/yyyy})"
+                : $"{startDate:dd/MM/yyyy} – {today:dd/MM/yyyy} ({days} ngày)";
+
+            return Ok(new
+            {
+                days,
+                rangeLabel,
+                doanhThuTheoNgay = dailyData,
+                phanBoTrangThai,
+                congViecCanXuLy = new
+                {
+                    nhaHangChoDuyet,
+                    hopDongSapHetHan,
+                    doiSoatTranhChap,
+                    doiSoatChoXacNhan
+                },
+                tongDoanhThuKyNay = completedByDay.Sum(x => x.TongGiaTriDon),
+                tongDoanhThuNenTangKyNay = completedByDay.Sum(x => x.DoanhThuNenTang),
+                tongDonKyNay = totalPeriodOrders
+            });
+        }
+
 
         [HttpGet("thong-ke/top-nha-hang")]
         public async Task<IActionResult> ThongKeTopNhaHang()

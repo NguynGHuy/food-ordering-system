@@ -33,7 +33,9 @@ try {
     }
     if (!$ready) { throw 'Test MySQL did not become ready.' }
     $env:FOODIE_RUN_MYSQL_TESTS = '1'
-    $testArguments = @('test', (Join-Path $workspace 'DatMonAnOnline.Tests\DatMonAnOnline.Tests.csproj'), '--no-restore', '-v', 'minimal')
+    # Use Release output so a developer's running `dotnet run` (Debug) does not
+    # lock the executable that the isolated test build needs to replace.
+    $testArguments = @('test', (Join-Path $workspace 'DatMonAnOnline.Tests\DatMonAnOnline.Tests.csproj'), '-c', 'Release', '--no-restore', '-v', 'minimal')
     if (![string]::IsNullOrWhiteSpace($Filter)) { $testArguments += @('--filter', $Filter) }
     & dotnet @testArguments
     $testExit = $LASTEXITCODE

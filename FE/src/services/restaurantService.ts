@@ -165,3 +165,52 @@ export async function updateRestaurantStatus(
         }
     );
 }
+
+/* =========================================================
+   QUÁN: THỐNG KÊ DOANH THU & VẬN HÀNH CHO DASHBOARD
+========================================================= */
+
+export interface MerchantDailyRevenue {
+    ngay: string;
+    ngayNgan: string;
+    isoDate: string;
+    tongGiaTriDon: number;
+    thuNhapNhaHang: number;
+    soDonHoanThanh: number;
+}
+
+export interface MerchantAlerts {
+    donChoLau: number;
+    monTamNgung: number;
+    voucherSapHetHan: number;
+    hopDongSapHetHan: boolean;
+    ngayHetHanHopDong?: string | null;
+}
+
+export interface MerchantRecentReview {
+    maDanhGia: number;
+    soSao: number;
+    noiDung: string | null;
+    ngayDanhGia: string;
+    tenKhachHang: string;
+    maDonHangHienThi?: string;
+}
+
+export interface MerchantAnalyticsData {
+    days: number;
+    rangeLabel: string;
+    doanhThuTheoNgay: MerchantDailyRevenue[];
+    canhBao: MerchantAlerts;
+    danhGiaMoiNhat: MerchantRecentReview[];
+    tongGiaTriDonKyNay: number;
+    tongThuNhapKyNay: number;
+    tongDonKyNay: number;
+}
+
+export async function getMerchantAnalytics(days = 7): Promise<MerchantAnalyticsData> {
+    return apiFetch(`/nha-hang/thong-ke/analytics?days=${days}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: "no-store",
+    });
+}

@@ -10,6 +10,7 @@ import {
   ChefHat,
   CircleX,
   Clock3,
+  Copy,
   ReceiptText,
   RefreshCw,
   Store,
@@ -87,6 +88,13 @@ function formatMoney(value: number) {
   return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
 }
 
+function formatShortOrderCode(code: string | null | undefined): string {
+  if (!code) return "";
+  const clean = code.trim();
+  if (clean.length <= 11) return clean;
+  return `${clean.slice(0, 5)}...${clean.slice(-4)}`;
+}
+
 function getStatusMeta(status: string): StatusMeta {
   return (
     STATUS_META[status] ?? {
@@ -129,6 +137,24 @@ function Orders() {
   const [cancelError, setCancelError] = useState("");
   const [cancelBusy, setCancelBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopyCode = async (code: string, id: number) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
 
   const loadOrders = useCallback(async (showFullLoading = true) => {
     try {
@@ -406,15 +432,17 @@ function Orders() {
                           <div className="customer-order-badges">
                             <span
                               className={`customer-order-payment payment-${order.trangThaiThanhToan || "unknown"}`}
+                              title={`Trạng thái thanh toán: ${getPaymentLabel(order)}`}
                             >
-                              <Banknote size={14} />
-                              {getPaymentLabel(order)}
+                              <Banknote size={13} />
+                              <span>{getPaymentLabel(order)}</span>
                             </span>
                             <span
                               className={`customer-order-status status-${status.className}`}
+                              title={`Trạng thái xử lý: ${status.label}`}
                             >
-                              <StatusIcon size={14} />
-                              {status.label}
+                              <StatusIcon size={13} />
+                              <span>{status.label}</span>
                             </span>
                           </div>
                         </div>
@@ -422,8 +450,28 @@ function Orders() {
                         <div className="customer-order-card-body">
                           <div className="customer-order-code">
                             <span>Mã đơn</span>
-
-                            <strong>{order.maDonHangHienThi}</strong>
+                            <div className="customer-order-code-row">
+                              <strong title={`Mã đơn đầy đủ: ${order.maDonHangHienThi}`}>
+                                {formatShortOrderCode(order.maDonHangHienThi)}
+                              </strong>
+                              <button
+                                type="button"
+                                className="order-code-copy-mini"
+                                title="Sao chép mã đơn đầy đủ"
+                                aria-label="Sao chép mã đơn"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  void handleCopyCode(order.maDonHangHienThi, order.maDonHang);
+                                }}
+                              >
+                                {copiedId === order.maDonHang ? (
+                                  <CheckCircle2 size={13} className="text-emerald-600" />
+                                ) : (
+                                  <Copy size={13} />
+                                )}
+                              </button>
+                            </div>
                           </div>
 
                           <div className="customer-order-amount">

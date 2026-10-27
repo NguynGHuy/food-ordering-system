@@ -828,7 +828,7 @@ function RestaurantDetail() {
                 <ScrollReveal
                   key={item.maMonAn}
                   className="customer-food-reveal-item"
-                  delay={(index % 3) * 70}
+                  delay={(index % 3) * 90}
                 >
                   <article className="customer-food-card">
                     <div className="customer-food-image">

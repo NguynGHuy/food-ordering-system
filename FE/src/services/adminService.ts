@@ -88,3 +88,43 @@ export function getTopRestaurants(): Promise<TopRestaurant[]> {
     headers: authHeaders(),
   });
 }
+
+export interface AdminDailyRevenue {
+  ngay: string;
+  ngayNgan: string;
+  isoDate: string;
+  tongGiaTriDon: number;
+  doanhThuNenTang: number;
+  soDonHoanThanh: number;
+}
+
+export interface AdminStatusDistribution {
+  maTrangThai: number;
+  tenTrangThai: string;
+  soLuong: number;
+  tyLe: number;
+}
+
+export interface AdminPendingTasks {
+  nhaHangChoDuyet: number;
+  hopDongSapHetHan: number;
+  doiSoatTranhChap: number;
+  doiSoatChoXacNhan: number;
+}
+
+export interface AdminAnalyticsData {
+  days: number;
+  rangeLabel: string;
+  doanhThuTheoNgay: AdminDailyRevenue[];
+  phanBoTrangThai: AdminStatusDistribution[];
+  congViecCanXuLy: AdminPendingTasks;
+  tongDoanhThuKyNay: number;
+  tongDoanhThuNenTangKyNay: number;
+  tongDonKyNay: number;
+}
+
+export function getAdminAnalytics(days = 7): Promise<AdminAnalyticsData> {
+  return apiFetch(`/admin/thong-ke/analytics?days=${days}`, {
+    headers: authHeaders(),
+  });
+}

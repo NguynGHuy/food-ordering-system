@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import {
   ArrowRight,
@@ -122,11 +122,15 @@ function getPaymentMeta(order: RestaurantOrderSummary) {
 
 function RestaurantOrders() {
   const PAGE_SIZE = 10;
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState<RestaurantOrderSummary[]>([]);
 
   const [statuses, setStatuses] = useState<OrderStatus[]>([]);
 
-  const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<number | null>(() => {
+    const value = Number(searchParams.get("maTrangThai"));
+    return Number.isInteger(value) && value > 0 ? value : null;
+  });
   const [pageNumber, setPageNumber] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
