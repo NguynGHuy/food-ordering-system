@@ -100,6 +100,8 @@ function RestaurantDetail() {
   const { id } = useParams<{ id: string }>();
 
   const menuRef = useRef<HTMLElement | null>(null);
+  const toppingGroupRefs = useRef(new Map<number, HTMLDivElement>());
+  const [showToppingValidation, setShowToppingValidation] = useState(false);
 
   /* =========================
        NHÀ HÀNG
@@ -388,6 +390,7 @@ function RestaurantDetail() {
       const food = await getMonAn(maMonAn);
       setSelectedFood(food);
       setSelectedToppings([]);
+      setShowToppingValidation(false);
       setQuantity(1);
       setNote("");
     } catch (err) {
@@ -401,6 +404,7 @@ function RestaurantDetail() {
     if (addingToCart) return;
     setSelectedFood(null);
     setSelectedToppings([]);
+    setShowToppingValidation(false);
     setCartError("");
   };
 
@@ -435,16 +439,17 @@ function RestaurantDetail() {
   const handleAddToCart = async () => {
     if (!selectedFood || addingToCart) return;
 
-    for (const group of selectedFood.nhomToppings) {
-      const groupIds = group.toppings.map((tp) => tp.maTopping);
-      const count = selectedToppings.filter((id) =>
-        groupIds.includes(id),
-      ).length;
-
-      if (group.batBuocChon && count === 0) {
-        setCartError(`Vui lòng chọn topping cho nhóm ${group.tenNhom}.`);
-        return;
-      }
+    const missingGroups = selectedFood.nhomToppings.filter(
+      (group) => group.batBuocChon &&
+        !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping)),
+    );
+    setShowToppingValidation(true);
+    if (missingGroups.length) {
+      setCartError("");
+      const firstGroup = toppingGroupRefs.current.get(missingGroups[0].maNhomTopping);
+      firstGroup?.scrollIntoView({ behavior: "instant", block: "center" });
+      firstGroup?.querySelector("input")?.focus({ preventScroll: true });
+      return;
     }
 
     try {
@@ -977,11 +982,25 @@ function RestaurantDetail() {
             </div>
 
             <div className="food-option-body">
-              {selectedFood.nhomToppings.map((group) => (
-                <div key={group.maNhomTopping} className="topping-group">
+              {selectedFood.nhomToppings.map((group) => {
+                const missing = showToppingValidation && group.batBuocChon &&
+                  !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping));
+                const errorId = `topping-error-${group.maNhomTopping}`;
+                return (
+                <div key={group.maNhomTopping}
+                  ref={(element) => {
+                    if (element) toppingGroupRefs.current.set(group.maNhomTopping, element);
+                    else toppingGroupRefs.current.delete(group.maNhomTopping);
+                  }}
+                  className={`topping-group${missing ? " is-invalid" : ""}`}
+                  role="group"
+                  aria-labelledby={`topping-title-${group.maNhomTopping}`}
+                  aria-invalid={missing || undefined}
+                  aria-describedby={missing ? errorId : undefined}
+                >
                   <div className="topping-group-title">
                     <div>
-                      <h3>{group.tenNhom}</h3>
+                      <h3 id={`topping-title-${group.maNhomTopping}`}>{group.tenNhom}</h3>
 
                       {group.chonToiDa ? (
                         <p>Chọn tối đa {group.chonToiDa} lựa chọn</p>
@@ -1003,6 +1022,8 @@ function RestaurantDetail() {
                         <input
                           type="checkbox"
                           checked={selectedToppings.includes(topping.maTopping)}
+                          aria-invalid={missing || undefined}
+                          aria-describedby={missing ? errorId : undefined}
                           onChange={() =>
                             toggleTopping(topping.maTopping, group)
                           }
@@ -1016,8 +1037,15 @@ function RestaurantDetail() {
                       </label>
                     ))}
                   </div>
+                  {missing && (
+                    <p id={errorId} className="topping-group-error">
+                      <CircleAlert size={15} aria-hidden="true" />
+                      Vui lòng chọn ít nhất một lựa chọn cho nhóm {group.tenNhom}.
+                    </p>
+                  )}
                 </div>
-              ))}
+                );
+              })}
 
               <label className="food-note-field">
                 <div className="food-note-heading">
@@ -1038,15 +1066,19 @@ function RestaurantDetail() {
                 />
               </label>
 
-              {cartError && (
-                <p className="food-option-error">
-                  <CircleAlert size={15} />
-                  <span>{cartError}</span>
-                </p>
-              )}
             </div>
 
             <div className="food-option-footer">
+              {(cartError || (showToppingValidation && selectedFood.nhomToppings.some(
+                (group) => group.batBuocChon && !group.toppings.some(
+                  (topping) => selectedToppings.includes(topping.maTopping),
+                ),
+              ))) && (
+                <p className="food-option-error" role="alert">
+                  <CircleAlert size={15} />
+                  <span>{cartError || "Vui lòng chọn đầy đủ các nhóm bắt buộc được đánh đỏ ở trên."}</span>
+                </p>
+              )}
               <div className="food-quantity-wrapper">
                 <span>Số lượng</span>
 
