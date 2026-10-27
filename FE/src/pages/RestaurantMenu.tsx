@@ -31,6 +31,7 @@ import { getNhomToppings, type NhomTopping } from "../services/toppingService";
 import { getCurrentUser } from "../services/userService";
 import ScrollReveal from "../components/ScrollReveal";
 import Pagination from "../components/Pagination";
+import { isFoodImageReference } from "../utils/foodImageReference";
 
 interface CurrentUser {
   nhaHang?: { maNhaHang: number };
@@ -187,6 +188,11 @@ function RestaurantMenu() {
 
     if (form.gia <= 0) {
       setError("Giá món phải lớn hơn 0.");
+      return;
+    }
+
+    if (!isFoodImageReference(form.hinhAnh)) {
+      setError("Ảnh món phải là đường dẫn /uploads/foods/ hợp lệ hoặc URL HTTP/HTTPS, tối đa 255 ký tự.");
       return;
     }
 
@@ -654,7 +660,10 @@ function RestaurantMenu() {
                 <div className="merchant-menu-icon-input">
                   <ImageIcon size={16} />
                   <input
-                    type="url"
+                    type="text"
+                    inputMode="url"
+                    maxLength={255}
+                    aria-label="Đường dẫn hình ảnh món ăn"
                     value={form.hinhAnh}
                     placeholder="https://..."
                     onChange={(event) =>

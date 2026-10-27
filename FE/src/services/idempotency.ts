@@ -41,6 +41,11 @@ export async function getIdempotencyKey(
     return key;
 }
 
+export async function forgetIdempotencyKey(operation: string, payload: unknown, key: string) {
+    const storageKey = await getStorageKey(operation, payload);
+    if (sessionStorage.getItem(storageKey) === key) sessionStorage.removeItem(storageKey);
+}
+
 /**
  * Mỗi thao tác thành công sẽ bỏ key cũ để lần bấm sau có key mới.
  * Nếu request lỗi hoặc mất kết nối, key vẫn được giữ để retry an toàn.

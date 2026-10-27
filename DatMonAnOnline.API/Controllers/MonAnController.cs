@@ -33,7 +33,7 @@ namespace DatMonAnOnline.API.Controllers
             [VndAmount]
             public decimal Gia { get; set; }
 
-            [MaxLength(255)]
+            [MaxLength(255), FoodImageReference]
             public string? HinhAnh { get; set; }
         }
 
@@ -51,7 +51,7 @@ namespace DatMonAnOnline.API.Controllers
             [VndAmount]
             public decimal Gia { get; set; }
 
-            [MaxLength(255)]
+            [MaxLength(255), FoodImageReference]
             public string? HinhAnh { get; set; }
         }
 

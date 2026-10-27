@@ -55,8 +55,12 @@ public class ViController : ControllerBase
         if (maTaiKhoan == null)
             return Unauthorized(new { message = "Token không hợp lệ." });
 
-        pageNumber = Math.Max(pageNumber, 1);
-        pageSize = Math.Clamp(pageSize, 1, 100);
+        if (pageNumber < 1 || pageSize is < 1 or > 100)
+            return BadRequest(new { message = "Số trang phải từ 1 và kích thước trang phải từ 1 đến 100." });
+
+        var offset = (long)(pageNumber - 1) * pageSize;
+        if (offset > int.MaxValue)
+            return BadRequest(new { message = "Số trang quá lớn. Vui lòng chọn trang nhỏ hơn." });
 
         var query = _context.Giaodichvis
             .AsNoTracking()
@@ -88,7 +92,7 @@ public class ViController : ControllerBase
         var items = await query
             .OrderByDescending(item => item.NgayTao)
             .ThenByDescending(item => item.MaGiaoDichVi)
-            .Skip((pageNumber - 1) * pageSize)
+            .Skip((int)offset)
             .Take(pageSize)
             .Select(item => new
             {

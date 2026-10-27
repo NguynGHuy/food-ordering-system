@@ -1,5 +1,5 @@
 import MediaImage from "../components/MediaImage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -34,9 +34,9 @@ import {
 } from "../services/addressService";
 import {
   checkPreCheckout,
-  placeOrder,
   type TienDonHang,
 } from "../services/orderService";
+import { beginCheckout, getPendingCheckout, submitCheckout } from "../services/checkoutAttempt";
 import { getCart, reserveCartForCheckout } from "../services/cartService";
 import { getCustomerProfile } from "../services/customerService";
 import {
@@ -144,6 +144,8 @@ function estimateVoucherDiscount(voucher: CustomerVoucher, subtotal: number) {
 
 function Checkout() {
   const navigate = useNavigate();
+  const submitting = useRef(false);
+  const [recoveryError, setRecoveryError] = useState("");
   const [searchParams] = useSearchParams();
 
   const maGioHang = Number(
@@ -275,7 +277,16 @@ function Checkout() {
     }
 
     const initCheckout = async () => {
+      let recovering = false;
       try {
+        const pending = await getPendingCheckout();
+        if (cancelled) return;
+        if (pending) {
+          recovering = true;
+          const order = await submitCheckout(pending);
+          if (!cancelled) navigate(`/don-hang/${order.maDonHang}`, { replace: true });
+          return;
+        }
         if (
           !Number.isInteger(maGioHang) ||
           maGioHang <= 0
@@ -382,6 +393,10 @@ function Checkout() {
                   ? error.message
                   : "Có lỗi xảy ra.";
 
+          if (recovering) {
+            setRecoveryError(message);
+            return;
+          }
           alert(message);
           navigate("/nha-hang", { replace: true });
       } finally {
@@ -687,6 +702,28 @@ function Checkout() {
   };
 
   const handlePay = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
+    setPaying(true);
+    try {
+      // A consumed cart is expected after commit. Resolve this exact attempt
+      // before any fresh-cart, balance, address or payment UI checks.
+      const pending = await getPendingCheckout();
+      if (pending) {
+        const order = await submitCheckout(pending);
+        navigate(`/don-hang/${order.maDonHang}`, { replace: true });
+        return;
+      }
+      await handleNewPayment();
+    } catch (error) {
+      setRecoveryError(error instanceof Error ? error.message : "Không thể xác minh kết quả.");
+    } finally {
+      submitting.current = false;
+      setPaying(false);
+    }
+  };
+
+  const handleNewPayment = async () => {
     const payment =
       phuongThucList.find(
         (item) =>
@@ -763,7 +800,7 @@ function Checkout() {
       await recheckBeforeOrder();
 
       const response =
-        await placeOrder({
+        await submitCheckout(await beginCheckout({
           maGioHang,
           maDiaChi:
             selectedAddressId,
@@ -772,7 +809,7 @@ function Checkout() {
           maKhuyenMai:
             promotionId,
           ghiChu,
-        });
+        }));
 
       if (
         payment.tenPhuongThuc ===
@@ -805,7 +842,8 @@ function Checkout() {
           ? error.message
           : "Có lỗi xảy ra.";
 
-      alert(message);
+      if (await getPendingCheckout()) setRecoveryError(message);
+      else alert(message);
     } finally {
       setPaying(false);
     }
@@ -875,6 +913,19 @@ function Checkout() {
         <p>
           Đang chuẩn bị đơn hàng...
         </p>
+      </main>
+    );
+  }
+
+  if (recoveryError) {
+    return (
+      <main className="checkout-page checkout-loading-page">
+        <h1>Khôi phục kết quả đặt hàng</h1>
+        <p role="alert">Chưa xác minh được kết quả. Không đặt lại đơn mới. {recoveryError}</p>
+        <button type="button" className="checkout-compact-submit" disabled={paying} onClick={handlePay}>
+          {paying ? "Đang xác minh..." : "Thử khôi phục"}
+        </button>
+        <Link to="/don-hang">Kiểm tra lịch sử đơn hàng</Link>
       </main>
     );
   }

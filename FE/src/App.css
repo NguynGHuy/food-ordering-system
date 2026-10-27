@@ -826,6 +826,7 @@ img {
 }
 
 .user-avatar {
+  position: relative;
   width: 34px;
   height: 34px;
 
@@ -29023,7 +29024,9 @@ img {
 .merchant-menu-image {
   position: relative;
   display: flex;
-  min-height: 174px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 0;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -47600,6 +47603,8 @@ select:focus-visible {
 @media (max-width: 768px) {
   .header-delivery-pill {
     max-width: 140px;
+    min-width: 0;
+    flex-shrink: 1;
     margin-left: 10px;
     padding: 4px 8px;
   }
@@ -47610,6 +47615,11 @@ select:focus-visible {
 
   .header-search-form {
     display: none;
+  }
+
+  .header-right {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .mobile-bottom-nav {
@@ -49533,9 +49543,28 @@ select:focus-visible {
   border-color: #fecdd3;
 }
 
-/* 3. Tối ưu nhẹ chiều cao card món, khoảng trắng & responsive */
+/* 3. Chuẩn hóa tỷ lệ ảnh món ăn 4:3 (Khớp chính xác ảnh gốc 800x600, hiển thị trọn vẹn món ăn, không bị cắt mép) */
+.customer-food-image,
 .customer-food-card .customer-food-image {
-  height: 172px !important;
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 4 / 3 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  background: #f4f2f0 !important;
+}
+
+.customer-food-image img,
+.customer-food-image > img,
+.customer-food-card .customer-food-image img,
+.customer-food-card .customer-food-image > img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
 }
 
 .customer-food-card .customer-food-content {
@@ -49554,10 +49583,6 @@ select:focus-visible {
 }
 
 @media (max-width: 768px) {
-  .customer-food-card .customer-food-image {
-    height: 170px !important;
-  }
-
   .order-detail-title-row {
     flex-direction: column;
     align-items: flex-start;
@@ -49581,10 +49606,6 @@ select:focus-visible {
 }
 
 @media (max-width: 375px) {
-  .customer-food-card .customer-food-image {
-    height: 155px !important;
-  }
-
   .customer-food-card .customer-food-content {
     padding: 11px 12px 12px !important;
   }

@@ -15,5 +15,7 @@
     </PackageReference>
     <ProjectReference Include="../DatMonAnOnline.API/DatMonAnOnline.API.csproj" />
     <None Include="../DatMonAnOnline.API/Database/Database.sql" Link="Database.sql" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../DatMonAnOnline.API/Database/SeedDemo.sql" Link="SeedDemo.sql" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures/food-image-references.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

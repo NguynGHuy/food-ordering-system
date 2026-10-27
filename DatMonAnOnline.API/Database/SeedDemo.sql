@@ -1203,8 +1203,25 @@ INSERT INTO `chitietdonhang` (`MaDonHang`,`MaMonAn`,`TenMonAnLucDat`,`SoLuong`,`
 INSERT INTO `lichsutrangthaidonhang` (`MaDonHang`,`MaTrangThai`,`MaTaiKhoan`,`GhiChu`) VALUES (35,1,21,'Trạng thái đơn demo');
 INSERT INTO `lichsutrangthaidonhang` (`MaDonHang`,`MaTrangThai`,`MaTaiKhoan`,`GhiChu`) VALUES (35,6,6,'Trạng thái đơn demo');
 
+-- Demo cart: create the parent rows before attaching Size M to the milk tea.
+-- Food 1 belongs to restaurant 1; topping 1 belongs to its assigned size group.
+-- Capture generated IDs rather than assuming cart/detail AUTO_INCREMENT values.
+INSERT INTO `giohang` (`MaKhachHang`,`MaNhaHang`,`NgayCapNhat`)
+SELECT `MaKhachHang`, 1, CURRENT_TIMESTAMP
+FROM `khachhang`
+ORDER BY `MaKhachHang`
+LIMIT 1;
+SET @demo_cart_id = LAST_INSERT_ID();
+
+INSERT INTO `chitietgiohang` (`MaGioHang`,`MaMonAn`,`SoLuong`,`GhiChu`)
+VALUES (@demo_cart_id,1,1,'Ít đá, giữ nguyên độ ngọt');
+SET @demo_cart_detail_id = LAST_INSERT_ID();
+
 INSERT INTO `chitietgiohang_topping` (`MaChiTietGioHang`,`MaTopping`,`SoLuong`,`GiaThem`)
-VALUES (1,1,1,0);
+SELECT @demo_cart_detail_id, t.`MaTopping`, 1, t.`GiaThem`
+FROM `topping` t
+JOIN `monan_nhomtopping` m ON m.`MaNhomTopping` = t.`MaNhomTopping`
+WHERE m.`MaMonAn` = 1 AND t.`MaTopping` = 1;
 
 COMMIT;
 -- Audit counts: SELECT MaNhaHang,COUNT(*) FROM donhang WHERE MaTrangThai=5 GROUP BY MaNhaHang;

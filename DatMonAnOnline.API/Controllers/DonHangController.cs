@@ -541,6 +541,21 @@ namespace DatMonAnOnline.API.Controllers
 
                 await transaction.CommitAsync();
 
+                try
+                {
+                    await _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                        "Admin",
+                        new[] { "donHang", "tongQuan" },
+                        new { donHang.MaDonHang, hanhDong = "DatHang" });
+                }
+                catch (Exception signalRException)
+                {
+                    _logger.LogWarning(
+                        signalRException,
+                        "Đơn {MaDonHang} đã tạo nhưng không gửi được cập nhật tổng quan Admin.",
+                        donHang.MaDonHang);
+                }
+
                 if (thongBaoDonMoi != null)
                 {
                     var thongBaoPayload = new

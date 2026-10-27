@@ -55,13 +55,13 @@ function Footer() {
         <div className="footer-column">
           <h3>Hỗ trợ</h3>
 
-          <a href="#">Trung tâm trợ giúp</a>
+          <Link to="/tro-giup">Trung tâm trợ giúp</Link>
 
-          <a href="#">Chính sách bảo mật</a>
+          <Link to="/chinh-sach-bao-mat">Chính sách bảo mật</Link>
 
-          <a href="#">Điều khoản sử dụng</a>
+          <Link to="/dieu-khoan-su-dung">Điều khoản sử dụng</Link>
 
-          <a href="#">Chính sách giao hàng</a>
+          <Link to="/chinh-sach-giao-hang">Chính sách giao hàng</Link>
         </div>
 
         {/* =========================

@@ -50,6 +50,7 @@ const Restaurants = lazy(() => import("./pages/Restaurants"));
 const RegisterRestaurant = lazy(() => import("./pages/RegisterRestaurant"));
 const RestaurantLegalProfile = lazy(() => import("./pages/RestaurantLegalProfile"));
 const RestaurantContract = lazy(() => import("./pages/RestaurantContract"));
+const InformationPage = lazy(() => import("./pages/InformationPage"));
 
 
 import RealtimeBridge from "./components/RealtimeBridge";
@@ -116,6 +117,10 @@ function AppContent() {
                     path="/dang-nhap"
                     element={<Login />}
                 />
+                <Route path="/tro-giup" element={<InformationPage section="help" />} />
+                <Route path="/chinh-sach-bao-mat" element={<InformationPage section="privacy" />} />
+                <Route path="/dieu-khoan-su-dung" element={<InformationPage section="terms" />} />
+                <Route path="/chinh-sach-giao-hang" element={<InformationPage section="delivery" />} />
 
                 <Route
                     path="/dang-ky"

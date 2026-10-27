@@ -37,10 +37,10 @@ export async function checkPreCheckout(
   });
 }
 
-export async function placeOrder(data: DatHangRequest): Promise<DatHangResult> {
+export async function placeOrder(data: DatHangRequest, attemptKey?: string): Promise<DatHangResult> {
   const token = localStorage.getItem("token");
   const path = "/don-hang/dat-hang";
-  return runIdempotentRequest(`POST ${path}`, data, (key) =>
+  const send = (key: string): Promise<DatHangResult> =>
     apiFetch(path, {
       method: "POST",
       headers: {
@@ -48,8 +48,8 @@ export async function placeOrder(data: DatHangRequest): Promise<DatHangResult> {
         "Idempotency-Key": key,
       },
       body: JSON.stringify(data),
-    })
-  );
+    });
+  return attemptKey ? send(attemptKey) : runIdempotentRequest(`POST ${path}`, data, send);
 }
 
 export interface CustomerOrderListResult<T> extends PagedResult<T> {
