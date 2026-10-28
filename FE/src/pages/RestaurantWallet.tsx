@@ -99,7 +99,7 @@ export default function RestaurantWallet() {
                   <div className="wallet-transaction-main">
                     <div className="wallet-transaction-title-row"><div><h3>{LABELS[item.loaiGiaoDich] ?? item.loaiGiaoDich}</h3><time>{dateTime(item.ngayTao)}</time></div><strong className={credit ? "is-credit" : "is-debit"}>{credit ? "+" : "−"}{money(item.soTien)}</strong></div>
                     {item.noiDung && <p>{item.noiDung}</p>}
-                    <div className="wallet-transaction-meta"><span>Số dư sau: <b>{money(item.soDuSau)}</b></span><span>Mã: <b>{item.maThamChieu}</b></span>{item.maDonHang && <Link to={`/quan/don-hang/${item.maDonHang}`}>Xem đơn hàng</Link>}{item.maDoiSoat && <Link to="/quan/doi-soat">Xem kỳ #{item.maDoiSoat}</Link>}</div>
+                    <div className="wallet-transaction-meta"><span>Số dư trước: <b>{money(item.soDuTruoc)}</b></span><span>Số dư sau: <b>{money(item.soDuSau)}</b></span><span>Mã: <b>{item.maThamChieu}</b></span>{item.maDonHang && <Link to={`/quan/don-hang/${item.maDonHang}`}>Xem đơn hàng</Link>}{item.maDoiSoat && <Link to="/quan/doi-soat">Xem kỳ #{item.maDoiSoat}</Link>}</div>
                   </div>
                 </article>
               );

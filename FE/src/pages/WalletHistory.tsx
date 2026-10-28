@@ -266,6 +266,7 @@ function WalletHistory() {
                       {transaction.noiDung && <p>{transaction.noiDung}</p>}
 
                       <div className="wallet-transaction-meta">
+                        <span>Số dư trước: <b>{formatMoney(transaction.soDuTruoc)}</b></span>
                         <span>Số dư sau: <b>{formatMoney(transaction.soDuSau)}</b></span>
                         <span>Mã: <b>{transaction.maThamChieu}</b></span>
                         {transaction.maDonHang && (

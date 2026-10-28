@@ -252,6 +252,7 @@ function AdminAccounts() {
                                     <th>Tài khoản</th>
                                     <th>Vai trò</th>
                                     <th>Trạng thái</th>
+                                    <th>Xác thực email</th>
                                     <th>Ngày tạo</th>
                                     <th>Thao tác</th>
                                 </tr>
@@ -308,6 +309,10 @@ function AdminAccounts() {
                                                         ? "Hoạt động"
                                                         : "Đã khóa"}
                                                 </span>
+                                            </td>
+
+                                            <td>
+                                                {account.daXacThucEmail ? "Đã xác thực" : "Chưa xác thực"}
                                             </td>
 
                                             <td>

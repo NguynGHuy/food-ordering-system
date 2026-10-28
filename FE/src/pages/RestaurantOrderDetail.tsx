@@ -410,6 +410,11 @@ function RestaurantOrderDetail() {
                         <time>
                           {new Date(item.thoiGianTao).toLocaleString("vi-VN")}
                         </time>
+                        <p>
+                          Người thực hiện: {item.maTaiKhoan != null
+                            ? `Tài khoản #${item.maTaiKhoan}`
+                            : "Không có thông tin tài khoản"}
+                        </p>
                         {item.ghiChu && <p>{item.ghiChu}</p>}
                       </div>
                     </li>

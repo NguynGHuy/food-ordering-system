@@ -185,6 +185,7 @@ export interface OrderDetails {
 
 export interface OrderStatusHistory {
   maLichSu: number;
+  maTaiKhoan: number | null;
   tenTrangThai: string;
   thoiGianTao: string;
   ghiChu: string | null;
