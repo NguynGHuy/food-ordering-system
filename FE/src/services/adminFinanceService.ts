@@ -1,4 +1,6 @@
-import { apiFetch, buildQuery } from "./api";
+import { apiFetch, buildQuery, type PagedResult } from "./api";
+
+type PageMetadata = Pick<PagedResult<unknown>, "pageNumber" | "pageSize" | "totalItems" | "totalPages">;
 
 export interface FinancePeriod {
   maDoiSoat: number;
@@ -54,10 +56,12 @@ export interface FinanceOverview {
   conPhaiThuNhaHang: number;
   cacDonDoanhThuGanDay: PlatformRevenueOrder[];
   cacKyGanDay: FinancePeriod[];
+  donDoanhThuPagination: PageMetadata;
+  kyDoiSoatPagination: PageMetadata;
   capNhatLuc: string;
 }
 
-export function getFinanceOverview(filters: { tuNgay?: string; denNgay?: string } = {}) {
+export function getFinanceOverview(filters: { tuNgay?: string; denNgay?: string; orderPageNumber?: number; orderPageSize?: number; periodPageNumber?: number; periodPageSize?: number } = {}) {
   return apiFetch(`/admin/tai-chinh/tong-quan${buildQuery(filters)}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   }) as Promise<FinanceOverview>;

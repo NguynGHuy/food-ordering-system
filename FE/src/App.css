@@ -407,7 +407,7 @@
   pointer-events: none;
   transform: translateY(-50%);
 }
-.reconciliation-restaurant-search-wrap input { padding-left: 38px !important; padding-right: 38px !important; }
+.reconciliation-restaurant-search-wrap input { padding-left: 38px; padding-right: 38px; }
 .reconciliation-picker-spinner {
   position: absolute;
   top: 50%;
@@ -15643,10 +15643,6 @@ img {
   background: var(--primary);
 
   box-shadow: 0 6px 14px rgba(244, 81, 30, 0.17);
-}
-
-.restaurants-page .restaurant-filter.active svg {
-  color: #ffffff;
 }
 
 /* Empty */
@@ -35674,28 +35670,6 @@ fieldset.merchant-promo-form-body {
   width: min(560px, 100%);
 }
 
-.admin-promotion-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 5;
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #909096;
-  cursor: pointer;
-}
-
-.admin-promotion-modal-close:hover {
-  background: #f1f1f2;
-  color: #333337;
-}
-
 /* Hỗ trợ cấu trúc form khuyến mãi cũ */
 .admin-promotion-modal .promotion-create-form,
 .admin-promotion-modal .promotion-edit-form {
@@ -45619,8 +45593,8 @@ button.profile-tool-card {
 }
 
 .admin-pro-nav a.active {
-  background-color: #fff4ef !important;
-  color: var(--primary) !important;
+  background-color: #fff4ef;
+  color: var(--primary);
   font-weight: 600;
   box-shadow: inset 3px 0 0 var(--primary);
 }
@@ -45786,8 +45760,8 @@ button.profile-tool-card {
 
 /* Search bar focus */
 .admin-account-search-pro:focus-within {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(244, 81, 30, 0.15) !important;
+  border-color: var(--primary);
+  box-shadow: none;
 }
 
 /* Table rows */
@@ -46521,11 +46495,6 @@ button.profile-tool-card {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* Thông báo chưa đọc (Unread) nổi bật tinh tế chuẩn Shopee/Grab */
-.merchant-notification-row.unread {
-  background-color: #fffbf8 !important;
-}
-
 /* 2. Thẻ Voucher Khách hàng (VoucherCard & VoucherWallet) */
 .customer-voucher-card {
   contain: layout style;
@@ -46647,8 +46616,8 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  border-color: var(--primary, #f4511e) !important;
-  box-shadow: 0 0 0 3px rgba(244, 81, 30, 0.16) !important;
+  border-color: var(--primary, #f4511e);
+  box-shadow: none;
 }
 
 /* Tắt hiệu ứng khi người dùng bật reduced motion */

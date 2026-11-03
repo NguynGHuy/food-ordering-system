@@ -24,7 +24,7 @@ function Pagination({
   disabled = false,
   onPageChange,
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  if (!Number.isFinite(totalPages) || !Number.isFinite(pageNumber) || totalPages <= 1) return null;
 
   const pages = getVisiblePages(pageNumber, totalPages);
 

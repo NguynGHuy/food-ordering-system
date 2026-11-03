@@ -1,18 +1,16 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import MotionPresence from "../components/MotionPresence";
+import Pagination from "../components/Pagination";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import type { PagedResult } from "../services/api";
 import { FolderOpen, Hash, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import {
   createDanhMuc,
   deleteDanhMuc,
-  getDanhMucs,
+  getManagedCategories,
   updateDanhMuc,
   type DanhMuc,
 } from "../services/categoryService";
-import { getCurrentUser } from "../services/userService";
 import ScrollReveal from "../components/ScrollReveal";
-
-interface CurrentUser {
-  nhaHang?: { maNhaHang: number };
-}
 
 interface CategoryForm {
   tenDanhMuc: string;
@@ -24,17 +22,6 @@ const EMPTY_FORM: CategoryForm = {
   thuTuHienThi: 0,
 };
 
-async function getRestaurantId() {
-  const user = (await getCurrentUser()) as CurrentUser;
-  const maNhaHang = user.nhaHang?.maNhaHang;
-
-  if (!maNhaHang) {
-    throw new Error("Không tìm thấy thông tin nhà hàng.");
-  }
-
-  return maNhaHang;
-}
-
 function RestaurantCategory() {
   const [danhMucs, setDanhMucs] = useState<DanhMuc[]>([]);
   const [form, setForm] = useState<CategoryForm>(EMPTY_FORM);
@@ -45,22 +32,26 @@ function RestaurantCategory() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [categoryPage, setCategoryPage] = useState<PagedResult<DanhMuc> | null>(null);
+  const pageRef = useRef(1);
+  const loadSequence = useRef(0);
 
-  const loadDanhMucs = useCallback(async (showLoading = true) => {
+  const loadDanhMucs = useCallback(async (showLoading = true, page = pageRef.current) => {
+    const sequence = ++loadSequence.current;
     try {
       if (showLoading) setLoading(true);
       setError("");
 
-      const maNhaHang = await getRestaurantId();
-      const data = await getDanhMucs(maNhaHang);
-
-      setDanhMucs(
-        [...data].sort((a, b) => (a.thuTuHienThi ?? 0) - (b.thuTuHienThi ?? 0)),
-      );
+      const data = await getManagedCategories({ pageNumber: page, pageSize: 12 });
+      if (sequence !== loadSequence.current) return;
+      setDanhMucs(data.items);
+      setCategoryPage(data);
+      pageRef.current = data.pageNumber;
     } catch (err) {
+      if (sequence !== loadSequence.current) return;
       setError(err instanceof Error ? err.message : "Không thể tải danh mục.");
     } finally {
-      if (showLoading) setLoading(false);
+      if (sequence === loadSequence.current && showLoading) setLoading(false);
     }
   }, []);
 
@@ -200,7 +191,7 @@ function RestaurantCategory() {
       </ScrollReveal>
 
       {error && !editorOpen && (
-        <div className="merchant-category-notice error">{error}</div>
+        <div className="merchant-category-notice error" role="alert">{error} <button type="button" onClick={() => void loadDanhMucs()}>Tải lại</button></div>
       )}
 
       {success && (
@@ -216,7 +207,7 @@ function RestaurantCategory() {
           </div>
 
           <span className="merchant-category-count">
-            {danhMucs.length} danh mục
+            {categoryPage?.totalItems ?? 0} danh mục
           </span>
           </div>
         </ScrollReveal>
@@ -245,7 +236,7 @@ function RestaurantCategory() {
               >
                 <article className="merchant-category-row">
                 <div className="merchant-category-position">
-                  {String(index + 1).padStart(2, "0")}
+                  {String(((categoryPage?.pageNumber ?? 1) - 1) * (categoryPage?.pageSize ?? 12) + index + 1).padStart(2, "0")}
                 </div>
 
                 <div className="merchant-category-icon">
@@ -288,9 +279,10 @@ function RestaurantCategory() {
             ))}
           </div>
         )}
+        {categoryPage && <Pagination {...categoryPage} disabled={saving || deletingId !== null} onPageChange={(page) => void loadDanhMucs(true, page)} />}
       </section>
 
-      {editorOpen && (
+      <MotionPresence present={Boolean(editorOpen)}>{editorOpen && (
         <div className="merchant-category-overlay" onMouseDown={closeEditor}>
           <form
             className="merchant-category-dialog"
@@ -377,7 +369,7 @@ function RestaurantCategory() {
             </footer>
           </form>
         </div>
-      )}
+      )}</MotionPresence>
     </div>
   );
 }

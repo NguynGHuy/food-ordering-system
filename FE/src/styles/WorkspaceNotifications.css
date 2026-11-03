@@ -1,0 +1,46 @@
+/* One shared notification component and visual language for all three roles. */
+.merchant-notifications-page .merchant-notifications-header { margin-bottom: 20px; }
+.merchant-notifications-page .merchant-notifications-eyebrow { display: none; }
+.merchant-notifications-page .merchant-notifications-tabs { border: 0; box-shadow: none; min-height: 0; }
+.merchant-notifications-page .merchant-notifications-read-all { min-height: 44px; padding: 10px 14px; border: 1px solid #24584a; border-radius: 6px; color: #24584a; background: white; box-shadow: none; }
+.merchant-notifications-page .merchant-notifications-panel-title { display: flex; align-items: center; gap: 12px; }
+.merchant-notifications-page .merchant-notifications-panel-title h2 { font-size: 18px; }
+.merchant-notifications-page .merchant-notifications-panel-title h2 svg { color: #24584a; }
+.merchant-notifications-page .merchant-notifications-panel-title > span { margin-left: auto; }
+.merchant-notifications-page .merchant-notification-content > div { display: flex; align-items: center; gap: 8px; }
+.merchant-notifications-page .merchant-notification-content p { margin: 6px 0 8px; }
+.merchant-notifications-page .merchant-notification-action { position: static; display: flex; align-items: center; padding: 0; border: 0; background: transparent; flex-shrink: 0; }
+.merchant-notifications-page .merchant-notification-row { align-items: center; }
+.merchant-notifications-page .merchant-notification-content time { display: inline-flex; align-items: center; gap: 6px; }
+.merchant-notifications-page .merchant-notification-row:last-child { border-bottom: 0; }
+.merchant-notifications-page .merchant-notification-row:hover::after { content: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-page { min-width: 0; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 24px; background: transparent; border-bottom: 1px solid #dce1da; padding: 0; border-radius: 0; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-tabs button { background: transparent; color: #5d685f; min-height: 44px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 14px; box-shadow: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-tabs button.active { color: #24584a; border-bottom-color: #24584a; background: transparent; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-panel { background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; overflow: hidden; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-panel-title { background: #fff; border-bottom: 1px solid #dce1da; padding: 16px 20px; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-list { display: grid; gap: 0; padding: 0; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row { display: flex; gap: 16px; padding: 20px; margin: 0; width: 100%; background: #fff; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row.unread { background-color: #f2f6ef; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row::before { content: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row.unread::before,
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row.unread:hover::after,
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-action button::before { content: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row:hover { transform: none; box-shadow: none; background-color: #f6f8f3; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-icon { width: 36px; height: 36px; color: #24584a; background: #eaf0eb; border-radius: 6px; flex-shrink: 0; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-content { flex: 1; min-width: 0; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-content > div { flex-wrap: wrap; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-content h3 { font-size: 15px; color: #202923; overflow-wrap: anywhere; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-content :is(p, time) { color: #5d685f; overflow-wrap: anywhere; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row .merchant-notification-content p { display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-content > div > span { background: #eaf0eb; color: #24584a; border-radius: 4px; font-size: 12px; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-action button { width: auto; height: auto; min-width: 44px; min-height: 44px; padding: 8px 12px; white-space: normal; color: #24584a; background: #fff; border: 1px solid #dce1da; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-row.unread .merchant-notification-icon { background: #eaf0eb; color: #24584a; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-panel-title > svg { color: #24584a; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notifications-tabs button > span { background: #eaf0eb; color: #24584a; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) :is(.merchant-notifications-empty, .merchant-notifications-loading) { background: #fff; border: 1px solid #dce1da; border-radius: 8px; padding: 40px 20px; color: #5d685f; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) :is(.merchant-notifications-error, .merchant-info-error, .merchant-status-error, .merchant-live-error, .merchant-orders-error) { color: #a12f2a; background: #fcedeb; border: 1px solid #e6c3bf; border-radius: 6px; padding: 16px; }
+@media (max-width: 639px) {
+  :is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) .merchant-notification-action { flex-basis: 100%; justify-content: flex-end; }
+}

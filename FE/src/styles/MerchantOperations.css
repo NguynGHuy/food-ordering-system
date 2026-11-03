@@ -1,0 +1,195 @@
+/* Dashboard: operations first, with flat statistical strips and readable queues. */
+.foodie-merchant-shell .merchant-live-dashboard { display: grid; gap: 24px; max-width: none; margin: 0; padding: 0; }
+.foodie-merchant-shell .merchant-live-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 0; min-height: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible; color: #202923; }
+.foodie-merchant-shell .merchant-live-hero::before, .foodie-merchant-shell .merchant-live-hero::after { content: none; }
+.foodie-merchant-shell .merchant-live-welcome { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
+.foodie-merchant-shell .merchant-live-welcome h1 { font-size: 28px; margin: 0 0 8px; color: #202923; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-live-welcome > p { color: #5d685f; margin: 0; font-size: 14px; }
+.foodie-merchant-shell .merchant-live-eyebrow-row { order: 3; margin-top: 12px; }
+.foodie-merchant-shell .merchant-sound-toggle { min-height: 36px; color: #24584a; background: #fff; border: 1px solid #dce1da; padding: 6px 10px; border-radius: 6px; }
+.foodie-merchant-shell .merchant-live-status { align-self: flex-start; padding: 12px 16px; min-width: 0; max-width: 320px; background: #eaf0eb; color: #24584a; border: 1px solid #c6d6c8; box-shadow: none; border-radius: 6px; }
+.foodie-merchant-shell .merchant-live-status :is(small, strong) { color: inherit; white-space: normal; }
+.foodie-merchant-shell .merchant-live-status.is-closed { color: #5d685f; background: #f0f0e9; border-color: #dce1da; }
+.foodie-merchant-shell .merchant-live-status-dot { background: currentColor; box-shadow: none; animation: none; }
+.foodie-merchant-shell .merchant-live-status:is(.is-open, .is-closed) .merchant-live-status-dot { animation: none; box-shadow: none; }
+.foodie-merchant-shell .merchant-live-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: #fff; border: 1px solid #dce1da; border-radius: 8px; overflow: hidden; }
+.foodie-merchant-shell .merchant-live-stats > article { display: flex; gap: 12px; align-items: flex-start; min-width: 0; padding: 20px; border: 0; border-right: 1px solid #dce1da; border-radius: 0; background: transparent; box-shadow: none; transform: none; }
+.foodie-merchant-shell .merchant-live-stats > article:last-child { border-right: 0; }
+.foodie-merchant-shell .merchant-live-stats > article::before, .foodie-merchant-shell .merchant-live-stats > article::after { content: none; }
+.foodie-merchant-shell .merchant-live-stats article > span { width: 28px; height: 28px; background: transparent; color: #24584a; border: 0; box-shadow: none; border-radius: 0; transform: none; }
+.foodie-merchant-shell .merchant-live-stats article > div { min-width: 0; }
+.foodie-merchant-shell .merchant-live-stats > article:hover { box-shadow: none; transform: none; border-color: #dce1da; }
+.foodie-merchant-shell .merchant-live-stats > article:hover > span { transform: none; }
+.foodie-merchant-shell .merchant-live-stats small { font-size: 13px; color: #5d685f; }
+.foodie-merchant-shell .merchant-live-stats strong { display: block; color: #202923; font-size: 24px; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-live-stats p { color: #5d685f; font-size: 12px; margin: 4px 0 0; }
+.foodie-merchant-shell :is(.merchant-priority-orders, .merchant-chart-section, .merchant-card-panel, .merchant-recent-orders, .merchant-live-operation, .merchant-live-quick, .merchant-setup-card) {
+  padding: 20px; border: 1px solid #dce1da; border-radius: 8px; background: #fff; box-shadow: none; min-width: 0;
+}
+.foodie-merchant-shell :is(.merchant-priority-header, .merchant-chart-header, .merchant-card-header, .merchant-recent-orders > header) { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; padding: 0 0 16px; margin: 0 0 8px; gap: 16px; border-bottom: 1px solid #dce1da; background: transparent; }
+.foodie-merchant-shell :is(.merchant-priority-header, .merchant-chart-header, .merchant-card-header, .merchant-recent-orders > header) h2 { font-size: 18px; color: #202923; margin: 0 0 4px; }
+.foodie-merchant-shell :is(.merchant-priority-header, .merchant-chart-header) p { color: #5d685f; font-size: 13px; margin: 0; }
+.foodie-merchant-shell .priority-title-wrap { min-width: 0; }
+.foodie-merchant-shell .priority-title-wrap h2 { color: #202923; }
+.foodie-merchant-shell .priority-pulse-dot { width: 8px; height: 8px; background: #d6a442; animation: none; box-shadow: none; }
+.foodie-merchant-shell .priority-count-badge { background: #fff4d6; color: #7a5700; border-radius: 6px; }
+.foodie-merchant-shell .merchant-priority-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+.foodie-merchant-shell .merchant-priority-card { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(140px, 1fr) auto; align-items: center; gap: 20px; padding: 16px 0; background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-priority-card:last-child { border-bottom: 0; }
+.foodie-merchant-shell .priority-card-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; margin: 0; min-width: 0; }
+.foodie-merchant-shell .priority-card-top > div { min-width: 0; }
+.foodie-merchant-shell .priority-order-code { display: block; color: #202923; white-space: normal; overflow-wrap: anywhere; font-size: 14px; font-weight: 600; }
+.foodie-merchant-shell .priority-order-time { color: #5d685f; font-size: 12px; }
+.foodie-merchant-shell .priority-order-money { color: #24584a; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .priority-card-customer { color: #5d685f; font-size: 13px; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .priority-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.foodie-merchant-shell .priority-card-actions :is(a, button) { flex: none; white-space: nowrap; font-size: 13px; }
+.foodie-merchant-shell :is(.merchant-priority-empty, .merchant-alerts-empty, .merchant-reviews-empty, .merchant-recent-empty) { padding: 28px 12px; color: #5d685f; background: transparent; border: 0; }
+.foodie-merchant-shell .merchant-chart-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.foodie-merchant-shell .merchant-chart-totals { gap: 16px; }
+.foodie-merchant-shell .merchant-chart-totals strong { color: #24584a; font-size: 18px; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-days-filter { background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; padding: 3px; }
+.foodie-merchant-shell .time-pill { min-height: 36px; color: #5d685f; border-radius: 4px; background: transparent; box-shadow: none; }
+.foodie-merchant-shell .time-pill.is-active { background: #24584a; color: #fff; }
+.foodie-merchant-shell .merchant-chart-body { padding: 12px 0 0; }
+.foodie-merchant-shell .revenue-chart-svg path[fill^="url("] { fill: none; }
+.foodie-merchant-shell .revenue-chart-tooltip { background: #fff; color: #202923; border: 1px solid #dce1da; border-radius: 6px; box-shadow: 0 4px 16px #20292314; }
+.foodie-merchant-shell .revenue-chart-tooltip .tooltip-date { color: #202923; }
+.foodie-merchant-shell .merchant-chart-caption { border: 0; padding: 12px 0 0; color: #5d685f; font-size: 12px; }
+.foodie-merchant-shell .merchant-operational-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.foodie-merchant-shell :is(.merchant-alerts-list, .merchant-reviews-list) { padding: 0; }
+.foodie-merchant-shell .alert-item { background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 14px 0; color: #24584a; box-shadow: none; }
+.foodie-merchant-shell .alert-item.is-warning { background: transparent; color: #7a5700; }
+.foodie-merchant-shell .alert-item:last-child { border-bottom: 0; }
+.foodie-merchant-shell .alert-text { min-width: 0; }
+.foodie-merchant-shell .alert-text p { color: #5d685f; }
+.foodie-merchant-shell .alert-badge { border-radius: 6px; background: #eaf0eb; color: #24584a; }
+.foodie-merchant-shell .alert-badge.has-issues { background: #fff4d6; color: #7a5700; }
+.foodie-merchant-shell .merchant-review-item { background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 16px 0; }
+.foodie-merchant-shell .review-item-header { flex-wrap: wrap; gap: 8px; }
+.foodie-merchant-shell .review-customer-info strong { color: #202923; }
+.foodie-merchant-shell .review-comment, .foodie-merchant-shell .review-time { color: #5d685f; overflow-wrap: anywhere; }
+.foodie-merchant-shell :is(.review-stars .star-active, .restaurant-rating-pill) { color: #7a5700; }
+.foodie-merchant-shell .restaurant-rating-pill { background: #fff4d6; border-radius: 6px; }
+.foodie-merchant-shell .merchant-live-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; }
+.foodie-merchant-shell .merchant-live-side { display: grid; gap: 20px; align-content: start; }
+.foodie-merchant-shell .merchant-recent-list > button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 0; background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; text-align: left; }
+.foodie-merchant-shell .merchant-recent-icon { background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-merchant-shell .merchant-recent-main { min-width: 0; flex: 1; }
+.foodie-merchant-shell .merchant-recent-main strong { white-space: normal; overflow-wrap: anywhere; color: #202923; }
+.foodie-merchant-shell .merchant-recent-money { flex-shrink: 0; text-align: right; }
+.foodie-merchant-shell .merchant-recent-money strong { font-size: 14px; color: #202923; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-live-operation { background: #fff; color: #202923; }
+.foodie-merchant-shell .merchant-live-operation :is(strong, h3) { color: #202923; }
+.foodie-merchant-shell .merchant-operation-heading > span { color: #24584a; background: #eaf0eb; }
+.foodie-merchant-shell .merchant-operation-hours { background: #f7f5ef; color: #5d685f; border-radius: 6px; }
+.foodie-merchant-shell .merchant-live-quick > div { display: grid; gap: 0; }
+.foodie-merchant-shell .merchant-live-quick button { background: transparent; color: #24584a; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 12px 0; min-height: 44px; }
+.foodie-merchant-shell .merchant-setup-card { margin: 0; }
+.foodie-merchant-shell .merchant-setup-steps { gap: 0; border: 1px solid #dce1da; border-radius: 6px; overflow: hidden; }
+.foodie-merchant-shell .merchant-setup-step { background: #f7f5ef; border: 0; border-radius: 0; padding: 12px; }
+.foodie-merchant-shell .merchant-setup-step.is-done { background: #eaf0eb; color: #24584a; }
+/* Order queue: stable columns, separate order/payment labels. */
+.foodie-merchant-shell .merchant-orders-page { max-width: none; margin: 0; padding: 0; }
+.foodie-merchant-shell .merchant-orders-heading-icon { width: 36px; height: 36px; color: #24584a; background: #eaf0eb; border-radius: 6px; box-shadow: none; }
+.foodie-merchant-shell .merchant-orders-count { background: transparent; color: #5d685f; padding: 0; border: 0; }
+.foodie-merchant-shell .merchant-orders-count strong { font-size: 24px; color: #24584a; }
+.foodie-merchant-shell .merchant-order-filter-section { padding: 16px 20px 0; margin: 0 0 20px; background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .merchant-order-filter-heading { margin-bottom: 12px; }
+.foodie-merchant-shell .merchant-order-tabs { display: flex; gap: 4px; padding: 0; overflow-x: auto; scrollbar-width: thin; flex-wrap: wrap; background: transparent; }
+.foodie-merchant-shell .merchant-order-tab { min-height: 44px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #5d685f; background: transparent; box-shadow: none; white-space: nowrap; }
+.foodie-merchant-shell .merchant-order-tab.is-active { color: #24584a; border-bottom-color: #24584a; background: #f4f7f2; box-shadow: none; }
+.foodie-merchant-shell .merchant-order-list { display: grid; gap: 0; background: #fff; border: 1px solid #dce1da; border-radius: 8px; overflow: hidden; }
+.foodie-merchant-shell .merchant-order-card { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(110px, auto) max-content; gap: 16px; padding: 20px; margin: 0; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: #fff; box-shadow: none; color: #202923; }
+.foodie-merchant-shell .merchant-order-card:hover { background: #f6f8f3; border-color: #dce1da; box-shadow: none; }
+.foodie-merchant-shell .merchant-order-card { border-left-width: 0 !important; }
+.foodie-merchant-shell .merchant-order-card::before, .foodie-merchant-shell .merchant-order-card::after { content: none; }
+.foodie-merchant-shell .merchant-order-card-reveal:last-child .merchant-order-card { border-bottom: 0; }
+.foodie-merchant-shell .merchant-order-status-mark { width: 32px; height: 32px; background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-merchant-shell .merchant-order-code-row { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.foodie-merchant-shell .merchant-order-code-row h3 { margin: 0; font-size: 15px; color: #202923; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-order-primary { min-width: 0; }
+.foodie-merchant-shell .merchant-order-customer { color: #5d685f; flex-wrap: wrap; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-order-price { text-align: right; align-self: center; min-width: 0; }
+.foodie-merchant-shell .merchant-order-price strong { color: #202923; font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-order-open { background: transparent; color: #24584a; width: auto; height: auto; font-size: 14px; white-space: nowrap; }
+.foodie-merchant-shell :is(.merchant-order-status, .merchant-detail-status, .merchant-recent-money > span) { border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #275d89; background: #edf4fa; border: 0; }
+.foodie-merchant-shell :is(.merchant-order-status, .merchant-detail-status, .merchant-recent-money > span):is(.status-pending, .status-preparing) { color: #7a5700; background: #fff4d6; }
+.foodie-merchant-shell :is(.merchant-order-status, .merchant-detail-status, .merchant-recent-money > span).status-completed { color: #24584a; background: #eaf0eb; }
+.foodie-merchant-shell :is(.merchant-order-status, .merchant-detail-status, .merchant-recent-money > span).status-cancelled { color: #a12f2a; background: #fcedeb; }
+.foodie-merchant-shell .merchant-order-payment { background: transparent; color: #5d685f; border: 1px solid #dce1da; border-radius: 4px; font-size: 12px; }
+/* Order detail: recipient and items left, independent financial summary right. */
+.foodie-merchant-shell .merchant-detail-page { padding: 0; max-width: none; margin: 0; }
+.foodie-merchant-shell .merchant-detail-back { display: inline-flex; min-height: 44px; align-items: center; color: #24584a; margin-bottom: 12px; }
+.foodie-merchant-shell .merchant-detail-shell { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.foodie-merchant-shell .merchant-detail-hero { background: #fff; color: #202923; padding: 24px; border: 1px solid #dce1da; border-radius: 8px; }
+.foodie-merchant-shell .merchant-detail-hero::before, .foodie-merchant-shell .merchant-detail-hero::after { content: none; }
+.foodie-merchant-shell .merchant-detail-hero-top { gap: 24px; flex-wrap: wrap; }
+.foodie-merchant-shell .merchant-detail-hero-top > div { min-width: 0; }
+.foodie-merchant-shell .merchant-detail-title { flex-wrap: wrap; }
+.foodie-merchant-shell .merchant-detail-title h1 { font-size: 24px; color: #202923; overflow-wrap: anywhere; white-space: normal; }
+.foodie-merchant-shell .merchant-detail-meta { color: #5d685f; flex-wrap: wrap; }
+.foodie-merchant-shell .merchant-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.foodie-merchant-shell .merchant-detail-actions button { min-height: 44px !important; border-radius: 6px !important; padding: 10px 16px !important; }
+.foodie-merchant-shell .merchant-detail-actions button:hover:not(:disabled) { transform: none !important; }
+.foodie-merchant-shell .merchant-detail-cancel { min-height: 44px; background: #fff; border: 1px solid #a12f2a; color: #a12f2a; padding: 10px 16px; }
+.foodie-merchant-shell .merchant-detail-progress { margin: 24px 0 0; padding: 20px 0 0; background: transparent; border-top: 1px solid #dce1da; color: #5d685f; }
+.foodie-merchant-shell .merchant-detail-progress li.reached { color: #24584a; }
+.foodie-merchant-shell .merchant-detail-progress li.current { color: #24584a; font-weight: 600; }
+.foodie-merchant-shell .merchant-detail-cancelled { background: #fcedeb; color: #a12f2a; border: 0; border-radius: 6px; }
+.foodie-merchant-shell .merchant-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; padding: 0; margin-top: 24px; gap: 24px; align-items: start; }
+.foodie-merchant-shell .merchant-detail-main { display: grid; gap: 24px; min-width: 0; }
+.foodie-merchant-shell .merchant-detail-card { background: #fff; padding: 20px; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .merchant-detail-card-title { padding: 0 0 12px; border-bottom: 1px solid #dce1da; margin-bottom: 12px; color: #24584a; }
+.foodie-merchant-shell .merchant-detail-item { gap: 12px; background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 16px 0; }
+.foodie-merchant-shell .merchant-detail-item > div { min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-detail-item-number { color: #24584a; background: #eaf0eb; border-radius: 4px; }
+.foodie-merchant-shell .merchant-detail-item > strong { color: #202923; text-align: right; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-detail-toppings { background: transparent; padding: 0; color: #5d685f; }
+.foodie-merchant-shell .merchant-delivery-info { color: #5d685f; gap: 12px; }
+.foodie-merchant-shell .merchant-delivery-address, .foodie-merchant-shell .merchant-delivery-note { background: #f7f5ef; border-radius: 6px; padding: 12px; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-detail-history { padding: 0; }
+.foodie-merchant-shell .merchant-detail-history li { background: transparent; border-radius: 0; border-bottom: 1px solid #dce1da; padding: 12px 0; }
+.foodie-merchant-shell .merchant-detail-money > div { gap: 16px; }
+.foodie-merchant-shell .merchant-detail-money strong { color: #202923; text-align: right; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-detail-money .total { border-top: 1px solid #dce1da; margin-top: 12px; padding-top: 16px; }
+.foodie-merchant-shell .merchant-detail-money .total strong { color: #24584a; font-size: 20px; }
+.foodie-merchant-shell .merchant-payment-state { color: #5d685f; background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; padding: 10px; }
+.foodie-merchant-shell .merchant-payment-state.state-ThanhCong { background: #eaf0eb; color: #24584a; }
+.foodie-merchant-shell .merchant-payment-state.state-ThatBai { background: #fcedeb; color: #a12f2a; }
+@media (max-width: 1279px) {
+  .foodie-merchant-shell .merchant-priority-card { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; }
+  .foodie-merchant-shell .priority-card-top { grid-column: 1 / -1; }
+  .foodie-merchant-shell .merchant-live-layout { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-live-side { grid-template-columns: 1fr 1fr; }
+  .foodie-merchant-shell .merchant-live-stats > article { padding: 16px 12px; gap: 8px; }
+  .foodie-merchant-shell .merchant-live-stats article > span { display: none; }
+}
+@media (max-width: 1023px) {
+  .foodie-merchant-shell .merchant-detail-layout { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-detail-summary { position: static; }
+}
+@media (max-width: 767px) {
+  .foodie-merchant-shell .merchant-live-hero { flex-direction: column; gap: 16px; }
+  .foodie-merchant-shell .merchant-live-welcome h1 { font-size: 24px; }
+  .foodie-merchant-shell .merchant-live-status { width: 100%; max-width: none; }
+  .foodie-merchant-shell .merchant-live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodie-merchant-shell .merchant-live-stats > article { border-bottom: 1px solid #dce1da; padding: 16px; }
+  .foodie-merchant-shell .merchant-live-stats > article:nth-child(2n) { border-right: 0; }
+  .foodie-merchant-shell .merchant-live-stats > article:nth-child(n+3) { border-bottom: 0; }
+  .foodie-merchant-shell .merchant-live-stats strong { font-size: 21px; }
+  .foodie-merchant-shell .merchant-operational-grid, .foodie-merchant-shell .merchant-live-side { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-priority-card { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .priority-card-actions { justify-content: flex-end; }
+  .foodie-merchant-shell :is(.merchant-priority-orders, .merchant-chart-section, .merchant-card-panel, .merchant-recent-orders, .merchant-live-operation, .merchant-live-quick) { padding: 16px; }
+  .foodie-merchant-shell .merchant-order-filter-section { padding: 16px 12px 0; }
+  .foodie-merchant-shell .merchant-order-card { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 16px; }
+  .foodie-merchant-shell .merchant-order-status-mark { display: none; }
+  .foodie-merchant-shell .merchant-order-primary { grid-column: 1 / -1; }
+  .foodie-merchant-shell .merchant-order-price { text-align: left; }
+  .foodie-merchant-shell .merchant-order-open { justify-self: end; }
+  .foodie-merchant-shell .merchant-detail-hero, .foodie-merchant-shell .merchant-detail-card { padding: 16px; }
+  .foodie-merchant-shell .merchant-detail-progress { display: flex; flex-wrap: wrap; gap: 16px; }
+  .foodie-merchant-shell .merchant-detail-progress li { min-width: 100px; flex: 1; }
+  .foodie-merchant-shell .merchant-detail-progress li::before, .foodie-merchant-shell .merchant-detail-progress li::after { content: none; }
+}

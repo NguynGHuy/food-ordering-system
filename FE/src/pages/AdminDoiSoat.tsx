@@ -1,5 +1,5 @@
+import MotionPresence from "../components/MotionPresence";
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Check, Eye, LoaderCircle, Plus, RefreshCw, Search, X } from "lucide-react";
 import Pagination from "../components/Pagination";
 import ReconciliationBreakdown from "../components/ReconciliationBreakdown";
@@ -335,8 +335,7 @@ export default function AdminDoiSoat() {
         )}
       </section>
 
-      {showCreate && createPortal((
-        <div className="admin-promotion-modal-overlay">
+      <MotionPresence present={Boolean(showCreate)} portal>{showCreate && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
           <div className="admin-promotion-modal edit-modal">
             <button className="admin-promotion-modal-close" onClick={closeCreateModal} disabled={busy} aria-label="Đóng"><X size={18} /></button>
             <form onSubmit={(event) => void handleCreate(event)}>
@@ -414,11 +413,9 @@ export default function AdminDoiSoat() {
               </div>
             </form>
           </div>
-        </div>
-      ), document.body)}
+        </div>)}</MotionPresence>
 
-      {showDetail && detailData && createPortal((
-        <div className="admin-promotion-modal-overlay">
+      <MotionPresence present={Boolean(showDetail && detailData)} portal>{showDetail && detailData && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
           <div className="admin-promotion-modal reconciliation-modal">
             <button className="admin-promotion-modal-close" onClick={closeDetail}><X size={18} /></button>
             <div className="reconciliation-modal-title">
@@ -493,8 +490,7 @@ export default function AdminDoiSoat() {
               </p>
             )}
           </div>
-        </div>
-      ), document.body)}
+        </div>)}</MotionPresence>
     </div>
   );
 }

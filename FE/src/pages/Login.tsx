@@ -1,3 +1,5 @@
+import MotionPresence from "../components/MotionPresence";
+import CustomerAuthIntro from "../components/CustomerAuthIntro";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -200,13 +202,14 @@ function Login() {
 
   return (
     <main className="auth-page">
+      <CustomerAuthIntro />
       <div className="auth-card">
         <h2>Đăng nhập</h2>
         <p className="auth-description">Đăng nhập để tiếp tục sử dụng dịch vụ</p>
 
         <div className="form-group">
-          <label>Email</label>
-          <input
+          <label htmlFor="cg-login-1">Email</label>
+          <input id="cg-login-1"
             type="email"
             autoComplete="email"
             placeholder="Nhập email của bạn"
@@ -220,10 +223,10 @@ function Login() {
 
         <div className="form-group login-password-group">
           <div className="login-password-heading">
-            <label>Mật khẩu</label>
+            <label htmlFor="cg-login-2">Mật khẩu</label>
             <button type="button" onClick={openForgotPassword}>Quên mật khẩu?</button>
           </div>
-          <input
+          <input id="cg-login-2"
             type="password"
             autoComplete="current-password"
             placeholder="Nhập mật khẩu"
@@ -251,7 +254,7 @@ function Login() {
         </p>
       </div>
 
-      {forgotOpen && (
+      <MotionPresence present={Boolean(forgotOpen)}>{forgotOpen && (
         <div className="forgot-password-overlay" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title" onMouseDown={closeForgotPassword}>
           <section className="forgot-password-dialog" onMouseDown={(event) => event.stopPropagation()}>
             <button type="button" className="forgot-password-close" aria-label="Đóng" disabled={forgotBusy} onClick={closeForgotPassword}>
@@ -326,7 +329,7 @@ function Login() {
             )}
           </section>
         </div>
-      )}
+      )}</MotionPresence>
     </main>
   );
 }

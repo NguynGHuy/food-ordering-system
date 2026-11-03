@@ -152,8 +152,8 @@ namespace DatMonAnOnline.API.Controllers
                     SoDu = 0,
                     DonViTienTe = "VND",
                     TrangThai = "HoatDong",
-                    NgayTao = DateTime.Now,
-                    NgayCapNhat = DateTime.Now
+                    NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now(),
+                    NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
                 });
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -240,15 +240,15 @@ namespace DatMonAnOnline.API.Controllers
                     SoDu = 0,
                     DonViTienTe = "VND",
                     TrangThai = "HoatDong",
-                    NgayTao = DateTime.Now,
-                    NgayCapNhat = DateTime.Now
+                    NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now(),
+                    NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
                 });
                 await _context.SaveChangesAsync();
 
                 _context.Hosophaplynhahangs.Add(new Hosophaplynhahang
                 {
                     MaNhaHang = nhaHang.MaNhaHang,
-                    NgayTao = DateTime.Now
+                    NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
                 });
 
                 await _context.SaveChangesAsync();

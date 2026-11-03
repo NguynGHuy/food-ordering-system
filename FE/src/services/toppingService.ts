@@ -1,4 +1,12 @@
-import { apiFetch } from "./api";
+import { apiFetch, buildQuery, type PaginationParams, type PagedResult } from "./api";
+
+export function getNhomToppingsPage(maNhaHang: number, pagination: PaginationParams): Promise<PagedResult<NhomTopping>> {
+    return apiFetch(`/nhom-topping${buildQuery({ maNhaHang, pageNumber: 1, pageSize: 10, ...pagination })}`, { headers: getAuthHeaders() });
+}
+
+export function getManagedToppings(maNhomTopping: number, pagination: PaginationParams): Promise<PagedResult<Topping> & { activeTotal: number }> {
+    return apiFetch(`/topping/quan${buildQuery({ maNhomTopping, ...pagination })}`, { headers: getAuthHeaders() });
+}
 
 // =====================================================
 // TYPES

@@ -1,0 +1,169 @@
+/* Catalog: menu rows keep imagery small and actions beside the editable data. */
+.foodie-merchant-shell :is(.merchant-menu-page, .merchant-category-page, .merchant-options-page, .merchant-promotions-page) { max-width: none; margin: 0; padding: 0; }
+.foodie-merchant-shell .merchant-menu-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 20px; padding: 20px; border: 1px solid #dce1da; border-radius: 8px; background: #fff; box-shadow: none; margin-bottom: 24px; }
+.foodie-merchant-shell .merchant-menu-summary { display: flex; gap: 32px; padding-bottom: 16px; border-bottom: 1px solid #dce1da; }
+.foodie-merchant-shell .merchant-menu-summary > div { display: flex; flex-direction: row; align-items: baseline; gap: 8px; padding: 0; border: 0; background: transparent; }
+.foodie-merchant-shell .merchant-menu-summary strong { font-size: 22px; color: #24584a; font-weight: 600; }
+.foodie-merchant-shell .merchant-menu-summary span { font-size: 13px; color: #5d685f; }
+.foodie-merchant-shell .merchant-menu-filters { display: grid; grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(170px, 1fr)); gap: 12px; width: 100%; }
+.foodie-merchant-shell :is(.merchant-menu-search, .merchant-menu-select) { display: flex; width: auto; min-width: 0; border: 1px solid #778478; border-radius: 6px; background: #fff; padding: 0 12px; color: #5d685f; gap: 8px; box-shadow: none; }
+.foodie-merchant-shell :is(.merchant-menu-search, .merchant-menu-select) :is(input, select) { flex: 1; width: 100%; border: 0; padding-left: 0; background: transparent; box-shadow: none; }
+.foodie-merchant-shell :is(.merchant-menu-search, .merchant-menu-select):focus-within { outline: 2px solid #24584a; outline-offset: 2px; }
+.foodie-merchant-shell .merchant-menu-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; border: 1px solid #dce1da; border-radius: 8px; background: #fff; overflow: hidden; }
+.foodie-merchant-shell .merchant-menu-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 20px; padding: 20px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: #fff; box-shadow: none; overflow: visible; transform: none; }
+.foodie-merchant-shell .merchant-menu-card-reveal:last-child .merchant-menu-card { border-bottom: 0; }
+.foodie-merchant-shell .merchant-menu-card:hover { box-shadow: none; background: #f9faf6; transform: none; }
+.foodie-merchant-shell .merchant-menu-image { width: 112px; height: 112px; aspect-ratio: 1; border-radius: 6px; background: #f0f2e9; color: #5d685f; overflow: hidden; }
+.foodie-merchant-shell .merchant-menu-image img { width: 100%; height: 100%; object-fit: cover; transform: none !important; animation: none !important; }
+.foodie-merchant-shell .merchant-menu-image > span { left: 4px; right: 4px; bottom: 4px; top: auto; width: auto; text-align: center; border-radius: 4px; padding: 3px 6px; font-size: 11px; color: #24584a; background: #eaf0eb; box-shadow: none; animation: none !important; }
+.foodie-merchant-shell .merchant-menu-image > span.hidden { background: #f7f5ef; color: #5d685f; }
+.foodie-merchant-shell .merchant-menu-card-body { padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; animation: none !important; }
+.foodie-merchant-shell .merchant-menu-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.foodie-merchant-shell .merchant-menu-card-heading > div { min-width: 0; }
+.foodie-merchant-shell .merchant-menu-card-heading h2 { color: #202923; font-size: 17px; margin: 4px 0 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-menu-card-heading span { color: #5d685f; background: transparent; padding: 0; font-size: 12px; }
+.foodie-merchant-shell .merchant-menu-card-heading > strong { font-size: 16px; color: #24584a; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-menu-card-body > p { margin: 0; color: #5d685f; min-height: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-menu-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 0; border: 0; }
+.foodie-merchant-shell .merchant-menu-card-actions button { flex: none; min-height: 40px; padding: 8px 12px; border: 1px solid #dce1da; color: #24584a; background: #fff; border-radius: 6px; box-shadow: none; }
+.foodie-merchant-shell .merchant-menu-card-actions button:hover:not(:disabled) { background: #eaf0eb; transform: none; }
+.foodie-merchant-shell :is(.merchant-menu-card-actions, .merchant-category-actions, .merchant-options-group-actions, .merchant-options-topping-actions) .delete { color: #a12f2a; background: #fff; border-color: #e5cfcb; }
+.foodie-merchant-shell :is(.merchant-menu-empty, .merchant-category-empty, .merchant-options-group-empty, .merchant-options-topping-empty, .merchant-options-no-group, .merchant-promotions-empty) { padding: 40px 20px; border: 1px solid #dce1da; border-radius: 8px; background: #fff; color: #5d685f; box-shadow: none; }
+.foodie-merchant-shell :is(.merchant-menu-empty, .merchant-category-empty, .merchant-options-no-group) > span { color: #24584a; background: #eaf0eb; border-radius: 8px; }
+.foodie-merchant-shell .merchant-category-panel { padding: 0; background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; overflow: hidden; }
+.foodie-merchant-shell .merchant-category-panel-header { padding: 20px; background: #fff; border-bottom: 1px solid #dce1da; }
+.foodie-merchant-shell .merchant-category-panel-header h2 { color: #202923; font-size: 18px; }
+.foodie-merchant-shell .merchant-category-count { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-merchant-shell .merchant-category-list { display: grid; gap: 0; padding: 0; }
+.foodie-merchant-shell .merchant-category-row { display: flex; align-items: center; padding: 16px 20px; gap: 16px; background: #fff; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-category-row:hover { transform: none; background: #f6f8f3; box-shadow: none; }
+.foodie-merchant-shell .merchant-category-position { font-size: 13px; color: #5d685f; background: transparent; }
+.foodie-merchant-shell .merchant-category-icon { width: 32px; height: 32px; color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-merchant-shell .merchant-category-info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-category-info h3 { font-size: 15px; color: #202923; }
+.foodie-merchant-shell .merchant-category-actions { display: flex; gap: 8px; }
+.foodie-merchant-shell .merchant-category-actions button { width: 44px; height: 44px; border: 1px solid #dce1da; background: #fff; color: #24584a; }
+/* Topping workspace: group navigation and detail editor, not repeated feature cards. */
+.foodie-merchant-shell .merchant-options-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+.foodie-merchant-shell :is(.merchant-options-groups, .merchant-options-toppings) { padding: 0; border: 1px solid #dce1da; border-radius: 8px; background: #fff; box-shadow: none; overflow: hidden; }
+.foodie-merchant-shell :is(.merchant-options-panel-title, .merchant-options-topping-header) { padding: 20px; margin: 0; border-bottom: 1px solid #dce1da; background: #fff; color: #24584a; gap: 12px; flex-wrap: wrap; }
+.foodie-merchant-shell :is(.merchant-options-panel-title, .merchant-options-topping-header) h2 { font-size: 18px; color: #202923; overflow-wrap: anywhere; }
+.foodie-merchant-shell :is(.merchant-options-panel-title, .merchant-options-topping-header) p { font-size: 13px; color: #5d685f; }
+.foodie-merchant-shell .merchant-options-topping-header > div > span { display: none; }
+.foodie-merchant-shell .merchant-options-topping-header > button { min-height: 44px; padding: 10px 14px; color: #fff; background: #24584a; border: 1px solid #24584a; }
+.foodie-merchant-shell .merchant-options-group-list { display: grid; gap: 0; padding: 0; }
+.foodie-merchant-shell .merchant-options-group { padding: 12px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: #fff; box-shadow: none; }
+.foodie-merchant-shell .merchant-options-group.selected { background: #eaf0eb; box-shadow: inset 1px 0 #24584a; border-color: #dce1da; }
+.foodie-merchant-shell .merchant-options-group-select { background: transparent; padding: 0; min-height: 44px; color: #202923; min-width: 0; }
+.foodie-merchant-shell .merchant-options-group-select > span { color: #24584a; background: transparent; width: 28px; height: 28px; }
+.foodie-merchant-shell .merchant-options-group-select > div { min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-options-group-select strong { color: #202923; font-size: 14px; }
+.foodie-merchant-shell .merchant-options-group-select p { color: #5d685f; font-size: 12px; }
+.foodie-merchant-shell .merchant-options-group-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
+.foodie-merchant-shell .merchant-options-group-actions button { width: 40px; height: 40px; background: #fff; color: #24584a; border: 1px solid #dce1da; }
+.foodie-merchant-shell .merchant-options-rule { padding: 12px 20px; margin: 0; background: #f7f5ef; border-radius: 0; color: #5d685f; }
+.foodie-merchant-shell .merchant-options-topping-list { padding: 0; display: grid; gap: 0; }
+.foodie-merchant-shell .merchant-options-topping-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 16px 20px; background: #fff; box-shadow: none; }
+.foodie-merchant-shell .merchant-options-topping-icon { display: none; }
+.foodie-merchant-shell .merchant-options-topping-info { min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-options-topping-info strong { font-size: 15px; color: #202923; }
+.foodie-merchant-shell .merchant-options-topping-info .active { background: #eaf0eb; color: #24584a; border-radius: 4px; }
+.foodie-merchant-shell .merchant-options-topping-info .inactive { background: #f7f5ef; color: #5d685f; }
+.foodie-merchant-shell .merchant-options-price { text-align: right; color: #24584a; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foodie-merchant-shell .merchant-options-topping-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.foodie-merchant-shell .merchant-options-topping-actions button { min-width: 40px; min-height: 40px; color: #24584a; background: #fff; border: 1px solid #dce1da; }
+/* Voucher terms remain legible, with a single header/code rather than a coupon graphic. */
+.foodie-merchant-shell .merchant-promotions-tabs { display: flex; flex-wrap: wrap; padding: 0; gap: 4px; border-bottom: 1px solid #dce1da; background: transparent; border-radius: 0; margin-bottom: 24px; }
+.foodie-merchant-shell .merchant-promotions-tabs button { min-height: 44px; padding: 10px 14px; background: transparent; color: #5d685f; border: 0; border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-promotions-tabs button.active { color: #24584a; background: transparent; border-bottom-color: #24584a; }
+.foodie-merchant-shell .merchant-promotions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+.foodie-merchant-shell .merchant-promotion-card { padding: 20px; border: 1px solid #dce1da; border-radius: 8px; background: #fff; box-shadow: none; display: flex; flex-direction: column; gap: 12px; height: 100%; }
+.foodie-merchant-shell .merchant-promotion-card::before, .foodie-merchant-shell .merchant-promotion-card::after { content: none; }
+.foodie-merchant-shell .merchant-promotion-card-header { flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; }
+.foodie-merchant-shell .merchant-promotion-code { color: #24584a; min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-promotion-code > span { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-merchant-shell .merchant-promotion-value { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-start; gap: 6px 12px; margin: 0; padding: 12px 0; color: #24584a; background: transparent; border: 0; border-block: 1px solid #dce1da; border-radius: 0; min-height: 0; }
+.foodie-merchant-shell .merchant-promotion-value strong { display: inline; width: auto; margin: 0; color: #24584a; font-size: 24px; line-height: 1.25; }
+.foodie-merchant-shell .merchant-promotion-value :is(span, small) { color: #5d685f; }
+.foodie-merchant-shell .merchant-promotion-description { color: #5d685f; overflow-wrap: anywhere; margin: 0; min-height: 0; }
+.foodie-merchant-shell .merchant-promotion-meta { background: transparent; padding: 0; margin: 0; gap: 12px; }
+.foodie-merchant-shell .merchant-promotion-meta > div { background: transparent; padding: 0; }
+.foodie-merchant-shell .merchant-promotion-meta strong { color: #202923; }
+.foodie-merchant-shell .merchant-promotion-progress { background: transparent; padding: 0; margin: 0; }
+.foodie-merchant-shell .merchant-promotion-progress i { background: #24584a; }
+.foodie-merchant-shell .merchant-promotion-period { color: #5d685f; background: #f7f5ef; border-radius: 6px; padding: 10px 12px; margin: 0; }
+.foodie-merchant-shell .merchant-promotion-status { color: #24584a; background: #eaf0eb; border-radius: 4px; }
+.foodie-merchant-shell .merchant-promotion-status:is(.expired, .inactive) { color: #5d685f; background: #f1f1ec; }
+.foodie-merchant-shell .merchant-promotion-status.upcoming { color: #275d89; background: #edf4fa; }
+.foodie-merchant-shell .merchant-promotion-actions { display: flex; gap: 8px; padding: 12px 0 0; margin-top: auto; border-top: 1px solid #dce1da; }
+.foodie-merchant-shell .merchant-promotion-actions button { min-height: 44px; color: #24584a; background: #fff; border: 1px solid #778478; }
+.foodie-merchant-shell .merchant-promotion-actions .disable { color: #a12f2a; border-color: #d8b2ac; }
+/* Editors: viewport-bound overlays, independently scrolling bodies, stable actions. */
+.foodie-merchant-shell :is(.merchant-menu-drawer-overlay, .merchant-topping-overlay, .merchant-config-overlay, .merchant-category-overlay, .merchant-promotion-overlay),
+.foodie-merchant-portal.merchant-config-overlay {
+  position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: #20292380; backdrop-filter: none; animation: none; overflow-y: auto;
+}
+.foodie-merchant-shell :is(.merchant-menu-drawer, .merchant-topping-dialog, .merchant-config-dialog, .merchant-category-dialog, .merchant-promotion-modal),
+.foodie-merchant-portal .merchant-config-dialog {
+  width: min(100%, 640px); max-width: 100%; max-height: calc(100dvh - 48px); margin: auto;
+  display: flex; flex-direction: column; background: #fff; color: #202923; border: 0; border-radius: 12px;
+  padding: 0; box-shadow: 0 16px 48px #20292326; overflow: hidden; animation: none; transform: none;
+}
+.foodie-merchant-shell .merchant-menu-drawer-overlay { justify-content: center; padding: 24px; }
+.foodie-merchant-shell .merchant-menu-drawer { max-height: calc(100dvh - 48px); height: auto; width: min(100%, 720px); border-radius: 12px; margin: auto; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-header, .merchant-topping-header, .merchant-config-header, .merchant-category-dialog-header, .merchant-promo-form-header),
+.foodie-merchant-portal .merchant-config-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px; border-bottom: 1px solid #dce1da; background: #fff; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-header, .merchant-topping-header, .merchant-config-header, .merchant-category-dialog-header, .merchant-promo-form-header) h2,
+.foodie-merchant-portal .merchant-config-header h2 { font-size: 20px; color: #202923; margin: 0 0 4px; overflow-wrap: anywhere; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-header, .merchant-topping-header, .merchant-config-header, .merchant-category-dialog-header, .merchant-promo-form-header) > div > span,
+.foodie-merchant-portal .merchant-config-header > div > span { display: none; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-header, .merchant-topping-header, .merchant-config-header, .merchant-category-dialog-header, .merchant-promo-form-header) > button,
+.foodie-merchant-portal .merchant-config-header > button { width: 44px; height: 44px; flex-shrink: 0; color: #24584a; background: #f7f5ef; border: 1px solid #dce1da; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-body, .merchant-topping-body, .merchant-config-body, .merchant-category-dialog-body),
+.foodie-merchant-portal .merchant-config-body { overflow-y: auto; min-height: 0; padding: 24px; overscroll-behavior: contain; }
+.foodie-merchant-shell :is(.merchant-menu-drawer-footer, .merchant-config-footer, .merchant-category-dialog-footer, .merchant-promo-form-footer) { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding: 16px 24px; margin: 0; border-top: 1px solid #dce1da; background: #fff; }
+.foodie-merchant-shell :is(.merchant-menu-field, .merchant-config-field, .merchant-category-field, .merchant-promo-field) { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; color: #202923; font-size: 14px; font-weight: 500; }
+.foodie-merchant-shell :is(.merchant-menu-field, .merchant-config-field, .merchant-category-field, .merchant-promo-field) > :is(input, select, textarea) { width: 100%; }
+.foodie-merchant-shell :is(.merchant-menu-field, .merchant-config-field, .merchant-category-field, .merchant-promo-field) small { font-size: 12px; font-weight: 400; color: #5d685f; }
+.foodie-merchant-shell :is(.merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price, .merchant-promo-money-input, .merchant-promo-icon-input) { display: flex; align-items: center; gap: 8px; border: 1px solid #778478; border-radius: 6px; background: #fff; padding: 0 12px; color: #5d685f; }
+.foodie-merchant-shell :is(.merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price, .merchant-promo-money-input, .merchant-promo-icon-input) input { width: 100%; border: 0 !important; background: transparent; padding-left: 0; }
+.foodie-merchant-shell .merchant-menu-image-preview { height: 160px; background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; }
+.foodie-merchant-shell .merchant-menu-image-preview img { object-fit: contain; }
+.foodie-merchant-shell .merchant-topping-list { display: grid; gap: 12px; }
+.foodie-merchant-shell .merchant-topping-row { padding: 16px; background: #fff; border: 1px solid #dce1da; border-radius: 6px; min-width: 0; }
+.foodie-merchant-shell .merchant-topping-row.selected { background: #eaf0eb; border-color: #24584a; }
+.foodie-merchant-shell .merchant-topping-row > div { min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-topping-row.selected .merchant-topping-check { background: #24584a; border-color: #24584a; }
+.foodie-merchant-shell .merchant-topping-row em { color: #24584a; }
+.foodie-merchant-shell .merchant-config-switch input:checked + .merchant-config-switch-control { background: #24584a; }
+.foodie-merchant-shell .merchant-promo-form { background: #fff; max-height: inherit; display: flex; flex-direction: column; min-height: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-promo-form-body { padding: 24px; overflow-y: auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.foodie-merchant-shell .merchant-promo-field.full { grid-column: 1 / -1; }
+.foodie-merchant-shell .merchant-promo-edit-summary { padding: 12px 24px; background: #f7f5ef; color: #5d685f; }
+.foodie-merchant-shell :is(.merchant-menu-form-error, .merchant-config-error, .merchant-category-form-error, .merchant-promo-form-error) { background: #fcedeb; color: #a12f2a; border: 1px solid #e6c3bf; border-radius: 6px; padding: 12px; }
+.foodie-merchant-shell .app-pagination { flex-wrap: wrap; margin-top: 24px; padding: 0; border: 0; background: transparent; }
+.foodie-merchant-shell .app-pagination-controls { flex-wrap: wrap; }
+.foodie-merchant-shell .app-pagination-controls button { min-width: 40px; min-height: 40px; color: #24584a; border: 1px solid #dce1da; border-radius: 6px; background: #fff; box-shadow: none; }
+.foodie-merchant-shell .app-pagination-controls button.is-active { background: #24584a; color: #fff; border-color: #24584a; }
+@media (max-width: 1279px) { .foodie-merchant-shell .merchant-options-layout { grid-template-columns: 260px minmax(0, 1fr); } }
+@media (max-width: 767px) {
+  .foodie-merchant-shell .merchant-menu-filters, .foodie-merchant-shell .merchant-options-layout, .foodie-merchant-shell .merchant-promotions-grid { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-menu-summary { flex-wrap: wrap; gap: 16px 24px; }
+  .foodie-merchant-shell .merchant-menu-toolbar { padding: 16px; }
+  .foodie-merchant-shell .merchant-menu-card { grid-template-columns: 80px minmax(0, 1fr); padding: 16px; gap: 12px; }
+  .foodie-merchant-shell .merchant-menu-image { width: 80px; height: 80px; }
+  .foodie-merchant-shell .merchant-menu-card-heading { flex-direction: column; gap: 8px; }
+  .foodie-merchant-shell .merchant-menu-card-actions { justify-content: flex-start; }
+  .foodie-merchant-shell .merchant-menu-card-actions button { min-height: 44px; }
+  .foodie-merchant-shell .merchant-category-row { padding: 16px; gap: 12px; flex-wrap: wrap; }
+  .foodie-merchant-shell .merchant-category-icon { display: none; }
+  .foodie-merchant-shell .merchant-category-info { flex-basis: calc(100% - 40px); }
+  .foodie-merchant-shell .merchant-category-actions { margin-left: auto; }
+  .foodie-merchant-shell .merchant-promotion-card { padding: 16px; }
+  .foodie-merchant-shell .merchant-promo-form-body { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .foodie-merchant-shell :is(.merchant-topping-overlay, .merchant-config-overlay, .merchant-category-overlay, .merchant-promotion-overlay), .foodie-merchant-portal.merchant-config-overlay { padding: 12px; }
+  .foodie-merchant-shell :is(.merchant-topping-dialog, .merchant-config-dialog, .merchant-category-dialog, .merchant-promotion-modal), .foodie-merchant-portal .merchant-config-dialog { max-height: calc(100dvh - 24px); }
+  .foodie-merchant-shell :is(.merchant-menu-drawer-header, .merchant-topping-header, .merchant-config-header, .merchant-category-dialog-header, .merchant-promo-form-header, .merchant-menu-drawer-body, .merchant-config-body, .merchant-category-dialog-body, .merchant-topping-body), .foodie-merchant-portal .merchant-config-header, .foodie-merchant-portal .merchant-config-body { padding: 16px; }
+  .foodie-merchant-shell .merchant-topping-row { flex-wrap: wrap; }
+}

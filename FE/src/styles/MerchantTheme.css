@@ -1,0 +1,199 @@
+/* Foodie — Chợ ngon. Merchant-only scope; also applied to the settlement portal. */
+.foodie-merchant-shell,
+.foodie-merchant-portal,
+.foodie-merchant-app,
+.foodie-merchant-loading {
+  --primary: #24584a;
+  --primary-hover: #1c463b;
+  --primary-active: #1c463b;
+  --primary-soft: #eaf0eb;
+  --food-primary: #24584a;
+  --food-primary-dark: #1c463b;
+  --food-primary-soft: #eaf0eb;
+  --food-text: #202923;
+  --food-muted: #5d685f;
+  --food-line: #dce1da;
+  --food-surface: #fff;
+  --food-background: #f7f5ef;
+  --food-success: #24584a;
+  --text-primary: #202923;
+  --text-secondary: #5d685f;
+  --text-muted: #5d685f;
+  --background: #f7f5ef;
+  --surface: #fff;
+  --surface-secondary: #f7f5ef;
+  --border: #dce1da;
+  --border-light: #e9ece6;
+  --success: #24584a;
+  --success-soft: #eaf0eb;
+  --warning: #7a5700;
+  --warning-soft: #fff4d6;
+  --danger: #a12f2a;
+  --danger-soft: #fcedeb;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 12px 32px #20292318;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  color: var(--text-primary);
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color-scheme: light;
+  accent-color: var(--primary);
+  caret-color: var(--primary);
+}
+.foodie-merchant-shell *, .foodie-merchant-portal * { box-sizing: border-box; }
+.foodie-merchant-shell ::selection, .foodie-merchant-portal ::selection { background: #dce9df; color: #202923; }
+.foodie-merchant-shell :focus-visible, .foodie-merchant-portal :focus-visible { outline: 2px solid #24584a; outline-offset: 3px; }
+.foodie-merchant-shell :is(button, input, select, textarea),
+.foodie-merchant-portal :is(button, input, select, textarea) { font: inherit; }
+.foodie-merchant-shell :is(h1, h2, h3, strong), .foodie-merchant-portal :is(h1, h2, h3, strong) { color: var(--text-primary); }
+.foodie-merchant-shell h1 { font-size: 28px; line-height: 1.3; font-weight: 600; letter-spacing: -.025em; }
+.foodie-merchant-shell h2, .foodie-merchant-portal h2 { font-size: 20px; font-weight: 600; line-height: 1.4; }
+.foodie-merchant-shell h3, .foodie-merchant-portal h3 { font-size: 16px; font-weight: 600; line-height: 1.45; }
+.foodie-merchant-shell p, .foodie-merchant-portal p { line-height: 1.6; }
+.foodie-merchant-shell :is(a, button) { -webkit-tap-highlight-color: transparent; }
+.foodie-merchant-shell button, .foodie-merchant-portal button { box-shadow: none; border-radius: 6px; }
+.foodie-merchant-shell button:disabled, .foodie-merchant-portal button:disabled { cursor: not-allowed; opacity: .58; transform: none; }
+.foodie-merchant-shell :is(button, a):hover { transform: none; }
+.foodie-merchant-loading { background: #f7f5ef; color: #5d685f; }
+.foodie-merchant-loading .loading-spinner { border-top-color: #24584a; }
+.foodie-merchant-shell :where(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea),
+.foodie-merchant-portal :where(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea) {
+  min-width: 0; max-width: 100%; min-height: 44px; border: 1px solid #778478;
+  border-radius: 6px; background: #fff; color: #202923; padding: 10px 12px; box-shadow: none;
+}
+.foodie-merchant-shell :is(input, textarea)::placeholder, .foodie-merchant-portal textarea::placeholder { color: #5d685f; opacity: 1; }
+.foodie-merchant-shell input:disabled, .foodie-merchant-shell textarea:disabled { background: #f1f2ed; }
+.foodie-merchant-shell input[type=checkbox], .foodie-merchant-shell input[type=radio] { accent-color: #24584a; }
+.foodie-merchant-shell :is([class$="-page"], [class$="-layout"], [class$="-panel"], [class$="-body"]) { min-width: 0; }
+/* Retire decorative entrances here without changing shared ScrollReveal behavior. */
+.foodie-merchant-shell .app-scroll-reveal {
+  opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important;
+}
+.foodie-merchant-shell .app-scroll-reveal > *, .foodie-merchant-shell :is(article, .merchant-recent-list > button) { animation: none; }
+.foodie-merchant-shell .app-scroll-reveal :not(.loading-spinner):not(.is-spinning):not(.spin-icon):not(.wallet-spin) { animation: none !important; }
+.foodie-merchant-shell [class$="-eyebrow"], .foodie-merchant-shell .merchant-live-eyebrow-row > span { display: none; }
+.foodie-merchant-shell :is(.loading-spinner, .wallet-spin) { border-top-color: var(--primary); }
+.foodie-merchant-shell :is(.quan-page-loading, .quan-empty, .merchant-orders-empty, .merchant-orders-loading, .merchant-detail-empty, .merchant-live-loading) {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 40px 24px; color: var(--text-secondary); text-align: center;
+}
+/* Shell: a quiet, persistent workspace, not a marketing banner. */
+.foodie-merchant-shell.quan-layout { --workspace-sidebar-width: 260px; display: grid; grid-template-columns: var(--workspace-sidebar-width) minmax(0, 1fr); min-height: 100dvh; background: #f7f5ef; }
+.foodie-merchant-shell .quan-sidebar {
+  position: sticky; top: 0; width: var(--workspace-sidebar-width); height: 100dvh; min-height: 0; display: flex; flex-direction: column;
+  background: #fff; color: #202923; border-right: 1px solid var(--border); box-shadow: none; padding: 20px 12px 12px; z-index: 90;
+}
+.foodie-merchant-shell .quan-sidebar::before, .foodie-merchant-shell .quan-sidebar::after { content: none; }
+.foodie-merchant-shell .quan-sidebar-brand { padding: 0 8px 20px; gap: 10px; border-bottom: 1px solid var(--border); }
+.foodie-merchant-shell .quan-brand-icon { width: 36px; height: 36px; color: #24584a; background: #eaf0eb; border-radius: 8px; box-shadow: none; transform: none; }
+.foodie-merchant-shell .quan-sidebar-brand strong { font-size: 24px; color: #24584a; letter-spacing: -.03em; }
+.foodie-merchant-shell .quan-sidebar-brand small { color: #5d685f; font-size: 12px; }
+.foodie-merchant-shell .quan-restaurant-card { margin: 16px 0 8px; padding: 12px 8px; border: 0; background: transparent; box-shadow: none; border-radius: 0; transform: none; }
+.foodie-merchant-shell :is(.quan-restaurant-avatar, .quan-topbar-avatar, .quan-sidebar-account > span) { background: #eaf0eb; color: #24584a; box-shadow: none; border-radius: 6px; flex-shrink: 0; }
+.foodie-merchant-shell .quan-restaurant-card > div { min-width: 0; }
+.foodie-merchant-shell .quan-restaurant-card strong { color: #202923; font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+.foodie-merchant-shell .quan-restaurant-card span { color: #5d685f; }
+.foodie-merchant-shell .quan-nav { overflow-y: auto; flex: 1; padding: 0; scrollbar-width: thin; scrollbar-color: #b8c5ba transparent; }
+.foodie-merchant-shell .quan-nav-group { margin: 16px 0 0; }
+.foodie-merchant-shell .quan-nav-group > p { color: #5d685f; padding: 0 10px; font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.foodie-merchant-shell .quan-nav-item { min-height: 44px; margin: 2px 0; padding: 10px; color: #46544a; border-radius: 6px; border: 0; font-size: 14px; font-weight: 500; gap: 10px; background: transparent; box-shadow: none; }
+.foodie-merchant-shell .quan-nav-item:hover { color: #24584a; background: #f1f4ef; }
+.foodie-merchant-shell .quan-nav-item.active { color: #24584a; background: #eaf0eb; box-shadow: inset 1px 0 #24584a; }
+.foodie-merchant-shell .quan-nav-item.active::before { content: none; }
+.foodie-merchant-shell .quan-nav-arrow { opacity: .4; margin-left: auto; }
+.foodie-merchant-shell .quan-nav-notification-count { color: #24584a; background: #dce9df; min-width: 24px; box-shadow: none; animation: none; }
+.foodie-merchant-shell .quan-sidebar-bottom { border-top: 1px solid var(--border); padding: 12px 4px 0; margin-top: 16px; background: #fff; }
+.foodie-merchant-shell .quan-sidebar-account { padding: 8px 4px; }
+.foodie-merchant-shell .quan-sidebar-account :is(strong, small) { color: #5d685f; }
+.foodie-merchant-shell .quan-logout { min-height: 44px; color: #a12f2a; background: transparent; border: 1px solid #e2d2cc; width: 100%; }
+.foodie-merchant-shell .quan-main { min-width: 0; width: 100%; margin: 0; background: #f7f5ef; }
+.foodie-merchant-shell .quan-topbar { position: relative; z-index: 1; top: auto; min-height: 72px; padding: 12px 32px; background: #fff; border-bottom: 1px solid var(--border); box-shadow: none; backdrop-filter: none; gap: 16px; }
+.foodie-merchant-shell .quan-topbar-left { min-width: 0; }
+.foodie-merchant-shell .quan-topbar-left > div { min-width: 0; }
+.foodie-merchant-shell .quan-topbar-left span { color: #5d685f; font-size: 12px; letter-spacing: 0; text-transform: none; }
+.foodie-merchant-shell .quan-topbar h2 { color: #202923; font-size: 16px; margin: 2px 0 0; overflow-wrap: anywhere; }
+.foodie-merchant-shell .quan-topbar-user { min-width: 0; }
+.foodie-merchant-shell .quan-topbar-user strong { color: #202923; font-size: 13px; }
+.foodie-merchant-shell .quan-topbar-user small { color: #5d685f; }
+.foodie-merchant-shell .quan-content { padding: 28px 32px 40px; width: 100%; max-width: 1680px; margin: 0 auto; min-width: 0; }
+.foodie-merchant-shell .quan-content > * { max-width: 100%; }
+.foodie-merchant-shell .quan-mobile-menu { color: #24584a; border: 1px solid var(--border); background: #fff; width: 44px; height: 44px; }
+.foodie-merchant-shell .quan-sidebar-overlay { display: none; }
+/* The existing global toast lives outside QuanLayout. Only its merchant host is themed. */
+.foodie-merchant-app .realtime-toast-stack { width: min(420px, calc(100vw - 32px)); right: 16px; top: 16px; }
+.foodie-merchant-app .realtime-toast { border: 1px solid #dce1da; border-radius: 8px; background: #fff; box-shadow: 0 8px 28px #2029231f; color: #202923; overflow: hidden; }
+.foodie-merchant-app .realtime-toast::before { background: #24584a; width: 1px; }
+.foodie-merchant-app .realtime-toast-main { min-width: 0; background: #fff; color: #202923; padding: 16px; }
+.foodie-merchant-app .realtime-toast-content { min-width: 0; overflow-wrap: anywhere; }
+.foodie-merchant-app .realtime-toast-content strong { color: #202923; font-size: 14px; }
+.foodie-merchant-app .realtime-toast-content > span { color: #5d685f; font-size: 13px; }
+.foodie-merchant-app .realtime-toast-icon { background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-merchant-app .realtime-toast-arrow { color: #24584a; }
+.foodie-merchant-app .realtime-toast-close { min-width: 44px; min-height: 44px; border-radius: 6px; color: #5d685f; }
+.foodie-merchant-app .realtime-toast-stack :focus-visible { outline: 2px solid #24584a; outline-offset: -3px; }
+.foodie-merchant-app .admin-access-message { padding: 32px 24px; color: #5d685f; }
+.foodie-merchant-shell .quan-sidebar .quan-sidebar-brand:hover .quan-brand-icon,
+.foodie-merchant-shell .quan-sidebar .quan-restaurant-card:hover,
+.foodie-merchant-shell .quan-sidebar .quan-restaurant-card:hover .quan-restaurant-avatar,
+.foodie-merchant-shell .quan-sidebar .quan-nav-item:hover { transform: none; box-shadow: none; }
+.foodie-merchant-shell .quan-sidebar .quan-nav-item.active::before { content: none; }
+.foodie-merchant-shell :is(.merchant-menu-field, .merchant-config-field, .merchant-category-field, .merchant-info-field, .merchant-promo-field) > span { font-size: 14px; font-weight: 500; color: #202923; }
+/* Shared workspace headers, controls and feedback. */
+.foodie-merchant-shell :is(.merchant-orders-header, .merchant-menu-header, .merchant-category-header, .merchant-options-header, .merchant-promotions-header, .merchant-info-header, .merchant-status-header, .merchant-notifications-header) {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 0 0 24px; margin: 0; border: 0; background: transparent; box-shadow: none;
+}
+.foodie-merchant-shell :is(.merchant-orders-header, .merchant-menu-header, .merchant-category-header, .merchant-options-header, .merchant-promotions-header, .merchant-info-header, .merchant-status-header, .merchant-notifications-header) h1 { margin: 0 0 8px; color: #202923; font-size: 28px; }
+.foodie-merchant-shell :is(.merchant-orders-header, .merchant-menu-header, .merchant-category-header, .merchant-options-header, .merchant-promotions-header, .merchant-info-header, .merchant-status-header, .merchant-notifications-header) p { margin: 0; color: #5d685f; font-size: 14px; }
+.foodie-merchant-shell :is(.merchant-menu-add, .merchant-category-add, .merchant-options-add-group, .merchant-promotions-add, .merchant-info-save, .merchant-detail-advance, .btn-priority-confirm, .save, .merchant-setup-continue) {
+  min-height: 44px; padding: 10px 16px; background: #24584a; color: #fff; border: 1px solid #24584a; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: none; white-space: normal;
+}
+.foodie-merchant-shell :is(.merchant-menu-add, .merchant-category-add, .merchant-options-add-group, .merchant-promotions-add, .merchant-info-save, .merchant-detail-advance, .btn-priority-confirm, .save):hover:not(:disabled) { background: #1c463b; border-color: #1c463b; box-shadow: none; }
+.foodie-merchant-shell :is(.merchant-info-reset, .merchant-orders-refresh, .merchant-status-refresh, .merchant-notifications-read-all, .cancel, .btn-priority-view) { min-height: 44px; padding: 10px 14px; border: 1px solid #778478; color: #24584a; background: #fff; border-radius: 6px; box-shadow: none; }
+.foodie-merchant-shell :is(.merchant-menu-notice, .merchant-category-notice, .merchant-options-notice, .merchant-promotions-notice, .merchant-info-notice, .merchant-status-notice) { padding: 12px 16px; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 6px; box-shadow: none; }
+.foodie-merchant-shell :is(.success, .is-approved) { color: #24584a; }
+.foodie-merchant-shell :is(.merchant-menu-notice, .merchant-category-notice, .merchant-options-notice, .merchant-promotions-notice, .merchant-info-notice, .merchant-status-notice).success { background: #eaf0eb; border-color: #c6d6c8; color: #24584a; }
+.foodie-merchant-shell :is(.merchant-menu-notice, .merchant-category-notice, .merchant-options-notice, .merchant-promotions-notice, .merchant-info-notice, .merchant-status-notice).error { background: #fcedeb; border-color: #e6c3bf; color: #a12f2a; }
+.foodie-merchant-shell :is(.merchant-menu-notice.warning, .merchant-info-contract-lock, .merchant-legal-readonly) { background: #fff4d6; color: #7a5700; border: 1px solid #e4d3a4; border-radius: 6px; padding: 12px 16px; }
+.foodie-merchant-shell :is(.pagination, .pagination-container) { margin-top: 24px; background: transparent; border: 0; box-shadow: none; flex-wrap: wrap; }
+.foodie-merchant-shell .pagination button { min-width: 40px; min-height: 40px; color: #24584a; border-radius: 6px; }
+.foodie-merchant-shell .pagination button.active { background: #24584a; color: #fff; }
+@media (max-width: 1279px) and (min-width: 1024px) {
+  .foodie-merchant-shell.quan-layout { --workspace-sidebar-width: 244px; }
+  .foodie-merchant-shell .quan-content { padding: 24px; }
+}
+@media (min-width: 1024px) {
+  .foodie-merchant-shell .quan-sidebar-brand > button, .foodie-merchant-shell .quan-mobile-menu { display: none; }
+}
+@media (max-width: 1023px) {
+  .foodie-merchant-shell.quan-layout { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .quan-sidebar { position: fixed; left: 0; top: 0; width: min(280px, 88vw); transform: translateX(-100%); transition: transform var(--motion-drawer) var(--motion-arrive), visibility 0s linear var(--motion-drawer); }
+  .foodie-merchant-shell .quan-sidebar.is-open { transform: translateX(0); }
+  .foodie-merchant-shell .quan-sidebar-brand > button { display: grid; place-items: center; margin-left: auto; width: 40px; height: 40px; color: #24584a; background: #fff; }
+  .foodie-merchant-shell .quan-mobile-menu { display: grid; place-items: center; flex-shrink: 0; }
+  .foodie-merchant-shell .quan-sidebar-overlay.is-visible { display: block; position: fixed; inset: 0; background: #20292366; backdrop-filter: none; z-index: 89; border: 0; border-radius: 0; }
+  .foodie-merchant-shell .quan-topbar { padding: 12px 24px; }
+  .foodie-merchant-shell .quan-content { padding: 24px; }
+}
+@media (max-width: 639px) {
+  .foodie-merchant-shell .quan-content { padding: 24px 16px 32px; }
+  .foodie-merchant-shell .quan-topbar { padding: 10px 16px; min-height: 64px; }
+  .foodie-merchant-shell .quan-topbar-user > div { display: none; }
+  .foodie-merchant-shell .quan-topbar-avatar { width: 32px; height: 32px; }
+  .foodie-merchant-shell h1, .foodie-merchant-shell :is(.merchant-orders-header, .merchant-menu-header, .merchant-category-header, .merchant-options-header, .merchant-promotions-header, .merchant-info-header, .merchant-status-header, .merchant-notifications-header) h1 { font-size: 24px; }
+  .foodie-merchant-shell :is(.merchant-orders-header, .merchant-menu-header, .merchant-category-header, .merchant-options-header, .merchant-promotions-header, .merchant-info-header, .merchant-status-header, .merchant-notifications-header) { flex-wrap: wrap; gap: 16px; padding-bottom: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .foodie-merchant-shell *, .foodie-merchant-portal * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
+.foodie-merchant-shell .merchant-list-search { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 20px; }
+.foodie-merchant-shell .merchant-list-search label { display: grid; gap: 8px; flex: 1; min-width: min(260px, 100%); font-size: 14px; color: #202923; }
+.foodie-merchant-shell .merchant-list-search input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid #778478; border-radius: 6px; color: #202923; background: #fff; font: inherit; }
+.foodie-merchant-shell .merchant-list-search button { min-height: 44px; padding: 10px 16px; border: 1px solid #24584a; border-radius: 6px; color: #fff; background: #24584a; font: inherit; cursor: pointer; }
+.foodie-merchant-shell .merchant-list-search button:disabled { opacity: .6; cursor: wait; }
+.foodie-merchant-shell .merchant-list-search :is(input,button):focus-visible { outline: 2px solid #24584a; outline-offset: 2px; }
+.foodie-merchant-shell .merchant-detail-item-note { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #5d685f; line-height: 1.5; }

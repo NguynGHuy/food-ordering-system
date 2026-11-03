@@ -71,7 +71,7 @@ public class GioHangController : ControllerBase
 
     private static bool GioHangCanLamMoi(Giohang gioHang)
         => gioHang.Chitietgiohangs.Any() &&
-           gioHang.NgayCapNhat <= DateTime.Now.Subtract(NguongGioHangCanLamMoi);
+           gioHang.NgayCapNhat <= DatMonAnOnline.API.Common.VietnamBusinessTime.Now().Subtract(NguongGioHangCanLamMoi);
 
     private static string? ChuanHoaGhiChu(string? ghiChu) =>
         string.IsNullOrWhiteSpace(ghiChu) ? null : ghiChu.Trim();
@@ -366,7 +366,7 @@ public class GioHangController : ControllerBase
             {
                 MaKhachHang = maKhachHang.Value,
                 MaNhaHang = monAn.MaNhaHang,
-                NgayCapNhat = DateTime.Now
+                NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
             _context.Giohangs.Add(gioHang);
         }
@@ -397,7 +397,7 @@ public class GioHangController : ControllerBase
             }
 
             cacDongGiongNhau[0].SoLuong = tongSoLuongHienTai + request.SoLuong;
-            gioHang.NgayCapNhat = DateTime.Now;
+            gioHang.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -428,7 +428,7 @@ public class GioHangController : ControllerBase
         }
 
         _context.Chitietgiohangs.Add(chiTiet);
-        gioHang.NgayCapNhat = DateTime.Now;
+        gioHang.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
         await _context.SaveChangesAsync();
 
         return Ok(new
@@ -479,7 +479,7 @@ public class GioHangController : ControllerBase
             return NotFound(new { message = "Không tìm thấy món trong giỏ." });
 
         chiTiet.SoLuong = request.SoLuong;
-        chiTiet.MaGioHangNavigation.NgayCapNhat = DateTime.Now;
+        chiTiet.MaGioHangNavigation.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Cập nhật số lượng thành công." });
@@ -565,7 +565,7 @@ public class GioHangController : ControllerBase
         }
 
         chiTiet.GhiChu = ChuanHoaGhiChu(request.GhiChu);
-        chiTiet.MaGioHangNavigation.NgayCapNhat = DateTime.Now;
+        chiTiet.MaGioHangNavigation.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
 
         await _context.Entry(chiTiet.MaGioHangNavigation)
             .Collection(g => g.Chitietgiohangs)
@@ -599,7 +599,7 @@ public class GioHangController : ControllerBase
         if (chiTiet == null)
             return NotFound(new { message = "Không tìm thấy món trong giỏ." });
 
-        chiTiet.MaGioHangNavigation.NgayCapNhat = DateTime.Now;
+        chiTiet.MaGioHangNavigation.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
         _context.ChitietgiohangToppings.RemoveRange(chiTiet.ChitietgiohangToppings);
         _context.Chitietgiohangs.Remove(chiTiet);
         await _context.SaveChangesAsync();
@@ -631,7 +631,7 @@ public class GioHangController : ControllerBase
             _context.ChitietgiohangToppings.RemoveRange(chiTiet.ChitietgiohangToppings);
 
         _context.Chitietgiohangs.RemoveRange(gioHang.Chitietgiohangs);
-        gioHang.NgayCapNhat = DateTime.Now;
+        gioHang.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
         _checkoutReservations.Release(gioHang);
         await _context.SaveChangesAsync();
 

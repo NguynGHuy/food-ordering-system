@@ -1,0 +1,166 @@
+/* One Foodie motion vocabulary. No animation of money, table layout or page shells. */
+:root {
+  --motion-micro: 160ms;
+  --motion-control: 220ms;
+  --motion-layer: 280ms;
+  --motion-drawer: 320ms;
+  --motion-hero: 560ms;
+  --motion-exit: 180ms;
+  --motion-reveal: 480ms;
+  --motion-ease: cubic-bezier(.2, .7, .2, 1);
+  --motion-arrive: cubic-bezier(.16, 1, .3, 1);
+  --motion-leave: cubic-bezier(.4, 0, 1, 1);
+}
+.foodie-motion-presence { display: contents; }
+.foodie-motion-presence[data-phase="exit"] { pointer-events: none; }
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-admin-portal, .foodie-merchant-portal)
+:is(button, a, input, select, textarea) {
+  transition: background-color var(--motion-micro) var(--motion-ease), color var(--motion-micro) var(--motion-ease),
+    border-color var(--motion-micro) var(--motion-ease), opacity var(--motion-micro) var(--motion-ease),
+    transform var(--motion-micro) var(--motion-ease);
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell)
+:is(.merchant-notification-row, .merchant-order-card, .merchant-options-group, .merchant-topping-row, .rd-topping-option) {
+  transition: background-color var(--motion-control) var(--motion-ease), border-color var(--motion-control) var(--motion-ease);
+}
+/* Parent shells must stay untransformed: their descendants include fixed overlays. */
+.foodie-customer-shell :is(.cart-page, .checkout-page, .order-detail-page),
+.foodie-merchant-shell :is(.merchant-menu-page, .merchant-options-page, .merchant-promotions-page),
+.foodie-admin-shell :is(.admin-promotions-pro, .admin-pro-main) { animation: none; transform: none; }
+
+.foodie-customer-shell .home-section-reveal { opacity: 1; transform: none; filter: none; pointer-events: auto; transition: none; will-change: auto; }
+.foodie-customer-shell .home-section-reveal:focus-within { animation: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes foodie-hero-copy { from { opacity: .2; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+  @keyframes foodie-hero-photo { from { opacity: .3; transform: scale(1.04); clip-path: inset(0 0 0 2%); } to { opacity: 1; transform: none; clip-path: inset(0); } }
+  @keyframes foodie-layer-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes foodie-layer-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes foodie-dialog-in { from { opacity: .2; transform: translateY(18px) scale(.965); } to { opacity: 1; transform: none; } }
+  @keyframes foodie-dialog-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(4px) scale(.99); } }
+  @keyframes foodie-drawer-in { from { opacity: .4; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+  @keyframes foodie-drawer-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(12px); } }
+  @keyframes foodie-confirm { 0% { transform: scale(.7) rotate(-12deg); opacity: .5; } 60% { transform: scale(1.18) rotate(4deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  @keyframes foodie-toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes foodie-loading-turn { to { transform: rotate(360deg); } }
+  @keyframes foodie-loading-breathe { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+
+  @keyframes foodie-section-in { from { opacity: .25; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes foodie-cart-feedback { 0%, 100% { transform: none; } 38% { transform: translateY(-5px); } 68% { transform: translateY(1px); } }
+  @keyframes foodie-nav-in { from { transform: scaleY(.3); opacity: .3; } to { transform: scaleY(1); opacity: 1; } }
+  @keyframes foodie-quantity-feedback { from { opacity: .6; transform: scale(.82); } to { opacity: 1; transform: none; } }
+  .foodie-customer-shell .rd-quantity-value { display: inline-block; animation: foodie-quantity-feedback var(--motion-micro) var(--motion-arrive); }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-content { animation: none; }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-content > :is(h1, .home-hero-lead, .home-hero-search-box, .home-hero-tags) {
+    animation: foodie-hero-copy var(--motion-hero) var(--motion-arrive) var(--hero-delay, 0ms) backwards;
+  }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-lead { --hero-delay: 90ms; }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-search-box { --hero-delay: 180ms; }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-tags { --hero-delay: 270ms; }
+  .foodie-customer-shell .home-page:not(.home-loading) .home-hero-image-card { animation: foodie-hero-photo var(--motion-hero) var(--motion-arrive) 120ms backwards; }
+  .foodie-customer-shell .home-section-reveal.is-visible { animation: foodie-section-in var(--motion-reveal) var(--motion-arrive) backwards; }
+  .foodie-customer-shell .home-section-reveal.is-visible:focus-within { animation: none; }
+  :is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell)
+  button:not(:disabled):not([class*="overlay"]):active { transform: scale(.96); }
+  .foodie-customer-shell:has(.page-loader-overlay) .home-page:not(.home-loading) .home-hero-content > :is(h1, .home-hero-lead, .home-hero-search-box, .home-hero-tags),
+  .foodie-customer-shell:has(.page-loader-overlay) .home-page:not(.home-loading) .home-hero-image-card,
+  .foodie-customer-shell:has(.page-loader-overlay) .home-page .home-section-reveal { animation: none; }
+  .foodie-customer-shell .foodie-restaurant .rd-add.is-success > svg,
+  .foodie-customer-shell .foodie-restaurant:has(.rd-cart-feedback:not(:empty)) .rd-mobile-cart > svg:first-child { animation: foodie-confirm 420ms var(--motion-arrive); }
+  .foodie-customer-shell .foodie-restaurant:has(.rd-cart-feedback:not(:empty)) .rd-mobile-cart { animation: foodie-cart-feedback 460ms var(--motion-arrive); }
+  .foodie-customer-shell .foodie-restaurant .rd-add.is-success { box-shadow: 0 3px 10px #24584a26; }
+  .foodie-customer-shell .rd-topping-option:has(input:checked) { background: #eaf0eb; border-color: #24584a; }
+  .foodie-customer-shell .rd-topping-option input:checked { animation: foodie-confirm var(--motion-control) var(--motion-arrive); }
+  .foodie-merchant-shell.quan-layout .quan-sidebar .quan-nav-item.active::before,
+  .foodie-admin-shell .admin-pro-nav a.active::before {
+    content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 1px; background: #24584a;
+    transform-origin: center; animation: foodie-nav-in var(--motion-layer) var(--motion-arrive);
+  }
+  :is(.foodie-merchant-shell, .foodie-admin-shell) :is(.quan-nav-item, .admin-pro-nav a) { position: relative; }
+  :is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell) :is(.home-filter-tab.active, .rd-category-list .is-active, .merchant-filter-tabs .active, .admin-account-tabs .active) {
+    transition: background-color var(--motion-control) var(--motion-ease), border-color var(--motion-control) var(--motion-ease), color var(--motion-control) var(--motion-ease);
+  }
+
+  .foodie-motion-presence[data-phase="enter"] > [class*="overlay"] { animation: foodie-layer-in var(--motion-control) var(--motion-ease) backwards; }
+  .foodie-motion-presence[data-phase="exit"] > [class*="overlay"] { animation: foodie-layer-out var(--motion-exit) var(--motion-leave) both; }
+  .foodie-motion-presence[data-phase="enter"] :is(.rd-dialog, .food-option-modal, .forgot-password-dialog, .checkout-voucher-dialog,
+    .qr-dialog-v2, .order-qr-dialog, .customer-cancel-dialog, .merchant-category-dialog, .merchant-config-dialog,
+    .merchant-topping-dialog, .merchant-promotion-modal, .admin-promotion-modal) {
+    animation: foodie-dialog-in var(--motion-layer) var(--motion-arrive) backwards;
+  }
+  .foodie-motion-presence[data-phase="exit"] :is(.rd-dialog, .food-option-modal, .forgot-password-dialog, .checkout-voucher-dialog,
+    .qr-dialog-v2, .order-qr-dialog, .customer-cancel-dialog, .merchant-category-dialog, .merchant-config-dialog,
+    .merchant-topping-dialog, .merchant-promotion-modal, .admin-promotion-modal) {
+    animation: foodie-dialog-out var(--motion-exit) var(--motion-leave) both;
+  }
+  /* Clip only the offscreen portion of the moving drawer at the viewport edge. */
+  .foodie-motion-presence > .merchant-menu-drawer-overlay { overflow-x: clip; }
+  .foodie-motion-presence[data-phase="enter"] .merchant-menu-drawer { animation: foodie-drawer-in var(--motion-drawer) var(--motion-arrive) backwards; }
+  .foodie-motion-presence[data-phase="exit"] .merchant-menu-drawer { animation: foodie-drawer-out var(--motion-exit) var(--motion-leave) both; }
+
+  :is(.foodie-customer-shell, .foodie-merchant-app, .foodie-admin-app) .realtime-toast { animation: foodie-toast-in var(--motion-layer) var(--motion-arrive) backwards; }
+  .foodie-customer-shell .user-dropdown { animation: foodie-dialog-in var(--motion-control) var(--motion-arrive) backwards; transform-origin: top right; }
+  .foodie-motion-presence[data-phase="exit"] > .user-dropdown { animation: foodie-dialog-out var(--motion-exit) var(--motion-leave) both; }
+  .foodie-motion-presence[data-phase="exit"] > .realtime-toast-stack { animation: foodie-layer-out var(--motion-exit) var(--motion-leave) both; }
+  .foodie-customer-shell .latest-cart-home-dock { animation: foodie-layer-in var(--motion-layer) var(--motion-ease) backwards; }
+  .foodie-customer-shell .foodie-restaurant .rd-cart:has(.rd-cart-feedback:not(:empty)) .rd-cart-title > svg { animation: foodie-confirm var(--motion-layer) var(--motion-arrive); }
+  .foodie-customer-shell .foodie-restaurant .rd-cart-feedback:not(:empty) { animation: foodie-layer-in var(--motion-control) var(--motion-ease); }
+
+  .foodie-merchant-shell .quan-sidebar, .foodie-admin-shell .admin-pro-sidebar { transition: transform var(--motion-drawer) var(--motion-arrive); }
+  :is(.foodie-merchant-shell, .foodie-admin-shell) :is(.quan-sidebar-overlay, .admin-pro-overlay) { animation: foodie-layer-in var(--motion-control) var(--motion-ease); }
+  :is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-admin-portal, .foodie-merchant-portal)
+  :is(.loading-spinner, .wallet-spin, .spin-icon, .is-spinning, .reconciliation-picker-spinner) {
+    animation: foodie-loading-turn 900ms linear infinite;
+  }
+  .foodie-customer-shell .address-skeleton { animation: foodie-loading-breathe 1200ms var(--motion-ease) infinite; }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 1023px) {
+  .foodie-merchant-shell .quan-sidebar, .foodie-admin-shell .admin-pro-sidebar {
+    visibility: hidden; pointer-events: none;
+    transition: transform var(--motion-drawer) var(--motion-arrive), visibility 0s linear var(--motion-drawer);
+  }
+  .foodie-merchant-shell .quan-sidebar.is-open, .foodie-admin-shell .admin-pro-sidebar.is-open {
+    visibility: visible; pointer-events: auto; transition-delay: 0s;
+  }
+  .foodie-merchant-shell.quan-layout .quan-sidebar-overlay {
+    display: block; position: fixed; inset: 0; opacity: 0; visibility: hidden; pointer-events: none;
+    background: #20292366; z-index: 89; border: 0; border-radius: 0;
+    transition: opacity var(--motion-control) var(--motion-ease), visibility 0s linear var(--motion-control);
+  }
+  .foodie-merchant-shell.quan-layout .quan-sidebar-overlay.is-visible { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  @keyframes foodie-image-shine {
+    from { transform: translate3d(-120%, 0, 0); opacity: 0; }
+    18%, 72% { opacity: .55; }
+    to { transform: translate3d(120%, 0, 0); opacity: 0; }
+  }
+  .foodie-customer-shell .restaurant-image-shine {
+    display: block; pointer-events: none; opacity: 0;
+    transform: translate3d(-120%, 0, 0); animation: none; transition: none; will-change: auto;
+  }
+  .foodie-customer-shell :is(.restaurant-card:hover, .restaurant-modern-card:hover) .restaurant-image-shine {
+    animation: foodie-image-shine 720ms var(--motion-ease) both; transition: none;
+  }
+  .foodie-customer-shell :is(.restaurant-card, .restaurant-modern-card, .rd-food, .customer-menu-card) {
+    transition: transform var(--motion-control) var(--motion-ease), border-color var(--motion-control) var(--motion-ease), box-shadow var(--motion-control) var(--motion-ease);
+  }
+  .foodie-customer-shell :is(.restaurant-card:hover, .restaurant-modern-card:hover, .rd-food:hover, .customer-menu-card:hover) { transform: translateY(-5px); box-shadow: 0 9px 20px #20292312; }
+  .foodie-customer-shell :is(.restaurant-image img, .restaurant-card-image img, .rd-food-image img) { transition: transform var(--motion-drawer) var(--motion-ease); }
+  .foodie-customer-shell .restaurant-card:hover .restaurant-image img,
+  .foodie-customer-shell .restaurant-modern-card:hover .restaurant-card-image img,
+  .foodie-customer-shell .rd-food:hover .rd-food-image img { transform: scale(1.045); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-micro: 0ms; --motion-control: 0ms; --motion-layer: 0ms; --motion-drawer: 0ms; --motion-hero: 0ms; --motion-exit: 0ms; --motion-reveal: 0ms; }
+  .foodie-motion-presence *, :is(.foodie-customer-shell, .foodie-merchant-app, .foodie-admin-app) .realtime-toast {
+    animation: none !important; transition: none !important;
+  }
+  .foodie-merchant-shell .quan-sidebar, .foodie-admin-shell .admin-pro-sidebar { transition: none; }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 1023px) {
+  .foodie-merchant-shell .quan-sidebar:not(.is-open), .foodie-admin-shell .admin-pro-sidebar:not(.is-open) { visibility: hidden; }
+}

@@ -324,7 +324,7 @@ public class AdminHopDongController : ControllerBase
             });
         }
 
-        var thoiGian = DateTime.Now;
+        var thoiGian = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
 
         hopDong.TrangThai = "ChamDut";
         hopDong.LyDoChamDut = lyDo;

@@ -60,7 +60,7 @@ public sealed class ContractExpirationService : BackgroundService
         var realtime = scope.ServiceProvider
             .GetRequiredService<IRealtimeNotificationService>();
 
-        var homNay = DateOnly.FromDateTime(DateTime.Now);
+        var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
 
         var maNhaHangs = await context.Hopdongnhahangs
             .AsNoTracking()
@@ -101,7 +101,7 @@ public sealed class ContractExpirationService : BackgroundService
                     x.NgayKetThuc < homNay)
                 .ToListAsync(cancellationToken);
 
-            var thoiGian = DateTime.Now;
+            var thoiGian = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var notifications = new List<Thongbao>();
 
             foreach (var hopDong in hopDongs)

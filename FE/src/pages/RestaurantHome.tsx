@@ -1,3 +1,4 @@
+import OrderAttentionList from "../components/OrderAttentionList";
 import { useCallback, useEffect, useRef, useState } from "react";
 import RestaurantSetupProgress from "../components/RestaurantSetupProgress";
 import { useNavigate } from "react-router-dom";
@@ -304,6 +305,7 @@ function QuanHome() {
   if (loading) {
     return (
       <main className="merchant-live-dashboard">
+      <OrderAttentionList merchant />
         <div className="merchant-live-loading">
           <div className="loading-spinner" />
           <p>Đang tải dữ liệu tổng quan...</p>
@@ -601,8 +603,8 @@ function QuanHome() {
                 data={chartPoints}
                 series1Name="Tổng giá trị đơn khách trả"
                 series2Name="Thu nhập thực nhận của quán"
-                series1Color="#f4511e"
-                series2Color="#10b981"
+                series1Color="#24584A"
+                series2Color="#7A5700"
                 height={240}
               />
             )}

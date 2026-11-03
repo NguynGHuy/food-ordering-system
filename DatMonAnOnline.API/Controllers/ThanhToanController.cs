@@ -212,10 +212,12 @@ namespace DatMonAnOnline.API.Controllers
                 MaGiaoDich = laFoodPay
                     ? TaoMaGiaoDichFoodPay()
                     : null,
-                ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
+                ThoiGianThanhToan = laFoodPay ? DatMonAnOnline.API.Common.VietnamBusinessTime.Now() : null
             };
 
             _context.Thanhtoans.Add(thanhToan);
+            if (laFoodPay || string.Equals(phuongThuc.TenPhuongThuc, "COD", StringComparison.OrdinalIgnoreCase))
+                await OrderWorkflowTracking.ReadyAsync(_context, donHang.MaDonHang, DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
 
             (int MaTaiKhoan, Thongbao ThongBao)? thongBaoDonMoi = null;
 
@@ -485,10 +487,12 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             thanhToan.TrangThaiThanhToan = ketQua;
-            thanhToan.ThoiGianThanhToan = DateTime.Now;
+            if (ketQua == "ThanhCong")
+                await OrderWorkflowTracking.ReadyAsync(_context, donHang.MaDonHang, DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
+            thanhToan.ThoiGianThanhToan = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             thanhToan.MaGiaoDich =
                 $"{thanhToan.MaPhuongThucNavigation.TenPhuongThuc.ToUpperInvariant()}_" +
-                $"{DateTime.Now:yyyyMMddHHmmss}_" +
+                $"{DatMonAnOnline.API.Common.VietnamBusinessTime.Now():yyyyMMddHHmmss}_" +
                 $"{thanhToan.MaThanhToan}";
 
             (int MaTaiKhoan, Thongbao ThongBao)? thongBaoDonMoi = null;
@@ -737,10 +741,12 @@ namespace DatMonAnOnline.API.Controllers
                 MaGiaoDich = laFoodPay
                     ? TaoMaGiaoDichFoodPay()
                     : null,
-                ThoiGianThanhToan = laFoodPay ? DateTime.Now : null
+                ThoiGianThanhToan = laFoodPay ? DatMonAnOnline.API.Common.VietnamBusinessTime.Now() : null
             };
 
             _context.Thanhtoans.Add(thanhToanMoi);
+            if (laFoodPay || string.Equals(phuongThuc.TenPhuongThuc, "COD", StringComparison.OrdinalIgnoreCase))
+                await OrderWorkflowTracking.ReadyAsync(_context, donHang.MaDonHang, DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
 
             (int MaTaiKhoan, Thongbao ThongBao)? thongBaoDonMoi = null;
 
@@ -909,8 +915,9 @@ namespace DatMonAnOnline.API.Controllers
                 return (false, null, null);
             }
 
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             order.MaTrangThai = 6;
+            await OrderWorkflowTracking.StateChangedAsync(_context, order.MaDonHang, 6, now);
             order.LyDoHuy =
                 "Hệ thống tự hủy do thanh toán online quá hạn 15 phút.";
 
@@ -981,7 +988,11 @@ namespace DatMonAnOnline.API.Controllers
                             order.MaDonHangHienThi,
                             trangThai = "DaHuy",
                             lyDoHuy = order.LyDoHuy
-                        }));
+                        }),
+                    _realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                        "Admin",
+                        new[] { "donHang", "tongQuan" },
+                        new { order.MaDonHang, hanhDong = "TuHuyQuaHan" }));
             }
             catch (Exception exception)
             {
@@ -1042,7 +1053,7 @@ namespace DatMonAnOnline.API.Controllers
                 Loai = "DonHang",
                 DuongDan = $"/quan/don-hang/{donHang.MaDonHang}",
                 DaDoc = false,
-                NgayTao = DateTime.Now
+                NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
 
             _context.Thongbaos.Add(thongBao);

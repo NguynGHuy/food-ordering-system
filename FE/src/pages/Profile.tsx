@@ -1,3 +1,5 @@
+import CustomerAccountNav from "../components/CustomerAccountNav";
+import Pagination from "../components/Pagination";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -28,11 +30,11 @@ import { changePassword } from "../services/authService";
 import {
   deleteCustomerAvatar,
   getCustomerProfile,
-  getRefundHistory,
+  getRefundHistoryPage,
   uploadCustomerAvatar,
   updateCustomerProfile,
 } from "../services/customerService";
-import { resolveMediaUrl } from "../services/api";
+import { resolveMediaUrl, type PagedResult } from "../services/api";
 
 import type { CustomerProfile, RefundHistoryItem } from "../services/customerService";
 
@@ -124,6 +126,11 @@ function Profile() {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [lichSuHoan, setLichSuHoan] = useState<RefundHistoryItem[]>([]);
   const [moLichSuHoan, setMoLichSuHoan] = useState(false);
+  const [refundPage, setRefundPage] = useState(1);
+  const [refundResult, setRefundResult] = useState<PagedResult<RefundHistoryItem> | null>(null);
+  const [refundLoading, setRefundLoading] = useState(true);
+  const [refundError, setRefundError] = useState("");
+  const refundSequence = useRef(0);
   const [hoTen, setHoTen] = useState("");
   const [ngaySinh, setNgaySinh] = useState("");
   const [gioiTinh, setGioiTinh] = useState("");
@@ -151,12 +158,8 @@ function Profile() {
       if (showLoading) setLoading(true);
       setError("");
 
-      const [data, refunds] = await Promise.all([
-        getCustomerProfile() as Promise<CustomerProfile>,
-        getRefundHistory(),
-      ]);
+      const data = await getCustomerProfile() as CustomerProfile;
       setProfile(data);
-      setLichSuHoan(refunds);
       setHoTen(data.hoTen || "");
       setNgaySinh(data.ngaySinh || "");
       setGioiTinh(data.gioiTinh || "");
@@ -174,6 +177,31 @@ function Profile() {
     const timeout = window.setTimeout(() => void loadProfile(true), 0);
     return () => window.clearTimeout(timeout);
   }, [loadProfile]);
+
+  const loadRefunds = useCallback(async () => {
+    const sequence = ++refundSequence.current;
+    setRefundLoading(true);
+    setRefundError("");
+    try {
+      const result = await getRefundHistoryPage({ pageNumber: refundPage, pageSize: 5 });
+      if (sequence !== refundSequence.current) return;
+      if (!result || !Array.isArray(result.items) || !Number.isFinite(result.totalPages)) {
+        throw new Error("Chưa tải được lịch sử hoàn tiền. Vui lòng thử lại sau.");
+      }
+      setRefundResult(result);
+      if (result.pageNumber === 1) setLichSuHoan(result.items.slice(0, 1));
+    } catch (err) {
+      if (sequence === refundSequence.current)
+        setRefundError(err instanceof Error ? err.message : "Không thể tải lịch sử hoàn tiền.");
+    } finally {
+      if (sequence === refundSequence.current) setRefundLoading(false);
+    }
+  }, [refundPage]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadRefunds(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadRefunds]);
 
   useEffect(() => {
     if (!notice) return;
@@ -374,8 +402,9 @@ function Profile() {
 
   return (
     <main className="profile-page profile-page-polished">
-      <div className="profile-page-glow profile-page-glow-one" aria-hidden="true" />
-      <div className="profile-page-glow profile-page-glow-two" aria-hidden="true" />
+      <CustomerAccountNav />
+
+
 
       <Link to="/" className="profile-top-back">
         <ArrowLeft size={16} /> Về trang chủ
@@ -387,7 +416,7 @@ function Profile() {
             <UserRound size={22} />
           </span>
           <div>
-            <span>Hồ sơ của bạn</span>
+
             <h1>Hồ sơ cá nhân</h1>
             <p>Cập nhật thông tin để trải nghiệm đặt món thuận tiện hơn mỗi ngày.</p>
           </div>
@@ -514,7 +543,7 @@ function Profile() {
         <section className="profile-tools-section" aria-labelledby="profile-tools-title">
           <div className="profile-tools-heading">
             <div>
-              <span>Tiện ích của bạn</span>
+
               <h2 id="profile-tools-title">Ví và ưu đãi</h2>
             </div>
             <p>Tất cả quyền lợi được tập trung tại một nơi.</p>
@@ -527,38 +556,42 @@ function Profile() {
 
           <div className="profile-tools-grid">
             {moLichSuHoan ? (
-              <button
-                type="button"
+              <section
                 className="profile-tool-card profile-wallet-card profile-refund-history-card"
-                onClick={() => setMoLichSuHoan(false)}
+                aria-busy={refundLoading}
               >
                 <div className="profile-tool-card-top">
                   <span className="profile-tool-icon"><WalletCards size={22} /></span>
                   <span className="profile-tool-label">Lịch sử hoàn tiền</span>
+                  <button type="button" onClick={() => setMoLichSuHoan(false)}>Thu gọn</button>
                 </div>
-                <LichSuHoanList items={lichSuHoan} />
-              </button>
+                {refundLoading ? <p role="status">Đang tải lịch sử hoàn tiền...</p>
+                  : refundError ? <div role="alert">{refundError} <button type="button" onClick={() => void loadRefunds()}>Thử lại</button></div>
+                    : <LichSuHoanList items={refundResult?.items ?? []} />}
+                {refundResult && <Pagination {...refundResult} disabled={refundLoading} onPageChange={setRefundPage} />}
+              </section>
             ) : (
               <>
-                <button
-                  type="button"
+                <article
                   className="profile-tool-card profile-wallet-card"
-                  onClick={() => setMoLichSuHoan(true)}
                 >
                   <div className="profile-tool-card-top">
                     <span className="profile-tool-icon"><WalletCards size={22} /></span>
-                    <span className="profile-tool-label">Ví hoàn tiền</span>
+                    <span className="profile-tool-label">Ví FoodPay</span>
                   </div>
                   <div className="profile-wallet-balance">
                     <strong>{(profile?.soDuVi ?? 0).toLocaleString("vi-VN")}</strong>
                     <span>đ</span>
                   </div>
                   <p>
-                    Tiền từ đơn thanh toán online bị khách hàng hoặc quán hủy sẽ
-                    được hoàn vào ví này.
+                    Xem số dư, thanh toán bằng ví và nhận tiền hoàn hợp lệ.
                   </p>
-                  <LichSuHoanList items={lichSuHoan.slice(0, 1)} />
-                </button>
+                  <div className="profile-wallet-actions">
+                    <Link to="/vi">Mở ví FoodPay <ChevronRight size={16} /></Link>
+                    <button type="button" onClick={() => { setRefundPage(1); setMoLichSuHoan(true); }}>Xem hoàn tiền</button>
+                  </div>
+                  {!refundLoading && !refundError && <LichSuHoanList items={lichSuHoan} />}
+                </article>
 
                 <Link to="/kho-voucher" className="profile-tool-card profile-voucher-card">
                   <div className="profile-tool-card-top">

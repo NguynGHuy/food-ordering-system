@@ -1,3 +1,4 @@
+import OrderWorkflowPanel from "../components/OrderWorkflowPanel";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -303,6 +304,7 @@ function RestaurantOrderDetail() {
             </ol>
           )}
         </header>
+        <OrderWorkflowPanel orderId={Number(id)} refreshToken={`${order.trangThai}:${order.trangThaiThanhToan}`} />
 
         <div className="merchant-detail-layout">
           <div className="merchant-detail-main">
@@ -328,6 +330,7 @@ function RestaurantOrderDetail() {
                       <h3>
                         {ct.tenMonAn} <small>x{ct.soLuong}</small>
                       </h3>
+                      {ct.ghiChu && <p className="merchant-detail-item-note"><strong>Ghi chú món:</strong> {ct.ghiChu}</p>}
                       {(ct.toppings || []).length > 0 && (
                         <div className="merchant-detail-toppings">
                           {(ct.toppings || []).map((tp, tpIndex) => (

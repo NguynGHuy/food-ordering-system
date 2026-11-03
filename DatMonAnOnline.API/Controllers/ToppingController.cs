@@ -56,7 +56,7 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "Mã nhóm topping không hợp lệ." });
             }
 
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var nhomHopLe = await _context.Nhomtoppings
                 .AsNoTracking()
                 .AnyAsync(x =>
@@ -88,6 +88,32 @@ namespace DatMonAnOnline.API.Controllers
                 .ToListAsync();
 
             return Ok(data);
+        }
+
+        // Management paging is separate from the public, complete selection list.
+        [HttpGet("quan")]
+        [Authorize(Roles = "Quan")]
+        public async Task<IActionResult> GetToppingsCuaQuan(
+            [FromQuery] int maNhomTopping, [FromQuery] PaginationQuery pagination)
+        {
+            if (maNhomTopping <= 0 || pagination.PageNumber < 1 || pagination.PageSize is < 1 or > 100)
+                return BadRequest(new { message = "Nhóm topping hoặc phân trang không hợp lệ." });
+            var account = GetMaTaiKhoan();
+            if (account == null) return Unauthorized();
+            var group = await _context.Nhomtoppings.AsNoTracking()
+                .Where(x => x.MaNhomTopping == maNhomTopping && x.MaNhaHangNavigation.MaTaiKhoan == account)
+                .Select(x => new { x.MaNhaHangNavigation.TrangThaiDuyet }).FirstOrDefaultAsync();
+            if (group == null) return Forbid();
+            if (group.TrangThaiDuyet != "DaDuyet")
+                return BadRequest(new { message = "Nhà hàng chưa được Admin duyệt." });
+            var query = _context.Toppings.AsNoTracking().Where(x => x.MaNhomTopping == maNhomTopping);
+            var activeTotal = await query.CountAsync(x => x.TrangThai == true);
+            var page = await query.OrderBy(x => x.MaTopping).Select(x => new
+            {
+                x.MaTopping, x.MaNhomTopping, x.TenTopping, x.GiaThem, x.TrangThai
+            }).ToPagedResultAsync(pagination);
+            return Ok(new { page.Items, page.PageNumber, page.PageSize, page.TotalItems, page.TotalPages,
+                page.HasPreviousPage, page.HasNextPage, activeTotal });
         }
 
         [HttpPost]

@@ -14,7 +14,7 @@ public static class OrderPaymentRules
             StringComparison.OrdinalIgnoreCase);
 
     public static bool IsOnlinePaymentExpired(Donhang order, DateTime? now = null)
-        => order.ThoiGianDat <= (now ?? DateTime.Now).Subtract(OnlinePaymentLifetime);
+        => order.ThoiGianDat <= (now ?? DatMonAnOnline.API.Common.VietnamBusinessTime.Now()).Subtract(OnlinePaymentLifetime);
 
     public static IQueryable<Donhang> ExpiredUnpaidOnlineOrders(IQueryable<Donhang> orders, DateTime expiredBefore)
         => orders.Where(order =>
@@ -63,7 +63,7 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
 
     private async Task ExpirePendingOrders(CancellationToken cancellationToken)
     {
-        var expiredBefore = DateTime.Now.Subtract(OrderPaymentRules.OnlinePaymentLifetime);
+        var expiredBefore = DatMonAnOnline.API.Common.VietnamBusinessTime.Now().Subtract(OrderPaymentRules.OnlinePaymentLifetime);
         List<int> candidateIds;
 
         await using (var scope = _scopeFactory.CreateAsyncScope())
@@ -160,8 +160,9 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
             return;
         }
 
-        var now = DateTime.Now;
+        var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
         order.MaTrangThai = 6;
+        await OrderWorkflowTracking.StateChangedAsync(context, order.MaDonHang, 6, DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
         order.LyDoHuy = "Hệ thống tự hủy do thanh toán online quá hạn 15 phút.";
 
         foreach (var payment in payments.Where(payment =>
@@ -202,7 +203,9 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
         await transaction.CommitAsync(cancellationToken);
 
         // SignalR chỉ là tín hiệu làm mới; bản ghi DB ở trên là nguồn dữ liệu bền vững.
-        await Task.WhenAll(
+        try
+        {
+            await Task.WhenAll(
             realtime.GuiThongBaoAsync(accountId.Value, notification),
             realtime.GuiDonHangDaHuyAsync(
                 accountId.Value,
@@ -212,6 +215,16 @@ public sealed class PendingOnlineOrderExpirationService : BackgroundService
                     order.MaDonHangHienThi,
                     trangThai = "DaHuy",
                     lyDoHuy = order.LyDoHuy
-                }));
+                }),
+            realtime.GuiDuLieuThayDoiTheoVaiTroAsync(
+                "Admin",
+                new[] { "donHang", "tongQuan" },
+                new { order.MaDonHang, hanhDong = "TuHuyQuaHan" }));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception,
+                "Order {OrderId} expiry committed; realtime delivery failed.", orderId);
+        }
     }
 }

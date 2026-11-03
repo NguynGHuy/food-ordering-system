@@ -1,3 +1,4 @@
+import { ShoppingCart } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -72,14 +73,14 @@ function LatestCartBar() {
 
     return (
         <aside className={`latest-cart-home-dock ${bump ? "is-bumped" : ""}`} aria-label="Giỏ hàng gần đây">
-            {bump && <span className="cart-bump-float-tag">+1 món</span>}
+            {bump && <span className="cart-bump-float-tag">Đã cập nhật giỏ</span>}
             <button
                 type="button"
                 className="latest-cart-home-button"
                 onClick={openCart}
             >
                 <span className="latest-cart-home-icon" aria-hidden="true">
-                    🛒
+                    <ShoppingCart size={22} />
                     <b>{cart.soLuongMon}</b>
                 </span>
 

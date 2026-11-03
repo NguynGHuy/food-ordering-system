@@ -46,5 +46,5 @@ if (process.argv.includes('--update-seed')) {
 for (const [table, kind, field] of [['nhahang', 'restaurants', 5], ['monan', 'foods', 6]]) {
   for (const row of seedRows(table)) assert.equal(row[field], catalog.find(x => x.kind === kind && x.id === row[0]).path);
 }
-assert.deepEqual(readdirSync(path.dirname(seedPath)).sort(), ['Database.sql', 'SeedDemo.sql']);
+assert.deepEqual(readdirSync(path.dirname(seedPath)).filter(name => name.endsWith('.sql')).sort(), ['Database.sql', 'SeedDemo.sql']);
 console.log(`PASS 10 covers + 124 food images: local WebP, unique content, checksums, size budget, seed paths, exactly two SQL files (${(manifest.reduce((sum, x) => sum + x.bytes, 0) / 1024 / 1024).toFixed(2)} MiB)`);

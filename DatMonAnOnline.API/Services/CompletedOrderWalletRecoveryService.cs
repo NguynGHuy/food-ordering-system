@@ -30,58 +30,70 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // A startup repair, not a permanent sweeper. Retry only failed passes,
+        // with fresh scopes/transactions, and leave unresolved cases for review.
+        const int maxPasses = 3;
         try
         {
-            var creditedCount = 0;
-            var creditedAmount = 0m;
-            var lastOrderId = 0;
-
-            while (!stoppingToken.IsCancellationRequested)
+            for (var pass = 1; pass <= maxPasses; pass++)
             {
-                var candidateIds = await GetCandidateIdsAsync(
-                    lastOrderId,
-                    stoppingToken);
-
-                if (candidateIds.Count == 0)
-                    break;
-
-                foreach (var orderId in candidateIds)
+                var retryNeeded = false;
+                var creditedCount = 0;
+                var creditedAmount = 0m;
+                var lastOrderId = 0;
+                try
                 {
-                    lastOrderId = orderId;
-                    var amount = await TryRecoverOrderAsync(
-                        orderId,
-                        stoppingToken);
-
-                    if (amount > 0)
+                    while (!stoppingToken.IsCancellationRequested)
                     {
-                        creditedCount++;
-                        creditedAmount += amount;
+                        var candidateIds = await GetCandidateIdsAsync(lastOrderId, stoppingToken);
+                        if (candidateIds.Count == 0) break;
+
+                        foreach (var orderId in candidateIds)
+                        {
+                            lastOrderId = orderId;
+                            try
+                            {
+                                var attempt = await TryRecoverOrderAsync(orderId, stoppingToken);
+                                retryNeeded |= attempt.Retry;
+                                if (attempt.Credit > 0)
+                                {
+                                    creditedCount++;
+                                    creditedAmount += attempt.Credit;
+                                }
+                            }
+                            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
+                            catch (Exception exception)
+                            {
+                                // Includes failures before BeginTransaction (scope/read/connection).
+                                retryNeeded = true;
+                                TryLog(() => _logger.LogError(exception,
+                                    "Wallet recovery preparation failed for order {OrderId}, pass {Pass}.", orderId, pass));
+                            }
+                        }
+                        if (candidateIds.Count < BatchSize) break;
                     }
                 }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
+                catch (Exception exception)
+                {
+                    retryNeeded = true;
+                    TryLog(() => _logger.LogError(exception, "Wallet recovery query failed on pass {Pass}.", pass));
+                }
 
-                if (candidateIds.Count < BatchSize)
-                    break;
-            }
-
-            if (creditedCount > 0)
-            {
-                TryLog(() => _logger.LogInformation(
-                    "Đã phục hồi thu nhập ví cho {OrderCount} đơn, tổng {Amount} VND.",
-                    creditedCount,
-                    creditedAmount));
+                if (creditedCount > 0)
+                    TryLog(() => _logger.LogInformation(
+                        "Wallet recovery pass {Pass}: {OrderCount} orders, {Amount} VND.", pass, creditedCount, creditedAmount));
+                if (!retryNeeded) return;
+                if (pass < maxPasses)
+                    await Task.Delay(TimeSpan.FromSeconds(pass * pass), stoppingToken);
+                else
+                    TryLog(() => _logger.LogWarning(
+                        "Wallet recovery exhausted {PassCount} passes; unresolved orders require review or a later restart.", maxPasses));
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            // Normal application shutdown.
-        }
-        catch (Exception exception)
-        {
-            // Recovery must never prevent the API from starting. Each actual
-            // wallet mutation is still protected by its own DB transaction.
-            TryLog(() => _logger.LogError(
-                exception,
-                "Không thể chạy tác vụ phục hồi thu nhập ví khi khởi động."));
+            // Normal application shutdown; uncommitted work is disposed/rolled back.
         }
     }
 
@@ -111,7 +123,7 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
             .ToListAsync(cancellationToken);
     }
 
-    private async Task<decimal> TryRecoverOrderAsync(
+    private async Task<(decimal Credit, bool Retry)> TryRecoverOrderAsync(
         int orderId,
         CancellationToken cancellationToken)
     {
@@ -132,7 +144,7 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
             .SingleOrDefaultAsync(cancellationToken);
 
         if (!restaurantId.HasValue)
-            return 0;
+            return (0, false);
 
         await using var transaction =
             await context.Database.BeginTransactionAsync(cancellationToken);
@@ -165,7 +177,16 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
                     cancellationToken))
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return 0;
+                return (0, false);
+            }
+
+            if (await context.Giaodichvis.AnyAsync(
+                item => item.MaDonHang == orderId &&
+                    item.LoaiGiaoDich == WalletTransactionTypes.ThuNhapDonHang &&
+                    item.TrangThai == "ThanhCong", cancellationToken))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return (0, false);
             }
 
             var latestPayment = await context.Thanhtoans
@@ -177,7 +198,7 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
             if (latestPayment == null)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return 0;
+                return (0, false);
             }
 
             var result = await settlementService.SettleAsync(
@@ -193,7 +214,7 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
                     "Bỏ qua phục hồi ví cho đơn {OrderId}: {Reason}",
                     orderId,
                     result.Error));
-                return 0;
+                return (0, true);
             }
 
             await context.SaveChangesAsync(cancellationToken);
@@ -201,7 +222,9 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
 
             if (result.WalletCredit > 0)
             {
-                await Task.WhenAll(
+                try
+                {
+                    await Task.WhenAll(
                     realtime.GuiDuLieuThayDoiAsync(
                         restaurant.MaTaiKhoan,
                         new[] { "vi", "donHang" },
@@ -210,9 +233,16 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
                         "Admin",
                         new[] { "taiChinh", "doiSoat" },
                         new { order.MaDonHang, hanhDong = "PhucHoiThuNhap" }));
+                }
+                catch (Exception exception)
+                {
+                    // Commit already succeeded. Do not roll it back or retry credit for a delivery failure.
+                    TryLog(() => _logger.LogWarning(exception,
+                        "Order {OrderId} wallet recovery committed; realtime delivery failed.", orderId));
+                }
             }
 
-            return result.WalletCredit;
+            return (result.WalletCredit, false);
         }
         catch (Exception exception) when (
             exception is not OperationCanceledException ||
@@ -223,7 +253,7 @@ public sealed class CompletedOrderWalletRecoveryService : BackgroundService
                 exception,
                 "Không thể phục hồi thu nhập ví cho đơn {OrderId}.",
                 orderId));
-            return 0;
+            return (0, true);
         }
     }
 

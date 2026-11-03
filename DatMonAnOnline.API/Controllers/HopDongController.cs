@@ -151,7 +151,7 @@ public class HopDongController : ControllerBase
         const string phienBan = "1.0";
         const decimal tyLePhi = 5m;
 
-        var ngayBatDau = DateOnly.FromDateTime(DateTime.Now);
+        var ngayBatDau = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
         var ngayKetThuc = ngayBatDau.AddYears(1);
 
         var chinhSachDoiSoat =
@@ -300,7 +300,7 @@ public class HopDongController : ControllerBase
                 .AsNoTracking()
                 .FirstAsync(x => x.MaNhaHang == nhaHang.MaNhaHang);
 
-            var thoiGianKy = DateTime.Now;
+            var thoiGianKy = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var maNgauNhien = Guid.NewGuid().ToString("N");
             var soHopDong = $"HD-{maNgauNhien}";
             var tenTep = $"{maNgauNhien}.txt";
@@ -490,7 +490,7 @@ public class HopDongController : ControllerBase
             });
         }
 
-        if (DateOnly.FromDateTime(DateTime.Now) > hopDong.NgayKetThuc)
+        if (DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now()) > hopDong.NgayKetThuc)
             return BadRequest(new
             {
                 message = "Hợp đồng đã quá thời hạn. Không thể gửi xét duyệt."
@@ -548,7 +548,7 @@ public class HopDongController : ControllerBase
 
         nhaHang.TrangThaiDuyet = "ChoDuyet";
         hopDong.TrangThai = "ChoDuyet";
-        hopDong.ThoiGianGuiDuyet = DateTime.Now;
+        hopDong.ThoiGianGuiDuyet = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
 
         await _context.SaveChangesAsync();
 

@@ -74,8 +74,8 @@ DatMonAnOnline/
 │   ├── Common/                    # Validation, phân trang, tiền VND, giờ Việt Nam
 │   ├── Controllers/               # REST API
 │   ├── Database/
-│   │   ├── Database.sql           # Schema + danh mục hệ thống cho cài mới
-│   │   └── SeedDemo.sql           # Dữ liệu demo, chạy riêng trên DB sạch
+│   │   ├── Database.sql           # Chỉ schema: bảng, khóa, index và constraints
+│   │   └── SeedDemo.sql           # Danh mục hệ thống và dữ liệu demo
 │   ├── Hubs/                      # SignalR
 │   ├── Models/                    # EF entities và DatMonAnOnlineContext
 │   ├── Options/
@@ -138,18 +138,20 @@ Clone repository bằng URL do nhóm cung cấp, rồi mở terminal tại thư 
 
 **Chỉ dùng hai lệnh dưới cho môi trường mới, chưa có database `DatMonAnOnline`.** Tắt API khi import. Script dùng tên database cố định; đây không phải lệnh nâng cấp hoặc cập nhật database đang sử dụng.
 
-Chạy lần lượt từ thư mục gốc; chỉ chạy lệnh thứ hai nếu lệnh thứ nhất thành công:
+Chạy lần lượt từ thư mục gốc trên môi trường cài mới; chỉ chạy seed nếu tạo schema thành công:
 
 ```powershell
 mysql --default-character-set=utf8mb4 -u root -p --execute="source DatMonAnOnline.API/Database/Database.sql"
+if ($LASTEXITCODE -ne 0) { throw "Schema import failed; do not run seed." }
 mysql --default-character-set=utf8mb4 -u root -p --execute="source DatMonAnOnline.API/Database/SeedDemo.sql"
 ```
 
 - `Database.sql` dùng `CREATE DATABASE`, không có `DROP DATABASE`; database đã tồn tại sẽ báo lỗi.
-- `SeedDemo.sql` có `START TRANSACTION`/`COMMIT`, sử dụng ID và mã cố định. Nó **không phải script upsert/idempotent**; chạy lại sẽ gặp lỗi khóa trùng.
+- `Database.sql` không có `INSERT`: chỉ tạo cấu trúc, chưa có tài khoản hay danh mục sử dụng.
+- `SeedDemo.sql` chứa danh mục vai trò, phương thức thanh toán, trạng thái đơn và dữ liệu demo; dùng `START TRANSACTION`/`COMMIT`, ID/mã cố định. Seed **không phải script upsert/idempotent**; không chạy lại trên database đã có dữ liệu.
 - Không dùng `--force`, không tiếp tục chạy các câu còn lại khi import lỗi. Nếu chạy trong phiên Workbench còn mở, rollback transaction đang dang dở trước khi xử lý.
 - Seed hiện tại có sẵn **16 tài khoản demo tổng hợp**. Đây là dữ liệu của file seed hiện hành, không phải bước tạo tài khoản production.
-- Nếu chỉ cần schema để tự nhập dữ liệu, bỏ qua lệnh seed.
+- Nếu chỉ cần schema, chỉ chạy `Database.sql`. Ứng dụng còn cần danh mục vai trò/thanh toán/trạng thái; bản demo cung cấp các danh mục này trong `SeedDemo.sql`.
 
 ### 3. Cấu hình backend bằng User Secrets
 
@@ -232,7 +234,11 @@ Token hiện được cấp với thời hạn một ngày. Backend còn kiểm 
 
 Schema do [Database.sql](DatMonAnOnline.API/Database/Database.sql) định nghĩa; EF mapping ở [DatMonAnOnlineContext.cs](DatMonAnOnline.API/Models/DatMonAnOnlineContext.cs). Repository hiện không có bộ EF Migrations để chạy `dotnet ef database update`.
 
-Thư mục `Database/` chỉ có `Database.sql` và `SeedDemo.sql`. Những thay đổi về giới hạn voucher, lịch sử đối soát và loại giao dịch thu nhập đơn được tích hợp trong schema cài mới. **Không có bộ script nâng cấp hoàn chỉnh cho database cũ trong thư mục hiện tại**; phải đối chiếu và chuẩn bị migration tăng dần riêng trước khi nâng cấp, không import installer lên dữ liệu đang dùng.
+`Database/` có hai file SQL: `Database.sql` chỉ chứa schema (gồm `orderworkflow`, `ordersupport`, `ordersupportaudit`); `SeedDemo.sql` chứa danh mục hệ thống và toàn bộ dữ liệu demo. Không có file workflow/rollback riêng. Các lệnh downgrade chỉ còn trong integration test, không nằm trong luồng cài đặt.
+
+Đây là installer cho database mới, **không phải migration cho database đang dùng**. Không import lên database cũ hoặc chạy với `--force`. Thay đổi cấu trúc file không tự nâng cấp, xóa hay sửa database hiện tại.
+
+`App_Data/` chứa hồ sơ/hợp đồng riêng tư được giữ nguyên và Git ignore, không phải dữ liệu seed hoặc file dư để xóa.
 
 Các số liệu sau được đếm từ **nội dung seed**, không phải kết quả chạy lại seed trên database thật trong lần cập nhật README:
 

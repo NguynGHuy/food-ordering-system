@@ -1,3 +1,4 @@
+import CustomerAccountNav from "../components/CustomerAccountNav";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Gift, LoaderCircle, TicketPercent } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -99,6 +100,7 @@ function VoucherWallet() {
 
   return (
     <main className="voucher-wallet-page">
+      <CustomerAccountNav />
       <Link to="/ho-so" className="voucher-wallet-back">
         <ArrowLeft size={16} /> Quay lại hồ sơ
       </Link>
@@ -107,11 +109,14 @@ function VoucherWallet() {
         <header className="voucher-wallet-hero">
           <span><TicketPercent size={24} /></span>
           <div>
-            <small>ƯU ĐÃI CỦA BẠN</small>
+
             <h1>Kho voucher</h1>
             <p>Lưu voucher trước, sau đó chọn nhanh khi thanh toán.</p>
           </div>
-          <strong>{savedTotal}<small>đã lưu</small></strong>
+          <div className="compact-account-total">
+            <strong>{savedTotal}</strong>
+            <span>đã lưu</span>
+          </div>
         </header>
       </ScrollReveal>
 

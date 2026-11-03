@@ -1,0 +1,44 @@
+.order-workflow-panel { margin: 20px 0; padding: 20px; border: 1px solid #dce1da; border-radius: 8px; background: #fff; color: #202923; min-width: 0; overflow-wrap: anywhere; }
+.order-workflow-panel.is-late { background: #fff9ec; }
+.order-workflow-panel h2 { font-size: 18px; margin: 0 0 12px; }
+.order-workflow-panel h3 { font-size: 16px; margin: 20px 0 8px; }
+.order-workflow-panel p { margin: 8px 0; line-height: 1.6; }
+.order-workflow-heading, .order-support-page-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.order-workflow-panel form, .order-support-decision, .order-support-toolbar label { display: grid; gap: 12px; }
+.order-workflow-panel label { display: grid; gap: 8px; font-size: 14px; }
+.order-workflow-panel :is(textarea,select), .order-support-toolbar :is(input,select) { width: 100%; min-height: 44px; padding: 10px 12px; background: #fff; color: #202923; border: 1px solid #778478; border-radius: 6px; font: inherit; }
+.order-workflow-panel textarea { resize: vertical; }
+.order-workflow-panel button, .order-support-admin > header button, .order-support-toolbar button { min-height: 44px; padding: 10px 16px; color: #fff; background: #24584a; border: 1px solid #24584a; border-radius: 6px; font: inherit; cursor: pointer; justify-self: start; }
+.order-workflow-panel button:disabled { opacity: .6; cursor: wait; }
+.order-workflow-panel :is(button,input,textarea,select,a):focus-visible, .order-support-admin :is(button,input,textarea,select,a):focus-visible { outline: 2px solid #24584a; outline-offset: 2px; }
+.order-workflow-deadline { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.order-workflow-countdown { font-variant-numeric: tabular-nums; font-weight: 600; }
+.order-workflow-hint { color: #5d685f; font-size: 14px; }
+.order-workflow-supports, .order-attention-list { padding: 0; list-style: none; }
+.order-workflow-supports li, .order-attention-list li { padding: 12px 0; border-top: 1px solid #dce1da; }
+.order-attention-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.order-attention-list li div { min-width: 0; }
+.order-attention-list span { display: block; color: #5d685f; margin-top: 6px; }
+.order-attention-list a { flex-shrink: 0; color: #24584a; min-height: 44px; display: inline-flex; align-items: center; }
+.order-support-admin { min-width: 0; }
+.order-support-admin h1 { font-size: 28px; margin-bottom: 8px; }
+.order-support-admin a { color: #24584a; }
+.order-support-toolbar { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 24px 0; }
+.order-support-toolbar label:first-child { flex: 1; min-width: min(260px,100%); }
+.order-support-table-scroll { overflow-x: auto; border: 1px solid #dce1da; background: #fff; }
+.order-support-admin table { border-collapse: collapse; width: 100%; min-width: 780px; }
+.order-support-admin :is(th,td) { text-align: left; padding: 14px 12px; border-bottom: 1px solid #dce1da; vertical-align: top; }
+.order-support-admin td { max-width: 260px; overflow-wrap: anywhere; font-size: 14px; }
+.order-support-admin td small { display: block; margin-top: 6px; }
+.order-support-admin th { font-size: 14px; background: #eaf0eb; }
+.order-support-finance { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.order-support-finance dd { margin: 8px 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.order-workflow-panel .order-support-check { display: flex; align-items: flex-start; gap: 10px; }
+.order-support-check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: #24584a; }
+.order-workflow-error { color: #a12f2a; }
+@media (max-width: 639px) {
+  .order-workflow-panel { padding: 16px; }
+  .order-support-finance { grid-template-columns: minmax(0,1fr); }
+  .order-support-toolbar label { width: 100%; }
+  .order-support-admin h1 { font-size: 24px; }
+}

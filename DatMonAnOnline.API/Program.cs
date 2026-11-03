@@ -12,6 +12,10 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
+// Browser SignalR transports put bearer tokens in the query string. Default
+// Hosting request Information logs include that URL; retain warnings/errors
+// without recording query credentials. Business-service logs are unaffected.
+builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Warning);
 builder.Services.Configure<ForwardedHeadersOptions>(options => TrustedProxyHeaders.Configure(
     options, builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? []));
 var frontendOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -285,6 +289,8 @@ builder.Services.AddSingleton<IPasswordResetEmailQueue>(services =>
 builder.Services.AddHostedService(services =>
     services.GetRequiredService<PasswordResetEmailQueue>());
 builder.Services.AddHostedService<PendingOnlineOrderExpirationService>();
+builder.Services.AddScoped<OrderWorkflowService>();
+builder.Services.AddHostedService<OrderWorkflowWorker>();
 builder.Services.AddHostedService<CompletedOrderWalletRecoveryService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<

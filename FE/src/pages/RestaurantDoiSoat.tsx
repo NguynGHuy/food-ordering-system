@@ -1,5 +1,5 @@
+import MotionPresence from "../components/MotionPresence";
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { AlertTriangle, CheckCircle2, Eye, RefreshCw, X } from "lucide-react";
 import Pagination from "../components/Pagination";
 import ReconciliationBreakdown from "../components/ReconciliationBreakdown";
@@ -220,8 +220,7 @@ export default function RestaurantDoiSoat() {
         )}
       </section>
 
-      {showDetail && detailData && createPortal((
-        <div className="merchant-config-overlay">
+      <MotionPresence present={Boolean(showDetail && detailData)} portal>{showDetail && detailData && (<div className="merchant-config-overlay foodie-merchant-portal">
           <div className="merchant-config-dialog reconciliation-modal">
             <header className="merchant-config-header">
               <div>
@@ -282,8 +281,7 @@ export default function RestaurantDoiSoat() {
               )}
             </div>
           </div>
-        </div>
-      ), document.body)}
+        </div>)}</MotionPresence>
     </div>
   );
 }

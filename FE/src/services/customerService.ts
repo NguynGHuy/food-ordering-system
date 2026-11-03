@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from "./api";
 
 export interface CustomerProfile {
     maKhachHang: number;
@@ -69,6 +69,12 @@ export function getRefundHistory() {
     return apiFetch("/khach-hang/hoan-tien", {
         headers: { Authorization: `Bearer ${token}` },
     }) as Promise<RefundHistoryItem[]>;
+}
+
+export function getRefundHistoryPage(pagination: PaginationParams) {
+    return apiFetch(`/khach-hang/hoan-tien${buildQuery({ pageNumber: 1, pageSize: 10, ...pagination })}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    }) as Promise<PagedResult<RefundHistoryItem>>;
 }
 
 export async function deleteCustomerAvatar() {

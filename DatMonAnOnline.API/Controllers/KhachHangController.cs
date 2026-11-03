@@ -1,4 +1,5 @@
 using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -60,8 +61,10 @@ namespace DatMonAnOnline.API.Controllers
         }
 
         [HttpGet("hoan-tien")]
-        public async Task<IActionResult> GetHoanTien()
+        public async Task<IActionResult> GetHoanTien([FromQuery] int? pageNumber = null, [FromQuery] int? pageSize = null)
         {
+            if (pageNumber < 1 || pageSize is < 1 or > 100)
+                return BadRequest(new { message = "Phân trang không hợp lệ." });
             var maTaiKhoan = GetMaTaiKhoan();
             if (maTaiKhoan == null) return Unauthorized(new { message = "Token không hợp lệ." });
 
@@ -72,12 +75,13 @@ namespace DatMonAnOnline.API.Controllers
             if (maKhachHang == null)
                 return NotFound(new { message = "Không tìm thấy hồ sơ khách hàng." });
 
-            var danhSach = await _context.Hoantiens
+            var danhSach = _context.Hoantiens
                 .AsNoTracking()
                 .Where(item => _context.Donhangs.Any(order =>
                     order.MaDonHang == item.MaDonHang &&
                     order.MaKhachHang == maKhachHang))
                 .OrderByDescending(item => item.ThoiGianHoanThanh)
+                .ThenByDescending(item => item.MaHoanTien)
                 .Select(item => new
                 {
                     item.LyDoHoan,
@@ -87,10 +91,16 @@ namespace DatMonAnOnline.API.Controllers
                         .FirstOrDefault(),
                     item.SoTienHoan,
                     item.ThoiGianHoanThanh
-                })
-                .ToListAsync();
+                });
 
-            return Ok(danhSach);
+            // Keep the existing array contract for callers that do not request paging.
+            if (!pageNumber.HasValue && !pageSize.HasValue)
+                return Ok(await danhSach.ToListAsync());
+            return Ok(await danhSach.ToPagedResultAsync(new PaginationQuery
+            {
+                PageNumber = pageNumber ?? 1,
+                PageSize = pageSize ?? 10
+            }));
         }
 
         [HttpPut("ho-so")]

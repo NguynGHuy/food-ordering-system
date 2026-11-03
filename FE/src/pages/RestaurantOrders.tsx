@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -132,6 +132,9 @@ function RestaurantOrders() {
     return Number.isInteger(value) && value > 0 ? value : null;
   });
   const [pageNumber, setPageNumber] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const requestSequence = useRef(0);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -159,6 +162,7 @@ function RestaurantOrders() {
   }, []);
   const loadOrders = useCallback(
     async (showLoading = true) => {
+      const sequence = ++requestSequence.current;
       try {
         if (showLoading) {
           setLoading(true);
@@ -170,13 +174,16 @@ function RestaurantOrders() {
           pageNumber,
           pageSize: PAGE_SIZE,
           maTrangThai: selectedStatus ?? undefined,
+          search: search || undefined,
         });
 
+        if (sequence !== requestSequence.current) return;
         setOrders(data.items);
         setTotalItems(data.totalItems);
         setTotalPages(data.totalPages);
         if (data.pageNumber !== pageNumber) setPageNumber(data.pageNumber);
       } catch (err) {
+        if (sequence !== requestSequence.current) return;
         setError(
           err instanceof Error ? err.message : "Không tải được đơn hàng.",
         );
@@ -188,12 +195,12 @@ function RestaurantOrders() {
           setOrders([]);
         }
       } finally {
-        if (showLoading) {
+        if (sequence === requestSequence.current) {
           setLoading(false);
         }
       }
     },
-    [pageNumber, selectedStatus],
+    [pageNumber, selectedStatus, search],
   );
 
   useEffect(() => {
@@ -261,6 +268,11 @@ function RestaurantOrders() {
 
       <ScrollReveal className="merchant-orders-filter-reveal" delay={100}>
         <section className="merchant-order-filter-section">
+        <form className="merchant-list-search" onSubmit={event => { event.preventDefault(); setSearch(searchInput.trim()); setPageNumber(1); }}>
+          <label htmlFor="merchant-order-search">Tìm đơn hàng<input id="merchant-order-search" type="search" maxLength={150} value={searchInput} placeholder="Mã đơn, tên hoặc số điện thoại người nhận" onChange={event => setSearchInput(event.target.value)} /></label>
+          <button type="submit" disabled={loading}>Tìm kiếm</button>
+          {search && <button type="button" onClick={() => { setSearchInput(""); setSearch(""); setPageNumber(1); }}>Xóa tìm kiếm</button>}
+        </form>
         <div className="merchant-order-filter-heading">
           <div>
             <strong>Lọc theo trạng thái</strong>
@@ -346,9 +358,9 @@ function RestaurantOrders() {
             <PackageOpen size={28} />
           </span>
 
-          <h2>Chưa có đơn hàng</h2>
+          <h2>{search ? "Không tìm thấy đơn hàng" : "Chưa có đơn hàng"}</h2>
 
-          <p>Hiện chưa có đơn nào thuộc trạng thái “{currentFilterLabel}”.</p>
+          <p>{search ? `Không có đơn phù hợp với “${search}” trong bộ lọc “${currentFilterLabel}”.` : `Hiện chưa có đơn nào thuộc trạng thái “${currentFilterLabel}”.`}</p>
 
           {selectedStatus !== null && (
             <button type="button" onClick={() => {

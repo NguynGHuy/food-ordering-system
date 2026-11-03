@@ -1,4 +1,5 @@
 using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,8 +53,12 @@ namespace DatMonAnOnline.API.Controllers
         [HttpGet]
         [Authorize(Roles = "Quan")]
         public async Task<IActionResult> GetNhomToppings(
-            [FromQuery] int maNhaHang)
+            [FromQuery] int maNhaHang,
+            [FromQuery] int? pageNumber = null,
+            [FromQuery] int? pageSize = null)
         {
+            if (pageNumber < 1 || pageSize is < 1 or > 100)
+                return BadRequest(new { message = "Phân trang không hợp lệ." });
             if (maNhaHang <= 0)
             {
                 return BadRequest(new
@@ -91,7 +96,7 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
-            var result = await _context.Nhomtoppings
+            var result = _context.Nhomtoppings
                 .AsNoTracking()
                 .Where(x => x.MaNhaHang == maNhaHang)
                 .OrderBy(x => x.MaNhomTopping)
@@ -102,10 +107,15 @@ namespace DatMonAnOnline.API.Controllers
                     x.TenNhom,
                     x.BatBuocChon,
                     x.ChonToiDa
-                })
-                .ToListAsync();
+                });
 
-            return Ok(result);
+            if (!pageNumber.HasValue && !pageSize.HasValue)
+                return Ok(await result.ToListAsync());
+            return Ok(await result.ToPagedResultAsync(new PaginationQuery
+            {
+                PageNumber = pageNumber ?? 1,
+                PageSize = pageSize ?? 10
+            }));
         }
 
         // =========================================================

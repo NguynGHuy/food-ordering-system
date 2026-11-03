@@ -1,0 +1,329 @@
+/* Cart, checkout, orders and notifications: presentation only, customer-scoped. */
+.foodie-customer-shell :is(.cart-page, .checkout-page, .checkout-review-page, .customer-orders-page, .order-detail-page, .customer-notifications-page) { width: 100%; max-width: 1280px; margin: auto; padding: 32px 24px 56px; min-height: 60vh; background: none; }
+.foodie-customer-shell :is(.cart-container, .checkout-compact-container, .checkout-review-container, .customer-orders-container, .order-detail-shell) { max-width: none; width: 100%; min-width: 0; padding: 0; margin: 0; }
+.foodie-customer-shell :is(.cart-back-link, .checkout-back-link, .order-detail-back, .checkout-review-back) { color: var(--primary); font-size: .8125rem; }
+.foodie-customer-shell .order-detail-back { width: 100%; margin: 0 0 20px; padding: 0; }
+.foodie-customer-shell .order-progress-wrap { overflow: clip; }
+.foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header) { padding: 0 0 24px; margin-bottom: 24px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; gap: 20px; }
+.foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header)::before,
+.foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header)::after { display: none; }
+.foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header) h1 { font-size: 1.75rem; margin: 8px 0; }
+.foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header) p { color: var(--text-secondary); font-size: .875rem; }
+.foodie-customer-shell :is(.cart-restaurant-heading > div > span, .customer-orders-title > div > span, .merchant-notifications-eyebrow, .order-detail-eyebrow, .qr-dialog-eyebrow, .food-option-eyebrow) { display: none; }
+.foodie-customer-shell .cg-order-steps { display: flex; list-style: none; gap: 24px; padding: 0; margin: 0 0 28px; color: var(--text-secondary); font-size: .8125rem; }
+.foodie-customer-shell .cg-order-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 0; }
+.foodie-customer-shell .cg-order-steps li[aria-current="step"] { color: var(--primary); font-weight: 600; box-shadow: inset 0 -2px var(--primary); }
+.foodie-customer-shell .cg-order-steps span { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 4px; }
+.foodie-customer-shell .cg-order-steps li[aria-current="step"] span { color: white; background: var(--primary); border-color: var(--primary); }
+
+/* Common order action language; safe guards remain on the actual buttons. */
+.foodie-customer-shell :is(.checkout-btn, .checkout-compact-submit, .checkout-review-pay, .order-detail-primary-button, .food-add-confirm, .edit-save-confirm, .qr-success-button, .order-qr-success-button, .order-review-submit-row button) { min-height: 46px; padding: 12px 16px; background: var(--primary); color: white; border: 0; border-radius: 6px; box-shadow: none; font-size: .875rem; transform: none; }
+.foodie-customer-shell :is(.checkout-review-edit, .edit-item-options-btn, .order-detail-secondary-button, .checkout-voucher-open, .qr-later-button, .order-qr-later-button) { min-height: 44px; color: var(--primary); background: white; border: 1px solid var(--primary); border-radius: 6px; box-shadow: none; font-size: .8125rem; }
+.foodie-customer-shell :is(.clear-cart-btn, .remove-btn, .customer-order-cancel, .customer-cancel-confirm, .qr-fail-button, .order-qr-failed-button) { color: var(--danger); background: white; border: 1px solid #d3aaa4; border-radius: 6px; min-height: 44px; box-shadow: none; }
+.foodie-customer-shell :is(.cart-summary, .checkout-compact-summary, .checkout-review-summary) { position: sticky; top: 104px; min-width: 0; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; padding: 24px; }
+.foodie-customer-shell :is(.summary-row, .checkout-compact-money > div, .checkout-review-money > div, .order-detail-money-lines > div) { color: var(--text-secondary); gap: 12px; font-size: .875rem; }
+.foodie-customer-shell :is(.summary-row strong, .checkout-compact-money strong, .checkout-review-money strong, .order-detail-money-lines strong, .order-detail-grand-total strong) { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.foodie-customer-shell :is(.summary-row.total, .checkout-compact-money .total, .checkout-review-money .total, .order-detail-grand-total) { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; }
+.foodie-customer-shell :is(.summary-row.total strong, .checkout-compact-money .total strong, .checkout-review-money .total strong, .order-detail-grand-total strong) { color: var(--primary); font-size: 1.25rem; }
+.foodie-customer-shell :is(.checkout-money-change, .cart-value-change, .cart-qty-value) { animation: none; }
+
+/* Cart: readable meal rows and a separate, stable cost summary. */
+.foodie-customer-shell .restaurant-cart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; align-items: start; gap: 28px; }
+.foodie-customer-shell .cart-items-panel { min-width: 0; padding: 0 24px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .cart-items-heading { padding: 20px 0; border-bottom: 1px solid var(--border); background: none; }
+.foodie-customer-shell .cart-items-heading h2 { font-size: 1.125rem; }
+.foodie-customer-shell .cart-items-heading svg { color: var(--primary); }
+.foodie-customer-shell .cart-items { display: block; padding: 0; }
+.foodie-customer-shell .restaurant-cart-container .cart-item { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 16px; padding: 24px 0; margin: 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; animation: none; transform: none; opacity: 1; }
+.foodie-customer-shell .cart-item:last-child { border-bottom: 0; }
+.foodie-customer-shell .cart-item-image { min-width: 0; width: 88px; height: 88px; border-radius: 6px; background: var(--primary-soft); color: var(--primary); }
+.foodie-customer-shell .cart-item-image img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.foodie-customer-shell .item-info { min-width: 0; }
+.foodie-customer-shell .cart-item-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.foodie-customer-shell .cart-item-title-row h3 { font-size: 1rem; font-weight: 600; }
+.foodie-customer-shell .cart-item-unit-price { color: var(--text-secondary); font-size: .75rem; }
+.foodie-customer-shell .item-price { font-size: .9375rem; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.foodie-customer-shell .cart-item-toppings { gap: 4px 12px; }
+.foodie-customer-shell .item-topping { padding: 0; background: none; color: var(--text-secondary); border: 0; border-radius: 0; font-size: .75rem; }
+.foodie-customer-shell .item-note { color: var(--text-secondary); background: none; padding: 0; font-size: .8125rem; }
+.foodie-customer-shell .cart-item-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.foodie-customer-shell .restaurant-cart-container .edit-item-options-btn { border: 0; padding: 8px 0; background: none; box-shadow: none; }
+.foodie-customer-shell .restaurant-cart-container .edit-item-options-btn:hover:not(:disabled) { background: var(--primary-soft); box-shadow: none; }
+.foodie-customer-shell .qty-control { border: 1px solid var(--cg-control); border-radius: 6px; background: white; padding: 0; }
+.foodie-customer-shell .qty-control button { width: 44px; height: 44px; color: var(--primary); background: none; border-radius: 4px; }
+.foodie-customer-shell .cart-summary-heading { padding: 0 0 20px; background: none; border-bottom: 1px solid var(--border); }
+.foodie-customer-shell .cart-summary-heading > svg { color: var(--primary); background: none; }
+.foodie-customer-shell .cart-summary-heading span { color: var(--text-secondary); font-size: .75rem; }
+.foodie-customer-shell .cart-summary-heading h2 { font-size: 1.125rem; }
+.foodie-customer-shell .cart-summary-content { padding: 20px 0 0; }
+.foodie-customer-shell :is(.cart-summary-note, .checkout-compact-security, .checkout-review-security, .order-payment-security) { font-size: .75rem; line-height: 1.6; color: var(--text-secondary); background: none; padding: 12px 0; border: 0; }
+.foodie-customer-shell .checkout-btn { width: 100%; margin-top: 20px; }
+.foodie-customer-shell .cart-continue-shopping { color: var(--primary); font-size: .8125rem; }
+.foodie-customer-shell .cart-refresh-notice { background: var(--warning-soft); color: var(--warning); border: 1px solid #dacb9d; border-radius: 6px; box-shadow: none; }
+.foodie-customer-shell .cart-state-page { text-align: center; padding: 64px 24px; }
+.foodie-customer-shell :is(.cart-state-icon, .cart-state-icon.error) { color: var(--primary); background: var(--primary-soft); border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .cart-state-button { background: var(--primary); color: white; border-radius: 6px; box-shadow: none; min-height: 44px; }
+
+/* Checkout: information form and exact totals, then the existing review/recovery states. */
+.foodie-customer-shell .checkout-compact-layout, .foodie-customer-shell .checkout-review-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; gap: 28px; }
+.foodie-customer-shell :is(.checkout-compact-main, .checkout-review-main) { display: grid; gap: 24px; min-width: 0; }
+.foodie-customer-shell .checkout-review-main { padding: 0; border: 0; background: none; box-shadow: none; }
+.foodie-customer-shell :is(.checkout-compact-card, .checkout-review-restaurant, .checkout-review-delivery) { padding: 24px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .checkout-compact-card-title { display: flex; align-items: center; gap: 10px; padding: 0 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.foodie-customer-shell .checkout-compact-card-title > svg { background: none; color: var(--primary); padding: 0; }
+.foodie-customer-shell .checkout-compact-card-title h2 { font-size: 1.125rem; }
+.foodie-customer-shell .checkout-compact-card-title a { color: var(--primary); font-size: .8125rem; }
+.foodie-customer-shell .checkout-address-select-row { display: flex; gap: 12px; align-items: center; }
+.foodie-customer-shell .checkout-address-select-wrap { flex: 1; min-width: 0; }
+.foodie-customer-shell .checkout-address-select-wrap select { width: 100%; min-height: 46px; padding: 10px 12px; background: white; color: var(--text-primary); border: 1px solid var(--cg-control); border-radius: 6px; font-size: 1rem; }
+.foodie-customer-shell .checkout-selected-address { margin-top: 16px; padding: 16px; background: var(--surface-secondary); border: 0; border-radius: 6px; color: var(--text-primary); }
+.foodie-customer-shell .checkout-compact-note textarea { width: 100%; min-height: 88px; border: 1px solid var(--cg-control); border-radius: 6px; background: white; color: var(--text-primary); padding: 12px; font-size: 1rem; box-shadow: none; }
+.foodie-customer-shell .checkout-compact-divider { border-color: var(--border); margin-block: 24px; }
+.foodie-customer-shell .checkout-compact-payment-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.foodie-customer-shell .checkout-compact-payment { min-height: 72px; padding: 16px; border: 1px solid var(--cg-control); border-radius: 6px; box-shadow: none; background: white; color: var(--text-primary); text-align: left; transform: none; }
+.foodie-customer-shell .checkout-compact-payment.selected { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.foodie-customer-shell .payment-compact-icon { background: none; color: var(--primary); border-radius: 0; }
+.foodie-customer-shell .checkout-voucher-select-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 20px; }
+.foodie-customer-shell .checkout-voucher-select-label { color: var(--text-secondary); font-size: .8125rem; }
+.foodie-customer-shell .checkout-voucher-open { padding: 8px 12px; }
+.foodie-customer-shell .checkout-voucher-remove { color: var(--danger); background: none; }
+.foodie-customer-shell .checkout-summary-restaurant { padding-bottom: 16px; border-bottom: 1px solid var(--border); background: none; }
+.foodie-customer-shell .checkout-summary-restaurant h2 { font-size: 1.125rem; }
+.foodie-customer-shell .checkout-compact-items { max-height: 360px; overflow-y: auto; padding: 8px 0; scrollbar-width: thin; }
+.foodie-customer-shell .checkout-compact-item { grid-template-columns: 56px minmax(0, 1fr) auto; padding: 16px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; gap: 12px; }
+.foodie-customer-shell .checkout-compact-item-image { width: 56px; height: 56px; border-radius: 6px; flex-shrink: 0; }
+.foodie-customer-shell .checkout-compact-item-image img { width: 100%; height: 100%; object-fit: cover; }
+.foodie-customer-shell .checkout-compact-item-info { min-width: 0; }
+.foodie-customer-shell .checkout-compact-item-info h3 { font-size: .875rem; }
+.foodie-customer-shell .checkout-compact-item-info :is(p, span) { color: var(--text-secondary); font-size: .75rem; }
+.foodie-customer-shell .checkout-compact-money { padding: 16px 0; }
+.foodie-customer-shell .checkout-compact-submit { width: 100%; }
+.foodie-customer-shell .checkout-review-header { align-items: center; }
+.foodie-customer-shell .checkout-review-title > span { color: var(--primary); background: var(--primary-soft); border-radius: 6px; }
+.foodie-customer-shell .checkout-review-restaurant > h2 { font-size: 1.125rem; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.foodie-customer-shell .checkout-review-items { padding-top: 8px; }
+.foodie-customer-shell .checkout-review-item { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; }
+.foodie-customer-shell .checkout-review-item-image { width: 72px; height: 72px; border-radius: 6px; }
+.foodie-customer-shell .checkout-review-item-info { min-width: 0; }
+.foodie-customer-shell .checkout-review-item-info h3 { font-size: .9375rem; }
+.foodie-customer-shell .checkout-review-item-info p { font-size: .8125rem; color: var(--text-secondary); }
+.foodie-customer-shell .checkout-review-item-info :is(h3, p) { overflow: visible; white-space: normal; text-overflow: clip; }
+.foodie-customer-shell .checkout-review-item-info > div { flex-wrap: wrap; }
+.foodie-customer-shell .checkout-review-item-info span { font-size: .875rem; }
+.foodie-customer-shell :is(.checkout-review-item-info, .checkout-compact-item-info) .checkout-item-note { overflow: visible; white-space: pre-wrap; text-overflow: clip; font-size: .875rem; }
+.foodie-customer-shell .checkout-review-item > strong { font-size: .875rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.foodie-customer-shell .checkout-review-section-title h3 { font-size: 1rem; }
+.foodie-customer-shell .checkout-review-summary-title { color: var(--text-primary); background: none; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.foodie-customer-shell .checkout-review-pay { width: 100%; }
+.foodie-customer-shell :is(.checkout-review-created, .checkout-retry-notice, .checkout-promotion-message.success, .checkout-voucher-dialog-message.success) { border: 1px solid #c9dacb; background: var(--primary-soft); color: var(--primary); border-radius: 6px; }
+.foodie-customer-shell :is(.checkout-promotion-message.error, .checkout-voucher-dialog-message.error) { border: 1px solid #e5bdb8; background: var(--danger-soft); color: var(--danger); border-radius: 6px; }
+.foodie-customer-shell .checkout-created-code-row { flex-wrap: wrap; gap: 8px; overflow-wrap: anywhere; }
+.foodie-customer-shell .checkout-review-code { background: var(--surface-secondary); border-color: var(--border); color: var(--text-primary); }
+
+/* Order list: compact rows with distinct order and payment information. */
+.foodie-customer-shell .customer-orders-title-icon { display: none; }
+.foodie-customer-shell .customer-orders-total { align-items: center; padding: 12px 16px; background: var(--primary-soft); color: var(--primary); border: 0; border-radius: 6px; }
+.foodie-customer-shell .customer-orders-total :is(strong, span) { color: inherit; }
+.foodie-customer-shell .customer-orders-total span { font-size: .8125rem; line-height: 1.4; }
+.foodie-customer-shell .customer-order-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 20px; margin-bottom: 0; border-bottom: 1px solid var(--border); background: none; }
+.foodie-customer-shell .customer-order-filters button { min-height: 44px; padding: 10px 14px; color: var(--text-secondary); background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: none; font-size: .8125rem; }
+.foodie-customer-shell .customer-order-filters button.active { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
+.foodie-customer-shell .customer-order-filters button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.foodie-customer-shell .customer-order-filters button strong { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; margin: 0; padding: 0 6px; color: var(--text-secondary); background: var(--surface-secondary); border-radius: 12px; font-size: .8125rem; line-height: 1; }
+.foodie-customer-shell .customer-order-filters button.active strong { color: var(--primary); background: white; }
+.foodie-customer-shell .customer-orders-search { margin-bottom: 20px; }
+.foodie-customer-shell .customer-orders-search label { display: block; margin-bottom: 8px; font-weight: 600; }
+.foodie-customer-shell .customer-orders-search-row { display: flex; align-items: stretch; flex-wrap: wrap; gap: 12px; }
+.foodie-customer-shell .customer-orders-search-field { display: flex; align-items: center; flex: 1 1 240px; gap: 8px; min-width: 0; padding: 0 12px; border: 1px solid var(--cg-control); border-radius: 6px; background: white; }
+.foodie-customer-shell .customer-orders-search-field:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.foodie-customer-shell .customer-orders-search-field svg { flex: 0 0 auto; color: var(--text-secondary); }
+.foodie-customer-shell .customer-orders-search-field input { width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 10px 0; border: 0; background: transparent; outline: 0; box-shadow: none; }
+.foodie-customer-shell .customer-orders-search-row > button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--primary); border-radius: 6px; background: var(--primary); color: white; }
+.foodie-customer-shell .customer-orders-search-row > .customer-orders-clear-search { background: white; color: var(--primary); }
+.foodie-customer-shell .customer-order-list { display: block; }
+.foodie-customer-shell .customer-order-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; margin: 0; padding: 24px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; background: none; transform: none; }
+.foodie-customer-shell .customer-order-card::before, .foodie-customer-shell .customer-order-card::after { display: none; }
+.foodie-customer-shell .customer-order-card-header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 0; background: none; border: 0; }
+.foodie-customer-shell .customer-order-restaurant { gap: 10px; min-width: 0; }
+.foodie-customer-shell .customer-order-restaurant h3 { font-size: 1rem; }
+.foodie-customer-shell .customer-order-restaurant > span { color: var(--primary); background: var(--primary-soft); border-radius: 6px; }
+.foodie-customer-shell .customer-order-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.foodie-customer-shell :is(.customer-order-status, .customer-order-payment) { border-radius: 4px; font-size: .75rem; box-shadow: none; }
+.foodie-customer-shell .customer-order-card-body { grid-column: 1; padding: 0; border: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px; }
+.foodie-customer-shell .customer-order-code { min-width: 0; }
+.foodie-customer-shell .customer-order-code-row { gap: 8px; flex-wrap: wrap; }
+.foodie-customer-shell .customer-order-code strong { overflow-wrap: anywhere; font-size: .8125rem; }
+.foodie-customer-shell .customer-order-amount strong { color: var(--text-primary); font-size: 1.125rem; font-variant-numeric: tabular-nums; }
+.foodie-customer-shell .customer-order-card-footer { grid-column: 2; padding: 0; border: 0; background: none; display: flex; align-items: center; align-self: end; gap: 12px; flex-wrap: wrap; }
+.foodie-customer-shell .customer-order-detail-link { min-height: 44px; padding: 10px 14px; border: 1px solid var(--primary); border-radius: 6px; background: white; color: var(--primary); box-shadow: none; font-size: .8125rem; }
+.foodie-customer-shell .customer-order-footer-note { font-size: .75rem; color: var(--text-secondary); }
+.foodie-customer-shell :is(.customer-orders-empty, .customer-orders-filter-empty) { padding: 40px 20px; border-radius: 8px; border: 1px solid var(--border); background: white; box-shadow: none; }
+.foodie-customer-shell .customer-orders-notice { color: var(--primary); background: var(--primary-soft); border-color: #c9dacb; border-radius: 6px; }
+.foodie-customer-shell .customer-orders-error { color: var(--danger); background: var(--danger-soft); border-color: #e5bdb8; border-radius: 6px; }
+
+/* Details: compact status header, items/history, and a stable financial column. */
+.foodie-customer-shell .order-detail-hero { padding: 24px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .order-detail-hero::before, .foodie-customer-shell .order-detail-hero::after { display: none; }
+.foodie-customer-shell .order-detail-hero h1 { font-size: 1.5rem; overflow-wrap: anywhere; }
+.foodie-customer-shell .order-detail-title-row { gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.foodie-customer-shell .order-code-badge-group { min-width: 0; }
+.foodie-customer-shell .order-detail-status-hint { max-width: 70ch; font-size: .875rem; color: var(--text-secondary); }
+.foodie-customer-shell .order-detail-hero-meta { gap: 12px 24px; font-size: .8125rem; color: var(--text-secondary); }
+.foodie-customer-shell .order-header-badges { flex-wrap: wrap; gap: 8px; }
+.foodie-customer-shell :is(.order-detail-status, .order-detail-payment-badge, .order-payment-state) { border-radius: 4px; box-shadow: none; font-size: .75rem; }
+.foodie-customer-shell .order-progress-wrap { padding: 20px 0 0; margin-top: 20px; border-top: 1px solid var(--border); background: none; }
+.foodie-customer-shell .order-progress-marker { box-shadow: none; }
+.foodie-customer-shell .order-progress-step.is-current .order-progress-marker { color: white; background: var(--primary); border-color: var(--primary); }
+.foodie-customer-shell .order-progress-step.is-passed .order-progress-marker { color: var(--primary); background: var(--primary-soft); border-color: var(--primary); }
+.foodie-customer-shell .order-progress-step.is-current .order-progress-label { color: var(--primary); }
+.foodie-customer-shell .order-progress-status-badge { color: var(--text-secondary); background: none; font-size: .6875rem; }
+.foodie-customer-shell .order-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-top: 24px; }
+.foodie-customer-shell :is(.order-detail-main-column, .order-detail-side-column) { display: grid; min-width: 0; gap: 24px; }
+.foodie-customer-shell .order-detail-side-column { position: sticky; top: 104px; }
+.foodie-customer-shell .order-detail-card { padding: 24px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .order-detail-section-heading { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.foodie-customer-shell .order-detail-section-heading h2 { font-size: 1.125rem; }
+.foodie-customer-shell .order-detail-section-icon { background: none; color: var(--primary); border-radius: 0; }
+.foodie-customer-shell .order-detail-food-item { padding: 16px 0; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+.foodie-customer-shell .order-detail-food-name { font-size: .9375rem; }
+.foodie-customer-shell .order-detail-food-price { color: var(--text-primary); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.foodie-customer-shell .order-detail-food-number { color: var(--text-secondary); background: var(--surface-secondary); border-radius: 4px; }
+.foodie-customer-shell .order-detail-toppings { color: var(--text-secondary); font-size: .8125rem; }
+.foodie-customer-shell :is(.order-delivery-content, .order-delivery-address, .order-delivery-note) { background: none; color: var(--text-secondary); border: 0; font-size: .875rem; }
+.foodie-customer-shell .order-detail-history { padding-left: 0; }
+.foodie-customer-shell .order-history-content { background: none; border: 0; box-shadow: none; }
+.foodie-customer-shell .order-history-dot { border-color: var(--primary); background: var(--primary); box-shadow: none; }
+.foodie-customer-shell .order-history-latest { color: var(--primary); background: var(--primary-soft); border-radius: 4px; }
+.foodie-customer-shell .order-history-code-pill { color: var(--text-secondary); background: var(--surface-secondary); border-color: var(--border); border-radius: 4px; }
+.foodie-customer-shell .order-detail-code { overflow-wrap: anywhere; white-space: normal; }
+.foodie-customer-shell :is(.order-payment-icon, .order-retry-icon) { color: var(--primary); background: var(--primary-soft); border-radius: 6px; }
+.foodie-customer-shell .order-payment-retry { padding-top: 20px; border-top: 1px solid var(--border); }
+.foodie-customer-shell .order-retry-methods { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.foodie-customer-shell .order-retry-method { min-height: 52px; padding: 12px; background: white; color: var(--text-primary); border: 1px solid var(--cg-control); border-radius: 6px; }
+.foodie-customer-shell .order-retry-method.selected { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
+.foodie-customer-shell .order-retry-actions { flex-wrap: wrap; gap: 8px; }
+.foodie-customer-shell .order-review-callout { background: var(--primary-soft); border-color: #c9dacb; border-radius: 8px; box-shadow: none; }
+.foodie-customer-shell .order-review-star { color: var(--warning); background: none; }
+.foodie-customer-shell .order-review-form { padding: 24px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; background: none; }
+.foodie-customer-shell .order-review-type-icon { color: var(--primary); background: var(--primary-soft); border-radius: 6px; }
+.foodie-customer-shell .order-review-form textarea { min-height: 100px; padding: 12px; width: 100%; border: 1px solid var(--cg-control); border-radius: 6px; color: var(--text-primary); background: white; font-size: 1rem; }
+.foodie-customer-shell .order-review-stars button { color: var(--text-secondary); background: none; min-width: 40px; min-height: 44px; }
+.foodie-customer-shell .order-review-stars button.selected, .foodie-customer-shell .order-review-stars button.active { color: var(--warning); }
+.foodie-customer-shell .order-review-saved { background: var(--primary-soft); border-color: #c9dacb; border-radius: 6px; color: var(--primary); }
+
+/* Explicit order/payment semantic colors; request completion is not inferred from these.
+   Important is limited to the legacy App.css status/shadow rules that are themselves important. */
+.foodie-customer-shell :is(.customer-order-status.status-completed, .order-detail-status.status-HoanThanh, .customer-order-payment.payment-ThanhCong, .order-detail-payment-badge.state-ThanhCong, .order-payment-state.state-ThanhCong) { color: var(--primary) !important; background: var(--primary-soft) !important; border-color: #c9dacb !important; border-radius: 4px !important; }
+.foodie-customer-shell :is(.customer-order-status.status-pending, .customer-order-status.status-confirmed, .order-detail-status.status-ChoXacNhan, .order-detail-status.status-DaXacNhan, .customer-order-payment.payment-ChoThanhToan, .order-detail-payment-badge.state-ChoThanhToan, .order-payment-state.state-ChoThanhToan) { color: var(--warning) !important; background: var(--warning-soft) !important; border-color: #dacb9d !important; border-radius: 4px !important; }
+.foodie-customer-shell :is(.customer-order-status.status-preparing, .customer-order-status.status-delivering, .order-detail-status.status-DangChuanBi, .order-detail-status.status-DangGiao) { color: #275d89 !important; background: #edf4fa !important; border-color: #bdcddd !important; border-radius: 4px !important; }
+.foodie-customer-shell :is(.customer-order-status.status-cancelled, .order-detail-status.status-DaHuy, .customer-order-payment.payment-ThatBai, .order-detail-payment-badge.state-ThatBai, .order-payment-state.state-ThatBai, .order-cancelled-panel) { color: var(--danger) !important; background: var(--danger-soft) !important; border-color: #e5bdb8 !important; border-radius: 4px !important; }
+
+/* Secondary dialogs: original callbacks, input limits and busy guards are untouched. */
+.foodie-customer-shell :is(.food-option-overlay, .checkout-voucher-overlay, .qr-overlay-v2, .order-qr-overlay, .customer-cancel-overlay) { position: fixed; inset: 0; z-index: 2000; background: rgb(20 31 24 / 48%); backdrop-filter: none; padding: 24px; display: flex; align-items: center; justify-content: center; }
+.foodie-customer-shell :is(.food-option-modal, .checkout-voucher-dialog, .qr-dialog-v2, .order-qr-dialog, .customer-cancel-dialog) { width: 100%; max-width: 680px; max-height: calc(100dvh - 48px); overflow-y: auto; padding: 24px; border: 0; border-radius: 12px; background: white; color: var(--text-primary); box-shadow: none; animation: none; }
+.foodie-customer-shell .food-option-modal { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.foodie-customer-shell .food-option-header { padding: 24px; flex-shrink: 0; background: white; border-bottom: 1px solid var(--border); }
+.foodie-customer-shell .food-option-header h2 { font-size: 1.25rem; }
+.foodie-customer-shell .food-option-header p { font-size: .8125rem; color: var(--text-secondary); }
+.foodie-customer-shell .food-option-price { color: var(--primary); font-size: 1rem; font-variant-numeric: tabular-nums; }
+.foodie-customer-shell .food-option-body { min-height: 0; overflow-y: auto; padding: 24px; overscroll-behavior: contain; }
+.foodie-customer-shell .food-option-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
+.foodie-customer-shell :is(.food-option-close, .customer-cancel-close, .order-qr-close, .checkout-voucher-dialog-header button) { width: 44px; height: 44px; border-radius: 6px; color: var(--text-secondary); background: white; box-shadow: none; }
+.foodie-customer-shell .topping-group { padding-top: 20px; margin-bottom: 20px; border-top: 1px solid var(--border); }
+.foodie-customer-shell .topping-group-title h3 { font-size: 1rem; }
+.foodie-customer-shell .topping-group-title p { color: var(--text-secondary); font-size: .8125rem; }
+.foodie-customer-shell .topping-group-title > span { color: var(--text-secondary); background: none; border: 0; border-radius: 0; }
+.foodie-customer-shell .topping-option { min-height: 48px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; }
+.foodie-customer-shell .topping-option input { accent-color: var(--primary); }
+.foodie-customer-shell .topping-option:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.foodie-customer-shell .topping-option-name { color: var(--text-primary); font-size: .875rem; }
+.foodie-customer-shell .topping-option strong { color: var(--text-primary); font-size: .8125rem; }
+.foodie-customer-shell :is(.food-note-field textarea, .customer-cancel-dialog textarea, .checkout-voucher-code-form input) { width: 100%; padding: 12px; min-height: 44px; background: white; color: var(--text-primary); border: 1px solid var(--cg-control); border-radius: 6px; font-size: 1rem; box-shadow: none; }
+.foodie-customer-shell .food-option-error, .foodie-customer-shell .customer-cancel-error { color: var(--danger) !important; background: var(--danger-soft) !important; border-color: #e5bdb8 !important; border-radius: 4px !important; }
+.foodie-customer-shell .customer-cancel-dialog { max-width: 480px; }
+.foodie-customer-shell .customer-cancel-icon { background: var(--danger-soft); color: var(--danger); border-radius: 6px; }
+.foodie-customer-shell .customer-cancel-dialog h2 { font-size: 1.25rem; }
+.foodie-customer-shell .customer-cancel-dialog p { font-size: .875rem; color: var(--text-secondary); }
+.foodie-customer-shell .customer-cancel-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.foodie-customer-shell .customer-cancel-secondary { color: var(--text-primary); background: white; border: 1px solid var(--cg-control); border-radius: 6px; min-height: 44px; }
+.foodie-customer-shell .qr-dialog-v2 { max-width: 800px; }
+.foodie-customer-shell :is(.qr-dialog-header, .order-qr-header, .checkout-voucher-dialog-header) { background: none; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+.foodie-customer-shell :is(.qr-dialog-icon, .order-qr-header-icon) { background: var(--primary-soft); color: var(--primary); border-radius: 6px; }
+.foodie-customer-shell .qr-dialog-content { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; padding-block: 24px; }
+.foodie-customer-shell :is(.qr-code-panel, .qr-payment-panel) { background: none; border: 0; padding: 0; }
+.foodie-customer-shell :is(.qr-code-frame, .order-qr-code-frame) { border: 1px solid var(--border); border-radius: 6px; background: white; box-shadow: none; padding: 12px; }
+.foodie-customer-shell :is(.qr-payment-amount, .order-qr-amount) { color: var(--primary); background: var(--primary-soft); border-radius: 6px; box-shadow: none; }
+.foodie-customer-shell :is(.qr-order-code-row, .order-qr-order-code) { overflow-wrap: anywhere; white-space: normal; font-size: .8125rem; }
+.foodie-customer-shell :is(.qr-demo-note, .order-qr-security) { color: var(--text-secondary); background: var(--surface-secondary); border: 0; border-radius: 6px; padding: 12px; font-size: .75rem; }
+.foodie-customer-shell .checkout-voucher-dialog { max-width: 720px; padding: 0; }
+.foodie-customer-shell .checkout-voucher-dialog-header { padding: 16px 24px; }
+.foodie-customer-shell .checkout-voucher-dialog-body { padding: 24px; }
+.foodie-customer-shell .checkout-voucher-code-form { display: flex; gap: 8px; }
+.foodie-customer-shell .checkout-voucher-code-form input { min-width: 0; flex: 1; }
+.foodie-customer-shell .checkout-voucher-code-form button { background: var(--primary); color: white; border: 0; border-radius: 6px; min-height: 44px; padding-inline: 16px; }
+.foodie-customer-shell .checkout-voucher-disabled-item { opacity: .8; }
+
+.foodie-customer-shell .customer-notifications-page { max-width: 1040px; }
+
+/* Disabled remains legible; never visually imply that an unavailable action is enabled. */
+.foodie-customer-shell :is(.auth-button, .profile-save-button, .address-primary-button, .customer-voucher-action, .checkout-btn, .checkout-compact-submit, .checkout-review-pay, .food-add-confirm, .qr-success-button, .order-qr-success-button, .order-detail-primary-button):disabled { background: #edf0eb; color: #59635b; border-color: #b6c0b5; box-shadow: none; cursor: not-allowed; }
+.foodie-customer-shell :is(.checkout-compact-submit, .checkout-review-pay, .checkout-compact-submit:hover:not(:disabled), .checkout-review-pay:hover:not(:disabled)) { box-shadow: none !important; transform: none !important; }
+
+@media (max-width: 1023px) {
+  .foodie-customer-shell :is(.restaurant-cart-layout, .checkout-compact-layout, .checkout-review-layout, .order-detail-layout) { grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
+  .foodie-customer-shell :is(.cart-summary, .checkout-compact-summary, .checkout-review-summary, .order-detail-card) { padding: 20px; }
+  .foodie-customer-shell .customer-order-card { grid-template-columns: minmax(0, 1fr); }
+  .foodie-customer-shell .customer-order-card-footer { grid-column: 1; justify-content: flex-end; }
+}
+@media (max-width: 767px) {
+  .foodie-customer-shell :is(.restaurant-cart-layout, .checkout-compact-layout, .checkout-review-layout, .order-detail-layout) { grid-template-columns: minmax(0, 1fr); }
+  .foodie-customer-shell :is(.cart-summary, .checkout-compact-summary, .checkout-review-summary, .order-detail-side-column) { position: static; }
+  .foodie-customer-shell .order-progress { display: flex; flex-direction: column; gap: 16px; padding: 0; min-width: 0; width: 100%; }
+  .foodie-customer-shell .order-progress-step { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; width: 100%; gap: 12px; text-align: left; }
+  .foodie-customer-shell .order-progress-step::before, .foodie-customer-shell .order-progress-step::after { display: none; }
+  .foodie-customer-shell .order-progress-marker { margin: 0; }
+  .foodie-customer-shell .order-progress-label { margin: 0; font-size: .8125rem; }
+  .foodie-customer-shell .order-progress-status-badge { margin: 0; }
+}
+@media (max-width: 639px) {
+  .foodie-customer-shell :is(.cart-page, .checkout-page, .checkout-review-page, .customer-orders-page, .order-detail-page, .customer-notifications-page) { padding: 24px 16px 40px; }
+  .foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header) { flex-wrap: wrap; gap: 12px; }
+  .foodie-customer-shell :is(.cart-restaurant-heading, .checkout-compact-header, .checkout-review-header, .customer-orders-hero, .merchant-notifications-header) h1 { font-size: 1.5rem; }
+  .foodie-customer-shell .cg-order-steps { gap: 12px; flex-wrap: wrap; font-size: .75rem; }
+  .foodie-customer-shell .cg-order-steps span { width: 20px; height: 20px; }
+  .foodie-customer-shell .cart-items-panel { padding-inline: 16px; }
+  .foodie-customer-shell .restaurant-cart-container .cart-item { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding-block: 20px; }
+  .foodie-customer-shell .cart-item-image { width: 64px; height: 64px; }
+  .foodie-customer-shell .cart-item-title-row { flex-wrap: wrap; gap: 8px; }
+  .foodie-customer-shell .cart-item-title-row h3 { font-size: .9375rem; }
+  .foodie-customer-shell :is(.cart-summary, .checkout-compact-summary, .checkout-review-summary, .order-detail-card, .checkout-compact-card, .checkout-review-restaurant, .checkout-review-delivery, .order-detail-hero) { padding: 20px 16px; }
+  .foodie-customer-shell .checkout-compact-payment-options { grid-template-columns: minmax(0, 1fr); }
+  .foodie-customer-shell .checkout-address-select-row { flex-wrap: wrap; }
+  .foodie-customer-shell .checkout-address-select-wrap { flex-basis: 100%; }
+  .foodie-customer-shell .checkout-review-item { grid-template-columns: 56px minmax(0, 1fr); gap: 8px 12px; }
+  .foodie-customer-shell .checkout-review-item > strong { grid-column: 2; justify-self: end; }
+  .foodie-customer-shell .checkout-review-item-image { width: 56px; height: 56px; }
+  .foodie-customer-shell .customer-order-card { gap: 16px; padding-block: 20px; }
+  .foodie-customer-shell .customer-order-card-header { align-items: flex-start; }
+  .foodie-customer-shell .customer-order-card-body { gap: 12px; }
+  .foodie-customer-shell .customer-order-card-footer { justify-content: space-between; }
+  .foodie-customer-shell .order-detail-hero h1 { font-size: 1.125rem; }
+  .foodie-customer-shell .order-detail-food-item { flex-wrap: wrap; gap: 10px; }
+  .foodie-customer-shell .order-detail-food-info { min-width: 0; }
+  .foodie-customer-shell .order-history-heading { flex-wrap: wrap; gap: 12px; }
+  .foodie-customer-shell :is(.food-option-overlay, .checkout-voucher-overlay, .qr-overlay-v2, .order-qr-overlay, .customer-cancel-overlay) { padding: 12px; }
+  .foodie-customer-shell :is(.food-option-modal, .checkout-voucher-dialog, .qr-dialog-v2, .order-qr-dialog, .customer-cancel-dialog) { max-height: calc(100dvh - 24px); border-radius: 12px; }
+  .foodie-customer-shell :is(.food-option-header, .food-option-body, .food-option-footer, .checkout-voucher-dialog-header, .checkout-voucher-dialog-body) { padding: 20px 16px; }
+  .foodie-customer-shell .qr-dialog-content { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .foodie-customer-shell .qr-code-panel { max-width: 240px; width: 100%; margin-inline: auto; }
+  .foodie-customer-shell :is(.qr-actions-v2, .order-qr-actions, .food-option-footer) { flex-wrap: wrap; gap: 12px; }
+  .foodie-customer-shell .qr-actions-v2 button { flex: 1 1 100%; }
+  .foodie-customer-shell .order-qr-actions button { min-height: 44px; }
+  .foodie-customer-shell .merchant-notification-row { padding: 16px; gap: 12px; flex-wrap: wrap; }
+  .foodie-customer-shell .merchant-notification-content { flex: 1; }
+  .foodie-customer-shell .merchant-notifications-panel-title { padding: 16px; flex-wrap: wrap; gap: 8px; }
+  .foodie-customer-shell .merchant-notification-action { margin-left: 48px; }
+}
+/* Existing per-item instructions are presentation metadata, separate from the order note. */
+.foodie-customer-shell .checkout-item-note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; color: var(--text-secondary); font-size: .875rem; line-height: 1.5; }
+.foodie-customer-shell .checkout-item-note > strong { font-weight: 500; }

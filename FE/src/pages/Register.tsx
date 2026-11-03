@@ -1,3 +1,4 @@
+import CustomerAuthIntro from "../components/CustomerAuthIntro";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
@@ -132,15 +133,16 @@ function Register() {
 
   return (
     <main className="auth-page">
+      <CustomerAuthIntro />
       <div className="auth-card register-card">
         <h2>Đăng ký </h2>
 
         <p className="auth-description">Tạo tài khoản khách hàng</p>
 
         <div className="form-group">
-          <label>Họ tên </label>
+          <label htmlFor="cg-register-1">Họ tên </label>
 
-          <input
+          <input id="cg-register-1"
             type="text"
             placeholder="Nhập họ tên"
             value={hoTen}
@@ -149,9 +151,9 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label>Email </label>
+          <label htmlFor="cg-register-2">Email </label>
 
-          <input
+          <input id="cg-register-2"
             type="email"
             placeholder="Nhập email"
             value={email}
@@ -160,9 +162,9 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label>Mật khẩu </label>
+          <label htmlFor="cg-register-3">Mật khẩu </label>
 
-          <input
+          <input id="cg-register-3"
             type="password"
             placeholder="Nhập mật khẩu"
             value={matKhau}
@@ -171,9 +173,9 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label>Số điện thoại </label>
+          <label htmlFor="cg-register-4">Số điện thoại </label>
 
-          <input
+          <input id="cg-register-4"
             type="tel"
             placeholder="Nhập số điện thoại"
             value={soDienThoai}
@@ -182,9 +184,9 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label>Ngày sinh </label>
+          <label htmlFor="cg-register-5">Ngày sinh </label>
 
-          <input
+          <input id="cg-register-5"
             type="date"
             value={ngaySinh}
             onChange={(e) => setNgaySinh(e.target.value)}
@@ -192,9 +194,9 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label>Giới tính </label>
+          <label htmlFor="cg-register-6">Giới tính </label>
 
-          <select
+          <select id="cg-register-6"
             value={gioiTinh}
             onChange={(e) => setGioiTinh(e.target.value)}
           >

@@ -56,6 +56,20 @@ public class FinanceQueryTests
         Assert.Equal(25, response.GetProperty("conPhaiThuNhaHang").GetDecimal());
         Assert.Equal(20, response.GetProperty("cacDonDoanhThuGanDay").GetArrayLength());
         Assert.Equal(4, response.GetProperty("cacKyGanDay").GetArrayLength());
+        var next = JsonSerializer.SerializeToElement(Assert.IsType<OkObjectResult>(
+            await controller.GetTongQuan(null, null, default, 2, 20, 2, 2)).Value);
+        Assert.Equal(40, next.GetProperty("tongSoDon").GetInt32());
+        Assert.Equal(16000, next.GetProperty("doanhThuThuan").GetDecimal());
+        Assert.Equal(20, next.GetProperty("cacDonDoanhThuGanDay").GetArrayLength());
+        Assert.Equal(2, next.GetProperty("donDoanhThuPagination").GetProperty("PageNumber").GetInt32());
+        var firstIds = response.GetProperty("cacDonDoanhThuGanDay").EnumerateArray().Select(x => x.GetProperty("MaDonHang").GetInt32());
+        var nextIds = next.GetProperty("cacDonDoanhThuGanDay").EnumerateArray().Select(x => x.GetProperty("MaDonHang").GetInt32());
+        Assert.Empty(firstIds.Intersect(nextIds));
+        Assert.Equal(2, next.GetProperty("cacKyGanDay").GetArrayLength());
+        var last = JsonSerializer.SerializeToElement(Assert.IsType<OkObjectResult>(
+            await controller.GetTongQuan(null, null, default, int.MaxValue, 20, int.MaxValue, 2)).Value);
+        Assert.Equal(2, last.GetProperty("donDoanhThuPagination").GetProperty("PageNumber").GetInt32());
+        Assert.Equal(2, last.GetProperty("kyDoiSoatPagination").GetProperty("PageNumber").GetInt32());
         var empty = JsonSerializer.SerializeToElement(Assert.IsType<OkObjectResult>(await controller.GetTongQuan(today.AddDays(2), today.AddDays(3), default)).Value);
         Assert.Equal(0, empty.GetProperty("tongSoDon").GetInt32());
         Assert.Equal(0, empty.GetProperty("tongSoKy").GetInt32());
@@ -67,6 +81,9 @@ public class FinanceQueryTests
     {
         Assert.IsType<BadRequestObjectResult>(await Controller(null!).GetTongQuan(null, DateOnly.MaxValue, default));
         Assert.IsType<BadRequestObjectResult>(await Controller(null!).GetTongQuan(DateOnly.MinValue, null, default));
+        Assert.IsType<BadRequestObjectResult>(await Controller(null!).GetTongQuan(null, null, default, 0));
+        Assert.IsType<BadRequestObjectResult>(await Controller(null!).GetTongQuan(null, null, default, 1, 101));
+        Assert.IsType<BadRequestObjectResult>(await Controller(null!).GetTongQuan(null, null, default, 1, 20, 0));
     }
 
     [MySqlFact]

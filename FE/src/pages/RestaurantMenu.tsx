@@ -1,5 +1,6 @@
+import MotionPresence from "../components/MotionPresence";
 import MediaImage from "../components/MediaImage";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   CircleDollarSign,
   ImageIcon,
@@ -67,6 +68,38 @@ function RestaurantMenu() {
   const [form, setForm] = useState<MonForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const editorRef = useRef<HTMLFormElement>(null);
+  const editorTriggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    const previousFocus = editorTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      const dialog = editorRef.current;
+      if (!dialog) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dialog.querySelector<HTMLButtonElement>(".merchant-menu-drawer-header button")?.click();
+      } else if (event.key === "Tab") {
+        const controls = [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter((control) => control.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); last?.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); first?.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [editorOpen]);
   const [toppingMonId, setToppingMonId] = useState<number | null>(null);
   const [monChiTiet, setMonChiTiet] = useState<MonAnChiTiet | null>(null);
   const [searchText, setSearchText] = useState("");
@@ -141,6 +174,7 @@ function RestaurantMenu() {
   };
 
   const openCreate = () => {
+    editorTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setEditingId(null);
     setForm({
       ...EMPTY_FORM,
@@ -152,6 +186,7 @@ function RestaurantMenu() {
   };
 
   const openEdit = (item: MonAn) => {
+    editorTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setEditingId(item.maMonAn);
     setForm({
       maDanhMuc: item.maDanhMuc,
@@ -569,10 +604,14 @@ function RestaurantMenu() {
         />
       )}
 
-      {editorOpen && (
+      <MotionPresence present={Boolean(editorOpen)}>{editorOpen && (
         <div className="merchant-menu-drawer-overlay" onMouseDown={closeEditor}>
           <form
             className="merchant-menu-drawer"
+            ref={editorRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="merchant-menu-editor-title"
             onSubmit={handleSubmit}
             onMouseDown={(event) => event.stopPropagation()}
           >
@@ -581,7 +620,7 @@ function RestaurantMenu() {
                 <span>
                   {editingId === null ? "MÓN ĂN MỚI" : "CHỈNH SỬA MÓN"}
                 </span>
-                <h2>
+                <h2 id="merchant-menu-editor-title">
                   {editingId === null ? "Thêm món ăn" : "Cập nhật món ăn"}
                 </h2>
                 <p>Điền thông tin khách hàng sẽ nhìn thấy.</p>
@@ -728,9 +767,9 @@ function RestaurantMenu() {
             </footer>
           </form>
         </div>
-      )}
+      )}</MotionPresence>
 
-      {toppingMonId !== null && (
+      <MotionPresence present={Boolean(toppingMonId !== null)}>{toppingMonId !== null && (
         <div
           className="merchant-topping-overlay"
           onMouseDown={closeToppingManager}
@@ -807,7 +846,7 @@ function RestaurantMenu() {
             </div>
           </section>
         </div>
-      )}
+      )}</MotionPresence>
     </div>
   );
 }

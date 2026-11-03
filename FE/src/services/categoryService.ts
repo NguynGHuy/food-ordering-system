@@ -1,4 +1,8 @@
-import { apiFetch } from "./api";
+import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from "./api";
+
+export function getManagedCategories(pagination: PaginationParams): Promise<PagedResult<DanhMuc>> {
+    return apiFetch(`/danh-muc/quan${buildQuery(pagination)}`, { headers: getAuthHeaders() });
+}
 
 export interface DanhMuc {
     maDanhMuc: number;

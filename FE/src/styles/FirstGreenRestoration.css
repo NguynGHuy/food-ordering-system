@@ -1,0 +1,68 @@
+/* Restore the first Chợ ngon composition from its archived screenshot.
+   Business code, data, shared motion and route guards remain unchanged. */
+.foodie-customer-shell .home-page { width: calc(100% - 96px); max-width: 1480px; padding: 38px 16px 48px; }
+.foodie-customer-shell .home-page .home-hero { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: center; gap: clamp(48px,6vw,112px); margin: 0 0 48px; padding: 0; }
+.foodie-customer-shell .home-page .home-hero h1 { max-width: 24ch; font-size: 44px; line-height: 1.2; margin: 0 0 24px; letter-spacing: -.025em; }
+.foodie-customer-shell .home-page .home-hero-lead { font-size: 16px; line-height: 1.65; margin: 0 0 24px; max-width: 64ch; }
+.foodie-customer-shell .home-page .home-hero-content { width: 100%; max-width: none; }
+.foodie-customer-shell .home-page .home-hero-search-box { width: 100%; max-width: none; padding: 4px; gap: 4px; }
+.foodie-customer-shell .home-page .home-hero-search-input { min-height: 48px; font-size: 14px; }
+.foodie-customer-shell .home-page .home-hero-search-btn { min-height: 48px; font-size: 14px; padding-inline: 16px; margin: 0; align-self: stretch; }
+.foodie-customer-shell .home-page .home-hero-tags { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; margin-top: 24px; width: 100%; max-width: none; }
+.foodie-customer-shell .home-page .home-hero-tags-label { flex: none; margin: 0; font-size: 13px; }
+.foodie-customer-shell .home-page .home-hero-tags-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.foodie-customer-shell .home-page .home-hero-tag-pill { min-height: 40px; padding: 8px 10px; font-size: 13px; }
+.foodie-customer-shell .home-page .home-hero-image-card { height: auto; width: 100%; aspect-ratio: 16/9; min-height: 0; }
+.foodie-customer-shell .home-page .cg-hero-caption { margin: 24px 0 0; padding: 0; min-height: 24px; font-size: 14px; line-height: 24px; }
+.foodie-customer-shell .home-hero-restaurant-link { display: block; width: 100%; min-width: 0; color: inherit; text-decoration: none; border-radius: 8px; }
+.foodie-customer-shell .home-hero-restaurant-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 6px; }
+.foodie-customer-shell .home-hero-restaurant-link .cg-hero-caption { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.foodie-customer-shell .home-hero-restaurant-link .cg-hero-caption svg { color: var(--primary); flex-shrink: 0; }
+.foodie-customer-shell .home-page .home-promo-strip { width: 100%; max-width: none; margin: 0 0 40px; }
+.foodie-customer-shell .home-page .home-promo-strip-card { padding: 24px 0; }
+.foodie-customer-shell .home-page .restaurant-section { padding: 0; margin: 0; }
+.foodie-customer-shell .home-page .section-header { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.foodie-customer-shell .home-page .section-header > div { display: block; min-width: 0; }
+.foodie-customer-shell .home-page .section-header h2 { margin: 0 0 8px; font-size: 26px; }
+.foodie-customer-shell .home-page .section-header p { margin: 0; font-size: 14px; }
+.foodie-customer-shell .home-page .restaurant-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-card,
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-skeleton-card { display: flex; flex-direction: column; gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 100%; background: var(--surface); }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-image,
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-skeleton-image { width: 100%; height: auto; min-height: 0; aspect-ratio: 16/10; border-radius: 0; }
+.foodie-customer-shell .home-page .restaurant-grid :is(.restaurant-card-content, .restaurant-skeleton-content) { padding: 20px; min-width: 0; flex: 1; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-card-title-row { align-items: flex-start; gap: 12px; }
+.foodie-customer-shell .home-page .restaurant-grid h3 { margin: 0; min-height: 0; font-size: 20px; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-card-rating { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 2px 0; line-height: 1.4; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-description { font-size: 14px; line-height: 1.6; margin: 10px 0 12px; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-card-address { margin: 0 0 16px; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-card-footer { padding-top: 12px; }
+.foodie-customer-shell .home-page .restaurant-grid .restaurant-status-badge { position: absolute; left: 12px; top: 12px; background: #eaf0eb; color: #24584a; padding: 7px 10px; border-radius: 4px; }
+@media (min-width: 1024px) {
+ .foodie-customer-shell .header-container { max-width: 1480px; width: calc(100% - 96px); min-height: 76px; padding-inline: 16px; gap: 24px; }
+ .foodie-customer-shell:has(.home-page,.restaurants-page) .header-search-form { display: flex; }
+ .foodie-customer-shell .header-search-form { flex: 1 1 280px; max-width: 420px; min-width: 140px; }
+ .foodie-customer-shell .header-delivery-pill { max-width: 200px; }
+ .foodie-customer-shell .main-nav { margin-left: auto; }
+ .foodie-customer-shell .header-right { flex: none; margin-left: 0; }
+}
+@media (max-width: 1023px) {
+ .foodie-customer-shell .home-page { width: 100%; padding: 32px 24px 48px; }
+ .foodie-customer-shell .home-page .home-hero { gap: 32px; }
+ .foodie-customer-shell .home-page .home-hero h1 { font-size: 36px; }
+ .foodie-customer-shell .home-page .home-hero-tags { display: block; }
+ .foodie-customer-shell .home-page .home-hero-tags-list { margin-top: 8px; }
+ .foodie-customer-shell .home-page .restaurant-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 639px) {
+ .foodie-customer-shell .home-page { padding: 24px 16px 40px; }
+ .foodie-customer-shell .home-page .home-hero { grid-template-columns: minmax(0,1fr); gap: 24px; margin-bottom: 32px; }
+ .foodie-customer-shell .home-page .home-hero h1 { font-size: 30px; }
+ .foodie-customer-shell .home-page .home-hero-tags-list { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+ .foodie-customer-shell .home-page .home-hero-tag-pill { flex: none; }
+ .foodie-customer-shell .home-page .home-hero-lead { font-size: 14px; }
+ .foodie-customer-shell .home-page .home-hero-image-card { height: auto; aspect-ratio: 16/9; }
+ .foodie-customer-shell .home-page .section-header { gap: 12px; flex-wrap: wrap; }
+ .foodie-customer-shell .home-page .section-header h2 { font-size: 24px; }
+ .foodie-customer-shell .home-page .restaurant-grid { grid-template-columns: minmax(0,1fr); }
+}

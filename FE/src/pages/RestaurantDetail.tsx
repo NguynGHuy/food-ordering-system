@@ -1,5 +1,6 @@
+import MotionPresence from "../components/MotionPresence";
 import MediaImage from "../components/MediaImage";
-import { useEffect, useCallback, useRef, useState } from "react";
+import { Fragment, useEffect, useCallback, useRef, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -30,7 +31,7 @@ import {
 
 import RestaurantReviews from "../components/RestaurantReviews";
 import FoodReviews from "../components/FoodReviews";
-import ScrollReveal from "../components/ScrollReveal";
+import "./RestaurantDetail.css";
 import {
   ArrowLeft,
   Bike,
@@ -48,7 +49,6 @@ import {
   ChevronRight,
   ShoppingCart,
   Star,
-  UtensilsCrossed,
   X,
 } from "lucide-react";
 interface Restaurant {
@@ -87,7 +87,7 @@ function isRestaurantOpen(restaurant: Restaurant): boolean {
 ========================================================= */
 
 function formatMoney(value: number) {
-  return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
+  return `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
 }
 
 /* =========================================================
@@ -100,6 +100,8 @@ function RestaurantDetail() {
   const { id } = useParams<{ id: string }>();
 
   const menuRef = useRef<HTMLElement | null>(null);
+  const foodDialogRef = useRef<HTMLElement | null>(null);
+  const foodTriggerRef = useRef<HTMLButtonElement | null>(null);
   const toppingGroupRefs = useRef(new Map<number, HTMLDivElement>());
   const [showToppingValidation, setShowToppingValidation] = useState(false);
 
@@ -408,6 +410,47 @@ function RestaurantDetail() {
     setCartError("");
   };
 
+  // Dialog focus/scroll lifecycle only. Cart and selection handlers are unchanged.
+  useEffect(() => {
+    if (!selectedFood) return;
+    const dialog = foodDialogRef.current;
+    if (!dialog) return;
+    const previousFocus = foodTriggerRef.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.querySelector<HTMLButtonElement>(".rd-dialog-close")?.focus();
+
+    const handleDialogKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        // The actual close button retains the current busy guard.
+        dialog.querySelector<HTMLButtonElement>(".rd-dialog-close")?.click();
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
+      )).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (!dialog.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleDialogKey);
+    return () => {
+      document.removeEventListener("keydown", handleDialogKey);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [selectedFood]);
+
   const toggleTopping = (
     maTopping: number,
     group: MonAnChiTiet["nhomToppings"][number],
@@ -488,35 +531,25 @@ function RestaurantDetail() {
 
   if (loading) {
     return (
-      <main className="restaurant-detail-page">
-        <div className="detail-loading">
-          <div className="loading-spinner" />
-
+      <main className="foodie-restaurant" aria-busy="true">
+        <div className="rd-container rd-loading" role="status">
+          <div className="rd-skeleton rd-skeleton-cover" aria-hidden="true" />
+          <div className="rd-skeleton rd-skeleton-title" aria-hidden="true" />
           <p>Đang tải thông tin nhà hàng...</p>
         </div>
       </main>
     );
   }
 
-  /* =========================================================
-       ERROR
-    ========================================================= */
-
   if (error || !restaurant) {
     return (
-      <main className="restaurant-detail-page">
-        <div className="detail-error">
-          <div className="detail-error-icon">!</div>
-
-          <h2>Không tìm thấy nhà hàng</h2>
-
-          <p>
-            {error ||
-              "Nhà hàng bạn đang tìm kiếm không tồn tại hoặc đã bị xóa."}
-          </p>
-
-          <Link to="/nha-hang" className="detail-back-button">
-            ← Xem danh sách nhà hàng
+      <main className="foodie-restaurant">
+        <div className="rd-container rd-state rd-page-error" role="alert">
+          <CircleAlert size={28} aria-hidden="true" />
+          <h1>Không tìm thấy nhà hàng</h1>
+          <p>{error || "Nhà hàng bạn đang tìm kiếm không tồn tại hoặc đã bị xóa."}</p>
+          <Link to="/nha-hang" className="rd-button rd-button-primary">
+            <ArrowLeft size={16} aria-hidden="true" /> Xem danh sách nhà hàng
           </Link>
         </div>
       </main>
@@ -524,9 +557,7 @@ function RestaurantDetail() {
   }
 
   const isOpen = isRestaurantOpen(restaurant);
-
   const rating = restaurant.danhGiaTrungBinh ?? 0;
-
   const selectedToppingTotal = selectedFood
     ? selectedFood.nhomToppings
         .flatMap((group) => group.toppings)
@@ -534,637 +565,154 @@ function RestaurantDetail() {
         .reduce((sum, tp) => sum + tp.giaThem, 0)
     : 0;
 
-  /* =========================================================
-       RENDER
-    ========================================================= */
-
   return (
-    <main className="restaurant-detail-page">
-      <div className="restaurant-detail-container">
-        {/* =========================
-                    BACK
-                ========================= */}
-        <Link to="/nha-hang" className="restaurant-detail-back">
-          <ArrowLeft size={16} />
-          <span>Tất cả nhà hàng</span>
-        </Link>
+    <main className="foodie-restaurant">
+      <div className="rd-container">
+        <nav className="rd-breadcrumb" aria-label="Đường dẫn">
+          <Link to="/nha-hang"><ArrowLeft size={16} aria-hidden="true" /> Tất cả nhà hàng</Link>
+          <ChevronRight size={14} aria-hidden="true" />
+          <span aria-current="page">{restaurant.tenNhaHang}</span>
+        </nav>
 
-        <section className="restaurant-detail-hero">
-          <div className="restaurant-detail-image">
-            {restaurant.anhBia ? (
-              <MediaImage kind="restaurant" src={restaurant.anhBia} alt={restaurant.tenNhaHang} />
-            ) : (
-              <div className="restaurant-detail-placeholder">
-                <UtensilsCrossed size={64} strokeWidth={1.5} />
-              </div>
-            )}
-
-            <div
-              className={
-                isOpen
-                  ? "restaurant-detail-status open"
-                  : "restaurant-detail-status closed"
-              }
-            >
-              <span className="restaurant-status-dot" />
-
-              {restaurant.trangThaiHienThi ||
-                (isOpen ? "Đang mở cửa" : "Đã đóng cửa")}
-            </div>
+        <section className="rd-restaurant" aria-labelledby="rd-restaurant-name">
+          <div className="rd-cover">
+            <MediaImage kind="restaurant" src={restaurant.anhBia} alt={restaurant.tenNhaHang} fetchPriority="high" />
           </div>
-
-          <div className="restaurant-detail-main">
-            <div className="restaurant-detail-heading">
-              <div className="restaurant-detail-title">
-                <span className="restaurant-detail-eyebrow">
-                  Nhà hàng đối tác
+          <div className="rd-intro">
+            <div className="rd-title-row">
+              <div className="rd-title-block">
+                <span className={`rd-opening ${isOpen ? "is-open" : "is-closed"}`}>
+                  <span aria-hidden="true" />
+                  {restaurant.trangThaiHienThi || (isOpen ? "Đang mở cửa" : "Đã đóng cửa")}
                 </span>
-
-                <h1>{restaurant.tenNhaHang}</h1>
+                <h1 id="rd-restaurant-name">{restaurant.tenNhaHang}</h1>
               </div>
-
-              <div className="restaurant-detail-rating">
-                <Star size={16} fill="currentColor" />
-
+              <div className="rd-rating">
+                <Star size={18} aria-hidden="true" />
                 <strong>{rating > 0 ? rating.toFixed(1) : "—"}</strong>
-
                 <span>{rating > 0 ? "Đánh giá" : "Chưa có đánh giá"}</span>
               </div>
             </div>
-
-            <p className="restaurant-detail-summary">
-              {restaurant.moTa ||
-                "Nhà hàng chưa cập nhật thông tin giới thiệu."}
-            </p>
-
-            <div className="restaurant-detail-quick-info">
-              <div className="restaurant-quick-item">
-                <div className="restaurant-quick-icon">
-                  <MapPin size={18} />
-                </div>
-
-                <div>
-                  <span>Địa chỉ</span>
-
-                  <strong>
-                    {restaurant.diaChiQuan || "Chưa cập nhật địa chỉ"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="restaurant-quick-item">
-                <div className="restaurant-quick-icon">
-                  <Clock3 size={18} />
-                </div>
-
-                <div>
-                  <span>Giờ hoạt động</span>
-
-                  <strong>
-                    {restaurant.gioMoCua
-                      ? restaurant.gioMoCua.slice(0, 5)
-                      : "--:--"}
-
-                    {" – "}
-
-                    {restaurant.gioDongCua
-                      ? restaurant.gioDongCua.slice(0, 5)
-                      : "--:--"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="restaurant-quick-item">
-                <div className="restaurant-quick-icon">
-                  <Bike size={18} />
-                </div>
-
-                <div>
-                  <span>Phí giao hàng</span>
-
-                  <strong>{formatMoney(restaurant.phiShipMacDinh ?? 0)}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="restaurant-detail-action">
-              <button
-                type="button"
-                className="restaurant-detail-menu-button"
-                onClick={handleViewMenu}
-              >
-                <UtensilsCrossed size={17} />
-                <span>Xem thực đơn</span>
-                <ChevronDown size={17} />
-              </button>
-
-              {!isOpen && (
-                <p className="customer-menu-closed-note">
-                  Nhà hàng đang đóng cửa. Bạn vẫn có thể xem thực đơn nhưng hiện
-                  chưa thể đặt món.
-                </p>
-              )}
+            <p className="rd-description">{restaurant.moTa || "Nhà hàng chưa cập nhật thông tin giới thiệu."}</p>
+            <dl className="rd-facts">
+              <div><dt><MapPin size={16} aria-hidden="true" /> Địa chỉ</dt><dd>{restaurant.diaChiQuan || "Chưa cập nhật địa chỉ"}</dd></div>
+              <div><dt><Clock3 size={16} aria-hidden="true" /> Giờ hoạt động</dt><dd>{restaurant.gioMoCua ? restaurant.gioMoCua.slice(0, 5) : "--:--"} – {restaurant.gioDongCua ? restaurant.gioDongCua.slice(0, 5) : "--:--"}</dd></div>
+              <div><dt><Bike size={16} aria-hidden="true" /> Phí giao hàng</dt><dd>{formatMoney(restaurant.phiShipMacDinh ?? 0)}</dd></div>
+            </dl>
+            <div className="rd-intro-footer">
+              <button type="button" className="rd-menu-jump" onClick={handleViewMenu}>Xem thực đơn <ChevronDown size={16} aria-hidden="true" /></button>
+              {!isOpen && <p className="rd-closed-note"><CircleAlert size={16} aria-hidden="true" /> Nhà hàng đang đóng cửa. Bạn vẫn có thể xem thực đơn nhưng hiện chưa thể đặt món.</p>}
             </div>
           </div>
         </section>
 
-        <ScrollReveal delay={90}>
-          <section className="restaurant-voucher-section">
-            <div className="restaurant-voucher-heading">
-              <div>
-                <span className="customer-menu-eyebrow">Ưu đãi của quán</span>
-                <h2>Lưu voucher, dùng khi thanh toán</h2>
-                <p>
-                  Voucher chỉ xuất hiện tại bước thanh toán sau khi bạn lưu vào kho.
-                </p>
-              </div>
-
-              <Link to="/kho-voucher" className="restaurant-voucher-wallet-link">
-                Mở kho voucher
-                <ChevronRight size={16} />
-              </Link>
-            </div>
-
-            {voucherMessage && (
-              <p className={`restaurant-voucher-message ${voucherMessageKind}`}>
-                {voucherMessage}
-              </p>
-            )}
-
-            {voucherLoading ? (
-              <div className="restaurant-voucher-loading">Đang tải ưu đãi...</div>
-            ) : restaurantVouchers.length > 0 ? (
-              <div className="restaurant-voucher-grid">
-                {restaurantVouchers.map((voucher) => (
-                  <VoucherCard
-                    key={voucher.maKhuyenMai}
-                    voucher={voucher}
-                    compact
-                    actionLabel={voucher.daLuu ? "Đã lưu" : "Lưu voucher"}
-                    actionDisabled={voucher.daLuu || voucherBusyId !== null}
-                    onAction={(item) => void handleSaveVoucher(item)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="restaurant-voucher-empty">
-                Nhà hàng chưa có voucher khả dụng.
-              </div>
-            )}
-          </section>
-        </ScrollReveal>
-
-        {/* =================================================
-                    MENU KHÁCH HÀNG
-                ================================================= */}
-
-        <section ref={menuRef} className="customer-menu-section">
-          <div className="customer-menu-heading">
-            <div>
-              <span className="customer-menu-eyebrow">Thực đơn</span>
-
-              <h2>Món ngon tại {restaurant.tenNhaHang}</h2>
-
-              <p>
-                Chọn món yêu thích và tùy chỉnh topping theo khẩu vị của bạn.
-              </p>
-            </div>
-
-            <div className="customer-menu-count">
-              {menuTotalItems} món
-            </div>
+        <details className="rd-offers">
+          <summary>
+            <span>Ưu đãi của quán <small>{!voucherLoading && restaurantVouchers.length > 0 ? `${restaurantVouchers.length} voucher khả dụng` : "Lưu mã để dùng khi thanh toán"}</small></span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </summary>
+          <div className="rd-offers-content">
+            <div className="rd-offers-help"><p>Voucher chỉ xuất hiện tại bước thanh toán sau khi bạn lưu vào kho.</p><Link to="/kho-voucher">Mở kho voucher <ChevronRight size={14} aria-hidden="true" /></Link></div>
+            {voucherMessage && <p className={`rd-voucher-message ${voucherMessageKind}`} role={voucherMessageKind === "error" ? "alert" : "status"}>{voucherMessage}</p>}
+            {voucherLoading ? <p role="status">Đang tải ưu đãi...</p> : restaurantVouchers.length > 0 ? (
+              <div className="rd-voucher-grid">{restaurantVouchers.map((voucher) => <VoucherCard key={voucher.maKhuyenMai} voucher={voucher} compact actionLabel={voucher.daLuu ? "Đã lưu" : "Lưu voucher"} actionDisabled={voucher.daLuu || voucherBusyId !== null} onAction={(item) => void handleSaveVoucher(item)} />)}</div>
+            ) : <p className="rd-muted">Nhà hàng chưa có voucher khả dụng.</p>}
           </div>
+        </details>
 
-          <div className="customer-menu-controls">
-            <div className="customer-menu-search">
-              <Search size={18} />
-
-              <input
-                type="text"
-                placeholder="Tìm kiếm món ăn..."
-                value={searchTerm}
-                onChange={(event) => {
-                  setSearchTerm(event.target.value);
-                  setMenuPageNumber(1);
-                }}
-              />
-            </div>
-
-            <div className="customer-menu-categories">
-              <button
-                type="button"
-                className={
-                  selectedCategory === 0
-                    ? "customer-category-button active"
-                    : "customer-category-button"
-                }
-                onClick={() => {
-                  setSelectedCategory(0);
-                  setMenuPageNumber(1);
-                }}
-              >
-                Tất cả
-              </button>
-
-              {danhMucs.map((category) => (
-                <button
-                  type="button"
-                  key={category.maDanhMuc}
-                  className={
-                    selectedCategory === category.maDanhMuc
-                      ? "customer-category-button active"
-                      : "customer-category-button"
-                  }
-                  onClick={() => {
-                    setSelectedCategory(category.maDanhMuc);
-                    setMenuPageNumber(1);
-                  }}
-                >
-                  {category.tenDanhMuc}
-                </button>
-              ))}
-            </div>
+        <section ref={menuRef} className="rd-menu-section" aria-labelledby="rd-menu-title">
+          <div className="rd-section-heading">
+            <h2 id="rd-menu-title">Thực đơn</h2>
+            <span>{menuLoading ? "Đang tải…" : `${menuTotalItems} món`}</span>
           </div>
-
-          {menuLoading ? (
-            <div className="customer-menu-state">
-              <div className="loading-spinner" />
-
-              <h3>Đang chuẩn bị thực đơn</h3>
-              <p>Vui lòng chờ trong giây lát.</p>
-            </div>
-          ) : menuError ? (
-            <div className="customer-menu-state error">
-              <div className="customer-menu-empty-icon">
-                <CircleAlert size={28} />
+          <div className="rd-menu-layout">
+            <nav className="rd-categories" aria-label="Danh mục món ăn">
+              <h3>Danh mục</h3>
+              <div className="rd-category-list">
+                <button type="button" className={selectedCategory === 0 ? "is-active" : ""} aria-pressed={selectedCategory === 0} onClick={() => { setSelectedCategory(0); setMenuPageNumber(1); }}>Tất cả món</button>
+                {danhMucs.map((category) => <button type="button" key={category.maDanhMuc} className={selectedCategory === category.maDanhMuc ? "is-active" : ""} aria-pressed={selectedCategory === category.maDanhMuc} onClick={() => { setSelectedCategory(category.maDanhMuc); setMenuPageNumber(1); }}>{category.tenDanhMuc}</button>)}
               </div>
+            </nav>
 
-              <h3>Không thể tải thực đơn</h3>
-              <p>{menuError}</p>
-            </div>
-          ) : monAns.length === 0 ? (
-            <div className="customer-menu-state">
-              <div className="customer-menu-empty-icon">
-                {searchTerm ? <SearchX size={30} /> : <UtensilsCrossed size={30} />}
-              </div>
-
-              <h3>{searchTerm ? "Không tìm thấy món phù hợp" : "Nhà hàng chưa có món ăn"}</h3>
-              <p>
-                {searchTerm
-                  ? `Không tìm thấy món nào với từ khóa "${searchTerm}".`
-                  : "Thực đơn của quán đang được cập nhật."}
-              </p>
-              {searchTerm && (
-                <button
-                  type="button"
-                  className="customer-menu-reset-search"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setMenuPageNumber(1);
-                  }}
-                >
-                  Xóa tìm kiếm & xem tất cả
-                </button>
+            <div className="rd-menu-main">
+              <label className="rd-search"><Search size={18} aria-hidden="true" /><span className="rd-sr-only">Tìm món trong thực đơn</span><input type="search" placeholder="Tìm món trong thực đơn…" value={searchTerm} onChange={(event) => { setSearchTerm(event.target.value); setMenuPageNumber(1); }} /></label>
+              {menuLoading ? (
+                <div className="rd-menu-loading" role="status" aria-label="Đang tải thực đơn"><span className="rd-sr-only">Đang tải thực đơn</span>{[0, 1, 2].map((slot) => <div key={slot} className="rd-skeleton-row" aria-hidden="true"><div className="rd-skeleton" /><div><div className="rd-skeleton" /><div className="rd-skeleton" /></div></div>)}</div>
+              ) : menuError ? (
+                <div className="rd-state rd-error" role="alert"><CircleAlert size={26} aria-hidden="true" /><h3>Không thể tải thực đơn</h3><p>{menuError}</p></div>
+              ) : monAns.length === 0 ? (
+                <div className="rd-state"><SearchX size={28} aria-hidden="true" /><h3>{searchTerm ? "Không tìm thấy món phù hợp" : "Nhà hàng chưa có món ăn"}</h3><p>{searchTerm ? `Không tìm thấy món nào với từ khóa "${searchTerm}".` : "Thực đơn của quán đang được cập nhật."}</p>{searchTerm && <button type="button" className="rd-button rd-button-secondary" onClick={() => { setSearchTerm(""); setMenuPageNumber(1); }}>Xóa tìm kiếm & xem tất cả</button>}</div>
+              ) : (
+                <div className="rd-food-list">
+                  {monAns.map((item, index) => (
+                    <Fragment key={item.maMonAn}>
+                    {item.tenDanhMuc && (index === 0 || item.maDanhMuc !== monAns[index - 1].maDanhMuc) && (
+                      <div className="rd-menu-group-heading"><h3>{item.tenDanhMuc}</h3></div>
+                    )}
+                    <article className="rd-food">
+                      <div className="rd-food-image"><MediaImage src={item.hinhAnh} alt={item.tenMonAn} loading="lazy" width={112} height={112} /></div>
+                      <div className="rd-food-content">
+                        <div className="rd-food-title"><h3>{item.tenMonAn}</h3>{item.danhGiaTrungBinh > 0 && <span className="rd-food-rating"><Star size={13} aria-hidden="true" /> {item.danhGiaTrungBinh.toFixed(1)}</span>}</div>
+                        {item.tenDanhMuc && <span className="rd-food-category">{item.tenDanhMuc}</span>}
+                        <p className="rd-food-description">{item.moTa || "Món ngon được chế biến tại nhà hàng."}</p>
+                        <div className="rd-food-actions"><strong className="rd-money">{formatMoney(item.gia)}</strong><button type="button" className={`rd-add ${justAddedId === item.maMonAn ? "is-success" : ""}`} disabled={!isOpen || foodModalLoading} onClick={(event) => { foodTriggerRef.current = event.currentTarget; void openFoodModal(item.maMonAn); }} aria-label={`${!isOpen ? "Đóng cửa · " : "Chọn món "}${item.tenMonAn}`}>
+                          {justAddedId === item.maMonAn ? <><Check size={16} aria-hidden="true" /> Đã thêm</> : foodModalLoading ? "Đang mở..." : !isOpen ? "Đóng cửa" : <><Plus size={16} aria-hidden="true" /> Thêm</>}
+                        </button></div>
+                        <FoodReviews maMonAn={item.maMonAn} />
+                      </div>
+                    </article>
+                    </Fragment>
+                  ))}
+                </div>
               )}
+              {!menuLoading && !menuError && menuTotalPages > 1 && <Pagination pageNumber={menuPageNumber} totalPages={menuTotalPages} totalItems={menuTotalItems} onPageChange={setMenuPageNumber} />}
             </div>
-          ) : (
-            <div className="customer-menu-grid">
-              {monAns.map((item, index) => (
-                <ScrollReveal
-                  key={item.maMonAn}
-                  className="customer-food-reveal-item"
-                  delay={(index % 3) * 90}
-                >
-                  <article className="customer-food-card">
-                    <div className="customer-food-image">
-                      {item.hinhAnh ? (
-                        <MediaImage
-                          src={item.hinhAnh}
-                          alt={item.tenMonAn}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="customer-food-placeholder">
-                          <UtensilsCrossed size={40} strokeWidth={1.4} />
-                        </div>
-                      )}
 
-                      <span
-                        className="customer-food-image-shine"
-                        aria-hidden="true"
-                      />
-
-                      {item.tenDanhMuc && (
-                        <span className="customer-food-category">
-                          {item.tenDanhMuc}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="customer-food-content">
-                      <div className="customer-food-top">
-                        <h3>{item.tenMonAn}</h3>
-
-                        {item.danhGiaTrungBinh > 0 && (
-                          <span className="customer-food-rating">
-                            <Star size={13} fill="currentColor" />
-
-                            {item.danhGiaTrungBinh.toFixed(1)}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="customer-food-description">
-                        {item.moTa || "Món ngon được chế biến tại nhà hàng."}
-                      </p>
-
-                      <div className="customer-food-bottom">
-                        <div>
-                          <span className="customer-food-price-label">
-                            Giá món
-                          </span>
-
-                          <strong className="customer-food-price">
-                            {formatMoney(item.gia)}
-                          </strong>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={`customer-add-cart-button ${
-                            justAddedId === item.maMonAn ? "is-success" : ""
-                          }`}
-                          disabled={!isOpen || foodModalLoading}
-                          onClick={() => openFoodModal(item.maMonAn)}
-                        >
-                          {justAddedId === item.maMonAn ? (
-                            <>
-                              <Check size={16} />
-                              <span>Đã thêm</span>
-                            </>
-                          ) : foodModalLoading ? (
-                            "Đang mở..."
-                          ) : !isOpen ? (
-                            "Đóng cửa"
-                          ) : (
-                            <>
-                              <Plus size={16} />
-                              <span>Thêm</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <FoodReviews maMonAn={item.maMonAn} />
-                    </div>
-                  </article>
-                </ScrollReveal>
-              ))}
-            </div>
-          )}
-
-          {!menuLoading && !menuError && menuTotalPages > 1 && (
-            <Pagination
-              pageNumber={menuPageNumber}
-              totalPages={menuTotalPages}
-              totalItems={menuTotalItems}
-              onPageChange={setMenuPageNumber}
-            />
-          )}
+            <aside className="rd-cart" aria-label="Giỏ hàng của nhà hàng">
+              <div className="rd-cart-title"><ShoppingBag size={20} aria-hidden="true" /><h3>Giỏ hàng của bạn</h3></div>
+              <p className="rd-cart-restaurant">{restaurant.tenNhaHang}</p>
+              {(cart?.soLuongMon ?? 0) > 0 ? <>
+                <ul className="rd-cart-items">{cart?.chiTiet.map((item) => <li key={item.maChiTietGioHang}><span className="rd-cart-quantity">{item.soLuong}×</span><div><strong>{item.tenMonAn}</strong>{item.toppings.length > 0 && <small>{item.toppings.map((topping) => topping.tenTopping).join(", ")}</small>}{item.ghiChu && <small>{item.ghiChu}</small>}</div><span className="rd-money">{formatMoney(item.thanhTien)}</span></li>)}</ul>
+                <div className="rd-cart-total"><span>Tạm tính · {cart?.soLuongMon} món</span><strong className="rd-money">{formatMoney(cart?.tongTienTamTinh ?? 0)}</strong></div>
+                <p className="rd-cart-hint">Chưa bao gồm phí giao hàng và ưu đãi.</p>
+              </> : <div className="rd-cart-empty"><ShoppingBag size={32} strokeWidth={1.3} aria-hidden="true" /><p>Chưa có món trong giỏ</p><span>Chọn món từ thực đơn để bắt đầu.</span></div>}
+              <button type="button" className="rd-button rd-button-primary rd-cart-open" onClick={openRestaurantCart}>Xem giỏ hàng <ChevronRight size={17} aria-hidden="true" /></button>
+              <p className="rd-cart-feedback" role="status">{cartBump ? "Đã cập nhật giỏ hàng" : ""}</p>
+            </aside>
+          </div>
         </section>
 
-        {/* =================================================
-                    REVIEWS
-                ================================================= */}
-
-        <ScrollReveal className="restaurant-reviews-reveal" delay={100}>
-          <section className="restaurant-detail-reviews">
-            <RestaurantReviews maNhaHang={restaurant.maNhaHang} />
-          </section>
-        </ScrollReveal>
+        <section className="rd-reviews"><RestaurantReviews maNhaHang={restaurant.maNhaHang} /></section>
       </div>
 
-      {selectedFood && (
-        <div className="food-option-overlay" onMouseDown={closeFoodModal}>
-          <section
-            className="food-option-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="food-option-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="food-option-close"
-              aria-label="Đóng form chọn món"
-              onClick={closeFoodModal}
-            >
-              <X size={18} />
-            </button>
-
-            <div className="food-option-header">
-              <MediaImage
-                src={selectedFood.hinhAnh}
-                alt={selectedFood.tenMonAn}
-                className="food-option-image"
-              />
-              <span className="food-option-eyebrow">Tùy chọn món</span>
-
-              <h2 id="food-option-title">{selectedFood.tenMonAn}</h2>
-
-              <p>
-                {selectedFood.moTa || "Tùy chỉnh món ăn theo sở thích của bạn."}
-              </p>
-
-              <div className="food-option-price">
-                {formatMoney(selectedFood.gia)}
+      <MotionPresence present={Boolean(selectedFood)}>{selectedFood && (
+        <div className="rd-dialog-overlay" onMouseDown={closeFoodModal}>
+          <section ref={foodDialogRef} className="rd-dialog" role="dialog" aria-modal="true" aria-labelledby="rd-food-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="rd-dialog-top"><span>Tùy chọn món</span><button type="button" className="rd-dialog-close" aria-label="Đóng form chọn món" disabled={addingToCart} onClick={closeFoodModal}><X size={20} aria-hidden="true" /></button></div>
+            <div className="rd-dialog-scroll">
+              <div className="rd-dialog-header"><MediaImage src={selectedFood.hinhAnh} alt={selectedFood.tenMonAn} className="rd-dialog-image" /><div><h2 id="rd-food-title">{selectedFood.tenMonAn}</h2><p>{selectedFood.moTa || "Tùy chỉnh món ăn theo sở thích của bạn."}</p><strong className="rd-money">{formatMoney(selectedFood.gia)}</strong></div></div>
+              <div className="rd-dialog-body">
+                {selectedFood.nhomToppings.map((group) => {
+                  const missing = showToppingValidation && group.batBuocChon && !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping));
+                  const errorId = `topping-error-${group.maNhomTopping}`;
+                  return <div key={group.maNhomTopping} ref={(element) => { if (element) toppingGroupRefs.current.set(group.maNhomTopping, element); else toppingGroupRefs.current.delete(group.maNhomTopping); }} className={`rd-topping-group${missing ? " is-invalid" : ""}`} role="group" aria-labelledby={`topping-title-${group.maNhomTopping}`} aria-invalid={missing || undefined} aria-describedby={missing ? errorId : undefined}>
+                    <div className="rd-topping-heading"><div><h3 id={`topping-title-${group.maNhomTopping}`}>{group.tenNhom}</h3><p>{group.chonToiDa ? `Chọn tối đa ${group.chonToiDa} lựa chọn` : "Chọn topping bạn muốn"}</p></div><span>{group.batBuocChon ? "Bắt buộc" : "Tùy chọn"}</span></div>
+                    <div className="rd-topping-options">{group.toppings.map((topping) => <label key={topping.maTopping} className="rd-topping-option"><input type="checkbox" checked={selectedToppings.includes(topping.maTopping)} aria-invalid={missing || undefined} aria-describedby={missing ? errorId : undefined} onChange={() => toggleTopping(topping.maTopping, group)} /><span>{topping.tenTopping}</span><strong className="rd-money">+{formatMoney(topping.giaThem)}</strong></label>)}</div>
+                    {missing && <p id={errorId} className="rd-topping-error"><CircleAlert size={15} aria-hidden="true" /> Vui lòng chọn ít nhất một lựa chọn cho nhóm {group.tenNhom}.</p>}
+                  </div>;
+                })}
+                <label className="rd-note"><span><MessageSquareText size={16} aria-hidden="true" /> Ghi chú cho quán <small>{note.length}/300</small></span><textarea value={note} maxLength={300} rows={3} placeholder="Ví dụ: ít cay, không hành, để sốt riêng..." onChange={(event) => setNote(event.target.value)} /></label>
               </div>
             </div>
-
-            <div className="food-option-body">
-              {selectedFood.nhomToppings.map((group) => {
-                const missing = showToppingValidation && group.batBuocChon &&
-                  !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping));
-                const errorId = `topping-error-${group.maNhomTopping}`;
-                return (
-                <div key={group.maNhomTopping}
-                  ref={(element) => {
-                    if (element) toppingGroupRefs.current.set(group.maNhomTopping, element);
-                    else toppingGroupRefs.current.delete(group.maNhomTopping);
-                  }}
-                  className={`topping-group${missing ? " is-invalid" : ""}`}
-                  role="group"
-                  aria-labelledby={`topping-title-${group.maNhomTopping}`}
-                  aria-invalid={missing || undefined}
-                  aria-describedby={missing ? errorId : undefined}
-                >
-                  <div className="topping-group-title">
-                    <div>
-                      <h3 id={`topping-title-${group.maNhomTopping}`}>{group.tenNhom}</h3>
-
-                      {group.chonToiDa ? (
-                        <p>Chọn tối đa {group.chonToiDa} lựa chọn</p>
-                      ) : (
-                        <p>Chọn topping bạn muốn</p>
-                      )}
-                    </div>
-
-                    <span
-                      className={group.batBuocChon ? "required" : "optional"}
-                    >
-                      {group.batBuocChon ? "Bắt buộc" : "Tùy chọn"}
-                    </span>
-                  </div>
-
-                  <div className="topping-options">
-                    {group.toppings.map((topping) => (
-                      <label key={topping.maTopping} className="topping-option">
-                        <input
-                          type="checkbox"
-                          checked={selectedToppings.includes(topping.maTopping)}
-                          aria-invalid={missing || undefined}
-                          aria-describedby={missing ? errorId : undefined}
-                          onChange={() =>
-                            toggleTopping(topping.maTopping, group)
-                          }
-                        />
-
-                        <span className="topping-option-name">
-                          {topping.tenTopping}
-                        </span>
-
-                        <strong>+{formatMoney(topping.giaThem)}</strong>
-                      </label>
-                    ))}
-                  </div>
-                  {missing && (
-                    <p id={errorId} className="topping-group-error">
-                      <CircleAlert size={15} aria-hidden="true" />
-                      Vui lòng chọn ít nhất một lựa chọn cho nhóm {group.tenNhom}.
-                    </p>
-                  )}
-                </div>
-                );
-              })}
-
-              <label className="food-note-field">
-                <div className="food-note-heading">
-                  <span>
-                    <MessageSquareText size={16} />
-                    Ghi chú cho quán
-                  </span>
-
-                  <small>{note.length}/300</small>
-                </div>
-
-                <textarea
-                  value={note}
-                  maxLength={300}
-                  rows={3}
-                  placeholder="Ví dụ: ít cay, không hành, để sốt riêng..."
-                  onChange={(event) => setNote(event.target.value)}
-                />
-              </label>
-
-            </div>
-
-            <div className="food-option-footer">
-              {(cartError || (showToppingValidation && selectedFood.nhomToppings.some(
-                (group) => group.batBuocChon && !group.toppings.some(
-                  (topping) => selectedToppings.includes(topping.maTopping),
-                ),
-              ))) && (
-                <p className="food-option-error" role="alert">
-                  <CircleAlert size={15} />
-                  <span>{cartError || "Vui lòng chọn đầy đủ các nhóm bắt buộc được đánh đỏ ở trên."}</span>
-                </p>
-              )}
-              <div className="food-quantity-wrapper">
-                <span>Số lượng</span>
-
-                <div className="food-quantity-control">
-                  <button
-                    type="button"
-                    aria-label="Giảm số lượng"
-                    onClick={() =>
-                      setQuantity((value) => Math.max(1, value - 1))
-                    }
-                  >
-                    <Minus size={16} />
-                  </button>
-
-                  <strong>{quantity}</strong>
-
-                  <button
-                    type="button"
-                    aria-label="Tăng số lượng"
-                    onClick={() =>
-                      setQuantity((value) => Math.min(100, value + 1))
-                    }
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="food-add-confirm"
-                disabled={addingToCart}
-                onClick={handleAddToCart}
-              >
-                <ShoppingBag size={17} />
-
-                <span>{addingToCart ? "Đang thêm..." : "Thêm vào giỏ"}</span>
-
-                {!addingToCart && (
-                  <strong>
-                    {formatMoney(
-                      (selectedFood.gia + selectedToppingTotal) * quantity,
-                    )}
-                  </strong>
-                )}
-              </button>
+            <div className="rd-dialog-footer">
+              {(cartError || (showToppingValidation && selectedFood.nhomToppings.some((group) => group.batBuocChon && !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping))))) && <p className="rd-dialog-error" role="alert"><CircleAlert size={15} aria-hidden="true" />{cartError || "Vui lòng chọn đầy đủ các nhóm bắt buộc được đánh đỏ ở trên."}</p>}
+              <div className="rd-dialog-actions"><div className="rd-quantity"><span className="rd-sr-only">Số lượng</span><button type="button" aria-label="Giảm số lượng" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} aria-hidden="true" /></button><strong aria-live="polite"><span className="rd-quantity-value" key={quantity}>{quantity}</span></strong><button type="button" aria-label="Tăng số lượng" onClick={() => setQuantity((value) => Math.min(100, value + 1))}><Plus size={16} aria-hidden="true" /></button></div><button type="button" className="rd-button rd-button-primary rd-add-confirm" disabled={addingToCart} onClick={handleAddToCart}><ShoppingBag size={17} aria-hidden="true" /><span>{addingToCart ? "Đang thêm..." : "Thêm vào giỏ"}</span>{!addingToCart && <strong className="rd-money">{formatMoney((selectedFood.gia + selectedToppingTotal) * quantity)}</strong>}</button></div>
             </div>
           </section>
         </div>
-      )}
+      )}</MotionPresence>
 
-      <button
-        type="button"
-        className={`restaurant-floating-cart ${
-          (cart?.soLuongMon ?? 0) > 0 ? "has-items" : "empty"
-        } ${cartBump ? "is-bumped" : ""}`}
-        aria-label={`Mở giỏ hàng của ${restaurant.tenNhaHang}`}
-        onClick={openRestaurantCart}
-      >
-        {cartBump && <span className="cart-bump-float-tag">+1 món</span>}
-        <span key={cart?.soLuongMon ?? 0} className="floating-cart-icon">
-          <ShoppingCart size={21} />
-
-          {(cart?.soLuongMon ?? 0) > 0 && <b>{cart?.soLuongMon}</b>}
-        </span>
-
-        <span className="floating-cart-info">
-          <small>Giỏ hàng tại</small>
-
-          <strong>{restaurant.tenNhaHang}</strong>
-        </span>
-
-        {(cart?.soLuongMon ?? 0) > 0 ? (
-          <span className="floating-cart-summary">
-            <small>{cart?.soLuongMon} món</small>
-
-            <strong>{formatMoney(cart?.tongTienTamTinh ?? 0)}</strong>
-          </span>
-        ) : (
-          <span className="floating-cart-empty-text">Chưa có món</span>
-        )}
-
-        <span className="floating-cart-arrow">
-          <ChevronRight size={18} />
-        </span>
-      </button>
+      <button type="button" className="rd-mobile-cart" aria-label={`Mở giỏ hàng của ${restaurant.tenNhaHang}`} onClick={openRestaurantCart}><ShoppingCart size={21} aria-hidden="true" /><span><strong>{(cart?.soLuongMon ?? 0) > 0 ? `${cart?.soLuongMon} món trong giỏ` : "Giỏ hàng của bạn"}</strong><small>{cartBump ? "Đã cập nhật giỏ hàng" : restaurant.tenNhaHang}</small></span><strong className="rd-money">{(cart?.soLuongMon ?? 0) > 0 ? formatMoney(cart?.tongTienTamTinh ?? 0) : "Xem giỏ"}</strong><ChevronRight size={18} aria-hidden="true" /></button>
     </main>
   );
 }

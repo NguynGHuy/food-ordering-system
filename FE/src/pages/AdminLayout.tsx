@@ -1,4 +1,6 @@
+import MotionPresence from "../components/MotionPresence";
 import { useEffect, useState } from "react";
+import "../styles/AdminTheme.css";
 import {
     Bell,
     ChevronRight,
@@ -30,6 +32,7 @@ interface AdminUser {
 }
 
 const NAV_ITEMS = [
+    { to: "/admin/ho-tro-don-hang", label: "Hỗ trợ đơn hàng", description: "Sự cố và ngoại lệ", icon: FileText },
     {
         to: "/admin",
         label: "Tổng quan",
@@ -128,7 +131,7 @@ function AdminLayout() {
 
     if (access === "loading") {
         return (
-            <div className="admin-pro-access">
+            <div className="admin-pro-access foodie-admin-access">
                 <span className="admin-pro-access-icon">
                     <ShieldCheck size={25} />
                 </span>
@@ -140,7 +143,7 @@ function AdminLayout() {
 
     if (access === "denied") {
         return (
-            <div className="admin-pro-access denied">
+            <div className="admin-pro-access denied foodie-admin-access">
                 <span className="admin-pro-access-icon">
                     <ShieldCheck size={25} />
                 </span>
@@ -166,15 +169,15 @@ function AdminLayout() {
     const avatarText = email.charAt(0).toUpperCase() || "A";
 
     return (
-        <div className="admin-pro-layout">
-            {mobileOpen && (
+        <div className="admin-pro-layout foodie-admin-shell">
+            <MotionPresence present={Boolean(mobileOpen)}>{mobileOpen && (
                 <button
                     type="button"
                     className="admin-pro-overlay"
                     aria-label="Đóng menu"
                     onClick={() => setMobileOpen(false)}
                 />
-            )}
+            )}</MotionPresence>
 
             <aside
                 className={`admin-pro-sidebar ${

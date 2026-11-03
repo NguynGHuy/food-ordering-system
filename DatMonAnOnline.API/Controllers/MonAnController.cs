@@ -75,7 +75,7 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "MaNhaHang không hợp lệ." });
             }
 
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var nhaHangTonTai = await _context.Nhahangs
                 .AsNoTracking()
                 .AnyAsync(x =>
@@ -160,7 +160,7 @@ namespace DatMonAnOnline.API.Controllers
                 return BadRequest(new { message = "MaMonAn không hợp lệ." });
             }
 
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var monAn = await _context.Monans
                 .AsNoTracking()
                 .Include(x => x.MaDanhMucNavigation)

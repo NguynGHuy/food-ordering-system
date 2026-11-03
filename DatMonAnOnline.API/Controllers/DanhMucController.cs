@@ -1,4 +1,5 @@
 using DatMonAnOnline.API.Models;
+using DatMonAnOnline.API.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -68,7 +69,7 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             // Kiểm tra nhà hàng có tồn tại, đã duyệt và đủ điều kiện nhận đơn.
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var nhaHangTonTai = await _context.Nhahangs
                 .AsNoTracking()
                 .AnyAsync(x =>
@@ -109,6 +110,26 @@ namespace DatMonAnOnline.API.Controllers
         // 2. POST /api/danh-muc
         // Quán tạo danh mục
         // =========================================================
+
+        [HttpGet("quan")]
+        [Authorize(Roles = "Quan")]
+        public async Task<IActionResult> GetDanhMucsCuaQuan([FromQuery] PaginationQuery pagination)
+        {
+            if (pagination.PageNumber < 1 || pagination.PageSize is < 1 or > 100)
+                return BadRequest(new { message = "Phân trang không hợp lệ." });
+            var account = GetMaTaiKhoan();
+            if (account == null) return Unauthorized();
+            var restaurant = await _context.Nhahangs.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaTaiKhoan == account);
+            if (restaurant == null) return Forbid();
+            if (restaurant.TrangThaiDuyet != "DaDuyet")
+                return BadRequest(new { message = "Nhà hàng chưa được Admin duyệt." });
+            return Ok(await _context.Danhmucs.AsNoTracking()
+                .Where(x => x.MaNhaHang == restaurant.MaNhaHang)
+                .OrderBy(x => x.ThuTuHienThi ?? int.MaxValue).ThenBy(x => x.MaDanhMuc)
+                .Select(x => new { x.MaDanhMuc, x.MaNhaHang, x.TenDanhMuc, x.ThuTuHienThi })
+                .ToPagedResultAsync(pagination));
+        }
 
         [HttpPost]
         [Authorize(Roles = "Quan")]

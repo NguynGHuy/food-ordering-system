@@ -29,8 +29,15 @@ public class AdminTaiChinhController : ControllerBase
     public async Task<IActionResult> GetTongQuan(
         [FromQuery] DateOnly? tuNgay,
         [FromQuery] DateOnly? denNgay,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] int orderPageNumber = 1,
+        [FromQuery] int orderPageSize = 20,
+        [FromQuery] int periodPageNumber = 1,
+        [FromQuery] int periodPageSize = 10)
     {
+        if (orderPageNumber < 1 || periodPageNumber < 1 ||
+            orderPageSize is < 1 or > 100 || periodPageSize is < 1 or > 100)
+            return BadRequest(new { message = "Phân trang không hợp lệ (1–100 dòng mỗi trang)." });
         if (tuNgay.HasValue && denNgay.HasValue && tuNgay > denNgay ||
             tuNgay?.Year < 1000 || denNgay?.Year < 1000 || denNgay == DateOnly.MaxValue)
         {
@@ -129,7 +136,6 @@ public class AdminTaiChinhController : ControllerBase
         var recentRevenueOrders = await validOrders
             .OrderByDescending(order => order.ThoiGianGiaoThucTe)
             .ThenByDescending(order => order.MaDonHang)
-            .Take(20)
             .Select(order => new
             {
                 order.MaDonHang,
@@ -148,7 +154,7 @@ public class AdminTaiChinhController : ControllerBase
                     ? "DaDuaVaoKy"
                     : "ChuaDoiSoat"
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(new PaginationQuery { PageNumber = orderPageNumber, PageSize = orderPageSize }, cancellationToken);
 
         var periodQuery = _context.Doisoatnhahangs
             .AsNoTracking()
@@ -190,7 +196,6 @@ public class AdminTaiChinhController : ControllerBase
         var recentPeriods = await periods
             .OrderByDescending(period => period.NgayThanhToan)
             .ThenByDescending(period => period.MaDoiSoat)
-            .Take(10)
             .Select(period => new
             {
                 period.MaDoiSoat,
@@ -214,7 +219,7 @@ public class AdminTaiChinhController : ControllerBase
                         : period.TrangThai == "DaThanhToan" ? "ChuyenKhoan" : null,
                 period.NgayThanhToan
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(new PaginationQuery { PageNumber = periodPageNumber, PageSize = periodPageSize }, cancellationToken);
 
         await snapshot.CommitAsync(cancellationToken);
 
@@ -239,8 +244,10 @@ public class AdminTaiChinhController : ControllerBase
             daThuTuNhaHang = periodStats?.ReceivedFromRestaurant ?? 0m,
             conPhaiTraNhaHang = periodStats?.OwedToRestaurant ?? 0m,
             conPhaiThuNhaHang = periodStats?.OwedByRestaurant ?? 0m,
-            cacDonDoanhThuGanDay = recentRevenueOrders,
-            cacKyGanDay = recentPeriods,
+            cacDonDoanhThuGanDay = recentRevenueOrders.Items,
+            donDoanhThuPagination = new { recentRevenueOrders.PageNumber, recentRevenueOrders.PageSize, recentRevenueOrders.TotalItems, recentRevenueOrders.TotalPages },
+            cacKyGanDay = recentPeriods.Items,
+            kyDoiSoatPagination = new { recentPeriods.PageNumber, recentPeriods.PageSize, recentPeriods.TotalItems, recentPeriods.TotalPages },
             capNhatLuc = VietnamBusinessTime.Now()
         });
     }

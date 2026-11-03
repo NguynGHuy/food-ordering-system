@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Globalization;
+using System.Text;
 
 namespace DatMonAnOnline.API.Controllers
 {
@@ -112,7 +114,7 @@ namespace DatMonAnOnline.API.Controllers
             [FromQuery] string? sort = null,
             [FromQuery] bool openOnly = false)
         {
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var query = _context.Nhahangs
                 .AsNoTracking()
                 .Include(x => x.MaTaiKhoanNavigation)
@@ -126,16 +128,33 @@ namespace DatMonAnOnline.API.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var keyword = search.Trim();
-                query = query.Where(x =>
-                    x.TenNhaHang.Contains(keyword) ||
-                    x.DiaChiQuan.Contains(keyword) ||
-                    (x.MoTa != null && x.MoTa.Contains(keyword)));
+                var keyword = search.Trim().Normalize(NormalizationForm.FormC);
+                var hasDiacritics = keyword.Normalize(NormalizationForm.FormD)
+                    .Any(c => CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark)
+                    || keyword.Contains('đ') || keyword.Contains('Đ');
+                if (hasDiacritics)
+                {
+                    // Honor the accents the customer typed: "phở" must not match
+                    // "phong cách" or "phô mai" under an accent-insensitive DB collation.
+                    var exactKeyword = keyword.ToLowerInvariant();
+                    query = query.Where(x =>
+                        EF.Functions.Collate(x.TenNhaHang.ToLower(), "utf8mb4_bin").Contains(exactKeyword) ||
+                        EF.Functions.Collate(x.DiaChiQuan.ToLower(), "utf8mb4_bin").Contains(exactKeyword) ||
+                        (x.MoTa != null && EF.Functions.Collate(x.MoTa.ToLower(), "utf8mb4_bin").Contains(exactKeyword)));
+                }
+                else
+                {
+                    // Preserve existing unaccented and partial-name/address lookup.
+                    query = query.Where(x =>
+                        x.TenNhaHang.Contains(keyword) ||
+                        x.DiaChiQuan.Contains(keyword) ||
+                        (x.MoTa != null && x.MoTa.Contains(keyword)));
+                }
             }
 
             if (openOnly)
             {
-                var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+                var currentTime = TimeOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
                 query = query.Where(x =>
                     x.CheDoHoatDong == "MoThuCong" ||
                     (x.CheDoHoatDong == "TuDong" &&
@@ -204,7 +223,7 @@ namespace DatMonAnOnline.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetChiTietNhaHang(int id)
         {
-            var homNay = DateOnly.FromDateTime(DateTime.Now);
+            var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
             var nhaHang = await _context.Nhahangs
                 .AsNoTracking()
                 .Include(x => x.MaTaiKhoanNavigation)
@@ -818,7 +837,7 @@ namespace DatMonAnOnline.API.Controllers
             }
 
             var hienTai = TimeOnly.FromDateTime(
-                thoiDiem ?? DateTime.Now
+                thoiDiem ?? DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             );
 
             bool dangTrongGioHoatDong;

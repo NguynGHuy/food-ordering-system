@@ -1,11 +1,15 @@
--- FOODIE SeedDemo - TEST / DEMO ONLY. Synthetic identities and transactions.
--- Requires freshly initialized DatMonAnOnline from Database.sql.
--- Never run on an existing database with important data.
--- Example demo password: Demo@123 - change before public deployment.
+-- FOODIE SeedDemo: system catalog + synthetic demo data.
+-- Requires the schema in Database.sql; run once on a fresh demo database.
+-- Demo password: Demo@123. Never use for real accounts.
 USE `DatMonAnOnline`;
 SET NAMES utf8mb4;
 -- Refuse to accidentally run twice: duplicate primary keys/unique indexes cause an error.
 START TRANSACTION;
+
+-- System catalog required by the demo and application.
+INSERT INTO `phuongthucthanhtoan` VALUES (1,'COD',1),(2,'Momo',1),(3,'VNPay',1),(4,'ZaloPay',1),(5,'FoodPay',1);
+INSERT INTO `role` VALUES (1,'Admin','Quan tri he thong'),(2,'Quan','Chu nha hang / quan an'),(3,'KhachHang','Nguoi dat mon');
+INSERT INTO `trangthaidonhang` VALUES (1,'ChoXacNhan',1),(2,'DaXacNhan',2),(3,'DangChuanBi',3),(4,'DangGiao',4),(5,'HoanThanh',5),(6,'DaHuy',6);
 
 -- taikhoan: 16 rows
 INSERT INTO `taikhoan` (`MaTaiKhoan`,`Email`,`MatKhau`,`SoDienThoai`,`MaRole`,`TrangThai`,`DaXacThucEmail`,`NgayTao`) VALUES

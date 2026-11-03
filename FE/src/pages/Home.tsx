@@ -8,19 +8,12 @@ import RestaurantCardSkeleton from "../components/RestaurantCardSkeleton";
 import {
   ArrowRight,
   Bike,
-  CheckCircle2,
-  Clock3,
-  Flame,
   ImageIcon,
   MapPin,
   Search,
-  ShieldCheck,
-  Sparkles,
   Star,
   Store,
-  Tag,
   UtensilsCrossed,
-  Wallet,
 } from "lucide-react";
 
 function isRestaurantOpen(restaurant: Restaurant): boolean {
@@ -46,7 +39,8 @@ function getRestaurantStatusLabel(restaurant: Restaurant): string {
 const POPULAR_SEARCH_TAGS = [
   "Cơm tấm",
   "Trà sữa",
-  "Bún / Phở",
+  "Bún",
+  "Phở",
   "Bánh mì",
   "Gà rán",
   "Ăn vặt",
@@ -134,19 +128,16 @@ function Home() {
       ========================= */}
       <section className="home-hero">
         <div className="home-hero-content">
-          <div className="home-hero-eyebrow">
-            <Sparkles size={16} strokeWidth={2.2} />
-            <span>Nền tảng đặt món online tin cậy</span>
-          </div>
+
 
           <h1>
-            Món ngon chuẩn vị,
-            <span className="home-hero-highlight"> giao tận cửa nhà.</span>
+            Mỗi bữa ăn,
+            <span className="home-hero-highlight"> một lựa chọn ngon.</span>
           </h1>
 
           <p className="home-hero-lead">
-            Khám phá hàng trăm nhà hàng chất lượng gần bạn với ưu đãi ngập tràn,
-            thanh toán linh hoạt và theo dõi đơn hàng từng bước.
+            Tìm quán quen, khám phá thực đơn mới và chọn món theo khẩu vị.
+            Kiểm tra giá, ưu đãi và theo dõi đơn ngay trên Foodie.
           </p>
 
           {/* Quick Hero Search Input */}
@@ -186,65 +177,34 @@ function Home() {
           </div>
 
           {/* Trust Value Props */}
-          <div className="home-hero-benefits">
-            <div className="home-benefit-item">
-              <div className="home-benefit-icon">
-                <Clock3 size={17} strokeWidth={2.2} />
-              </div>
-              <div>
-                <strong>Giao nhanh chuẩn giờ</strong>
-                <small>Theo dõi thời gian thực</small>
-              </div>
-            </div>
 
-            <div className="home-benefit-item">
-              <div className="home-benefit-icon">
-                <ShieldCheck size={17} strokeWidth={2.2} />
-              </div>
-              <div>
-                <strong>Thanh toán an toàn</strong>
-                <small>COD, Ví Foodie, QR</small>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* HERO VISUAL */}
         <div className="home-hero-visual">
-          <div className="home-hero-image-card">
-            {heroRestaurant?.anhBia ? (
-              <MediaImage
-                kind="restaurant"
-                src={heroRestaurant.anhBia}
-                alt={heroRestaurant.tenNhaHang}
-              />
-            ) : (
+          {heroRestaurant?.anhBia ? (
+            <Link
+              to={`/nha-hang/${heroRestaurant.maNhaHang}`}
+              className="home-hero-restaurant-link"
+              aria-label={`Xem thực đơn ${heroRestaurant.tenNhaHang}`}
+            >
+              <div className="home-hero-image-card">
+                <MediaImage
+                  kind="restaurant"
+                  src={heroRestaurant.anhBia}
+                  alt={heroRestaurant.tenNhaHang}
+                />
+              </div>
+              <p className="cg-hero-caption">Thực đơn từ <strong>{heroRestaurant.tenNhaHang}</strong><ArrowRight size={16} aria-hidden="true" /></p>
+            </Link>
+          ) : (
+            <div className="home-hero-image-card">
               <div className="home-hero-placeholder">
                 <UtensilsCrossed size={64} strokeWidth={1.5} />
                 <span>Món ngon đang chờ bạn</span>
               </div>
-            )}
-          </div>
-
-          <div className="hero-floating-card hero-rating-card">
-            <span className="hero-floating-icon rating">
-              <Star size={16} fill="currentColor" />
-            </span>
-            <div>
-              <strong>Đối tác tuyển chọn</strong>
-              <small>Đánh giá thực tế từ khách hàng</small>
             </div>
-          </div>
-
-          <div className="hero-floating-card hero-time-card">
-            <span className="hero-floating-icon delivery">
-              <Bike size={17} />
-            </span>
-            <div>
-              <strong>Giao hàng tiện lợi</strong>
-              <small>Phí ship minh bạch, rõ ràng</small>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -254,12 +214,9 @@ function Home() {
       <section className="home-promo-strip">
         <div className="home-promo-strip-card">
           <div className="home-promo-strip-left">
-            <span className="home-promo-strip-badge">
-              <Tag size={15} />
-              ƯU ĐÃI FOODIE
-            </span>
+
             <h3>Thu thập voucher giảm giá cho bữa ăn của bạn</h3>
-            <p>Hàng ngàn mã giảm giá từ hệ thống và quán ăn đang chờ bạn trong kho voucher.</p>
+            <p>Lưu ưu đãi từ hệ thống và nhà hàng, xem điều kiện trước khi áp dụng.</p>
           </div>
           <Link to="/kho-voucher" className="home-promo-strip-cta">
             <span>Mở kho Voucher</span>
@@ -274,12 +231,9 @@ function Home() {
       <section className="restaurant-section">
         <div className="section-header">
           <div>
-            <div className="section-header-eyebrow">
-              <Flame size={16} className="text-orange-500" />
-              <span>Được yêu thích nhất</span>
-            </div>
+
             <h2>Nhà hàng nổi bật</h2>
-            <p>Khám phá các quán ăn có lượt đánh giá cao và thực đơn đa dạng</p>
+            <p>Khám phá thực đơn, đánh giá và thông tin nhận đơn của từng quán.</p>
           </div>
 
           <Link to="/nha-hang" className="view-all-link">
@@ -346,7 +300,7 @@ function Home() {
 
         {!loading && !error && filteredRestaurants.length > 0 && (
           <div className="restaurant-grid">
-            {filteredRestaurants.map((restaurant, index) => {
+            {filteredRestaurants.map((restaurant) => {
               const isOpen = isRestaurantOpen(restaurant);
               const statusLabel = getRestaurantStatusLabel(restaurant);
               const rating = restaurant.danhGiaTrungBinh ?? 0;
@@ -355,7 +309,6 @@ function Home() {
               return (
                 <ScrollReveal
                   key={restaurant.maNhaHang}
-                  delay={index < 4 ? index * 75 : (index % 4) * 85}
                   className="restaurant-reveal-item"
                 >
                   <Link
@@ -452,49 +405,7 @@ function Home() {
       {/* =========================
           4. BRAND TRUST PILLARS
       ========================= */}
-      <section className="home-trust-section">
-        <div className="home-trust-grid">
-          <ScrollReveal delay={0} className="home-trust-reveal-item">
-            <div className="home-trust-card">
-              <div className="home-trust-icon">
-                <UtensilsCrossed size={22} strokeWidth={2.2} />
-              </div>
-              <h4>Thực đơn đa dạng</h4>
-              <p>Hàng trăm món ăn từ quán cơm gia đình đến thương hiệu nổi tiếng.</p>
-            </div>
-          </ScrollReveal>
 
-          <ScrollReveal delay={90} className="home-trust-reveal-item">
-            <div className="home-trust-card">
-              <div className="home-trust-icon">
-                <Bike size={22} strokeWidth={2.2} />
-              </div>
-              <h4>Giao hàng nhanh chóng</h4>
-              <p>Đội ngũ đối tác tận tâm, đảm bảo món ăn nóng hổi, nguyên vẹn.</p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={180} className="home-trust-reveal-item">
-            <div className="home-trust-card">
-              <div className="home-trust-icon">
-                <Wallet size={22} strokeWidth={2.2} />
-              </div>
-              <h4>Thanh toán linh hoạt</h4>
-              <p>Tích hợp tiền mặt COD, Ví Foodie tiện lợi và quét mã QR ngân hàng.</p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={270} className="home-trust-reveal-item">
-            <div className="home-trust-card">
-              <div className="home-trust-icon">
-                <CheckCircle2 size={22} strokeWidth={2.2} />
-              </div>
-              <h4>Chất lượng đảm bảo</h4>
-              <p>Nhà hàng được xác thực thông tin và kiểm duyệt pháp lý minh bạch.</p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
     </main>
   );
 }

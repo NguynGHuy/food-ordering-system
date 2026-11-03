@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { getCurrentUser } from "../services/userService";
 import Home from "./Home";
+import HomeSkeleton from "../components/HomeSkeleton";
 
 function HomeEntry() {
     const [destination, setDestination] = useState<
@@ -19,7 +20,7 @@ function HomeEntry() {
     }, []);
 
     if (destination === "checking") {
-        return <p className="admin-access-message">Đang tải trang...</p>;
+        return <HomeSkeleton />;
     }
 
     if (destination === "admin") {

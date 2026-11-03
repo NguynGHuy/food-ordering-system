@@ -92,7 +92,7 @@ public class PromotionCreateRequest : IValidatableObject
                 new[] { nameof(NgayKetThuc) });
         }
 
-        if (NgayKetThuc <= DateTime.Now)
+        if (NgayKetThuc <= VietnamBusinessTime.Now())
         {
             yield return new ValidationResult(
                 "Không thể tạo mã đã hết hạn.",

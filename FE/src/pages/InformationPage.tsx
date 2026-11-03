@@ -47,7 +47,7 @@ export default function InformationPage({ section }: { section: Section }) {
   return (
     <main className="foodie-information-page">
       <article className="foodie-information-card" aria-labelledby="information-title">
-        <span className="foodie-information-eyebrow">FOODIE · THÔNG TIN BẢN DEMO</span>
+
         <h1 id="information-title">{content.title}</h1>
         {section !== "help" && (
           <p className="foodie-information-draft" role="note">

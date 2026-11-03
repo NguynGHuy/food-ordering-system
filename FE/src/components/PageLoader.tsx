@@ -38,14 +38,14 @@ function PageLoader() {
                     />
                 </div>
 
-                <strong>Đặt Món Ăn</strong>
+                <strong>Foodie</strong>
 
                 <div className="page-loader-progress">
                     <span />
                 </div>
 
                 <small>
-                    MÓN NGON · GIAO TẬN NƠI
+                    Chợ ngon
                 </small>
             </div>
         </div>

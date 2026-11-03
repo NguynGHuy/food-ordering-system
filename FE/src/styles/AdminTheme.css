@@ -1,0 +1,211 @@
+/* Foodie Chợ ngon: the same palette, with an operations density for Admin. */
+.foodie-admin-shell, .foodie-admin-portal, .foodie-admin-access {
+  --primary: #24584a; --primary-hover: #1c463b; --primary-soft: #eaf0eb;
+  --food-primary: #24584a; --food-primary-dark: #1c463b; --food-primary-soft: #eaf0eb;
+  --text-primary: #202923; --text-secondary: #5d685f; --text-muted: #5d685f;
+  --background: #f7f5ef; --surface: #fff; --surface-secondary: #f7f5ef;
+  --border: #dce1da; --border-light: #e9ece6; --danger: #a12f2a; --danger-soft: #fcedeb;
+  --success: #24584a; --success-soft: #eaf0eb; --warning: #7a5700; --warning-soft: #fff4d6;
+  color: #202923; background: #f7f5ef; font: 400 14px/1.5 "Be Vietnam Pro", system-ui, sans-serif;
+  accent-color: #24584a; caret-color: #24584a;
+}
+.foodie-admin-shell *, .foodie-admin-portal * { box-sizing: border-box; }
+.foodie-admin-shell ::selection, .foodie-admin-portal ::selection { background: #dce9df; color: #202923; }
+.foodie-admin-shell :focus-visible, .foodie-admin-portal :focus-visible { outline: 2px solid #24584a; outline-offset: 3px; }
+.foodie-admin-shell :is(button, input, select, textarea), .foodie-admin-portal :is(button, input, select, textarea) { font: inherit; }
+.foodie-admin-shell :is(h1, h2, h3, strong), .foodie-admin-portal :is(h1, h2, h3, strong) { color: #202923; }
+.foodie-admin-shell h1 { font-size: 28px; font-weight: 600; line-height: 1.3; letter-spacing: -.025em; margin: 0 0 8px; }
+.foodie-admin-shell h2, .foodie-admin-portal h2 { font-size: 18px; font-weight: 600; line-height: 1.4; }
+.foodie-admin-shell h3 { font-size: 16px; font-weight: 600; }
+.foodie-admin-shell p, .foodie-admin-portal p { line-height: 1.6; }
+.foodie-admin-shell :is(button, a):hover { transform: none; }
+.foodie-admin-shell button, .foodie-admin-portal button { min-height: 40px; border-radius: 6px; box-shadow: none; }
+.foodie-admin-shell button:disabled, .foodie-admin-portal button:disabled { opacity: .58; cursor: not-allowed; }
+.foodie-admin-shell :where(input:not([type=checkbox]):not([type=radio]), select, textarea), .foodie-admin-portal :where(input:not([type=checkbox]):not([type=radio]), select, textarea) { min-width: 0; max-width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #778478; border-radius: 6px; color: #202923; background: #fff; box-shadow: none; }
+.foodie-admin-shell input::placeholder, .foodie-admin-portal input::placeholder { color: #5d685f; opacity: 1; }
+.foodie-admin-shell [class$="-eyebrow"] { display: none; }
+.foodie-admin-shell :is(article, tr, .app-scroll-reveal), .foodie-admin-shell .app-scroll-reveal * { animation: none; }
+.foodie-admin-shell :is([class$="-panel"], [class$="-grid"], [class$="-page"]) { min-width: 0; }
+.foodie-admin-shell.admin-pro-layout { --workspace-sidebar-width: 260px; display: grid; grid-template-columns: var(--workspace-sidebar-width) minmax(0, 1fr); min-height: 100dvh; background: #f7f5ef; }
+.foodie-admin-shell .admin-pro-sidebar { position: sticky; top: 0; height: 100dvh; width: var(--workspace-sidebar-width); min-height: 0; padding: 20px 12px 12px; background: #fff; color: #202923; border-right: 1px solid #dce1da; box-shadow: none; display: flex; flex-direction: column; }
+.foodie-admin-shell .admin-pro-sidebar-header { padding: 0 8px 20px; border-bottom: 1px solid #dce1da; }
+.foodie-admin-shell .admin-pro-brand { gap: 10px; }
+.foodie-admin-shell .admin-pro-brand strong { color: #24584a; font-size: 24px; }
+.foodie-admin-shell .admin-pro-brand span { color: #5d685f; font-size: 12px; }
+.foodie-admin-shell .admin-pro-brand-icon { width: 36px; height: 36px; background: #eaf0eb; color: #24584a !important; border-radius: 6px; box-shadow: none; }
+.foodie-admin-shell .admin-pro-role { padding: 16px 8px; margin: 0; background: transparent; border: 0; color: #5d685f; }
+.foodie-admin-shell .admin-pro-role > span { background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-admin-shell .admin-pro-role strong { color: #202923; font-size: 14px; }
+.foodie-admin-shell .admin-pro-role small { color: #5d685f; }
+.foodie-admin-shell .admin-pro-nav { flex: 1; overflow-y: auto; padding: 0; scrollbar-width: thin; scrollbar-color: #b8c5ba transparent; }
+.foodie-admin-shell .admin-pro-nav a { padding: 12px 10px; min-height: 52px; margin: 2px 0; border: 0; border-radius: 6px; background: transparent; color: #5d685f; box-shadow: none; gap: 10px; }
+.foodie-admin-shell .admin-pro-sidebar .admin-pro-nav a.active { background: #eaf0eb; color: #24584a; box-shadow: inset 1px 0 #24584a; }
+.foodie-admin-shell .admin-pro-nav a::before { content: none; }
+.foodie-admin-shell .admin-pro-nav a:hover { background: #f1f4ef; }
+.foodie-admin-shell .admin-pro-nav-icon { background: transparent; color: #24584a; width: 24px; }
+.foodie-admin-shell .admin-pro-nav-text { min-width: 0; }
+.foodie-admin-shell .admin-pro-nav-text strong { color: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.foodie-admin-shell .admin-pro-nav-text small { color: #5d685f; font-size: 11px; white-space: normal; }
+.foodie-admin-shell .admin-pro-sidebar-bottom { background: #fff; border-top: 1px solid #dce1da; padding: 12px 0 0; }
+.foodie-admin-shell .admin-pro-sidebar-user { padding: 8px; }
+.foodie-admin-shell .admin-pro-sidebar-user > span, .foodie-admin-shell .admin-pro-topbar-user > span { background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-admin-shell .admin-pro-sidebar-user small { color: #5d685f; }
+.foodie-admin-shell .admin-pro-logout { min-height: 44px; width: 100%; border: 1px solid #e2d2cc; background: #fff; color: #a12f2a; }
+.foodie-admin-shell .admin-pro-workspace { min-width: 0; margin: 0; width: 100%; }
+.foodie-admin-shell .admin-pro-topbar { position: relative; z-index: 1; padding: 12px 32px; min-height: 72px; background: #fff; border-bottom: 1px solid #dce1da; box-shadow: none; backdrop-filter: none; }
+.foodie-admin-shell .admin-pro-topbar-title > div > span { display: none; }
+.foodie-admin-shell .admin-pro-topbar h2 { margin: 0; font-size: 16px; }
+.foodie-admin-shell .admin-pro-topbar-user small { color: #5d685f; }
+.foodie-admin-shell .admin-pro-main { min-width: 0; width: 100%; max-width: 1680px; margin: auto; padding: 28px 32px 40px; }
+.foodie-admin-shell .admin-pro-menu-button, .foodie-admin-shell .admin-pro-sidebar-close { color: #24584a; background: #fff; border: 1px solid #dce1da; width: 44px; height: 44px; }
+/* Summaries are one flat strip; data panels are separated by task. */
+.foodie-admin-shell :is(.admin-dashboard, .admin-accounts-pro, .admin-restaurants-pro, .admin-promotions-pro, .admin-finance-page, .admin-contract-page) { width: 100%; max-width: none; margin: 0; padding: 0; }
+.foodie-admin-shell .admin-promotions-pro { animation: none; transform: none; }
+.foodie-admin-shell .admin-promotion-modal { animation: none; transform: none; }
+.foodie-admin-shell .admin-dashboard { display: grid; gap: 24px; }
+.foodie-admin-shell :is(.admin-dashboard-welcome, .admin-accounts-heading, .admin-restaurants-heading, .admin-promotions-heading) { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; background: transparent; padding: 0; margin: 0 0 24px; border: 0; box-shadow: none; border-radius: 0; color: #202923; }
+.foodie-admin-shell .admin-dashboard-welcome { margin: 0; }
+.foodie-admin-shell .admin-dashboard-welcome::before, .foodie-admin-shell .admin-dashboard-welcome::after { content: none; }
+.foodie-admin-shell :is(.admin-dashboard-welcome, .admin-accounts-heading, .admin-restaurants-heading, .admin-promotions-heading) h1 { color: #202923; font-size: 28px; }
+.foodie-admin-shell :is(.admin-dashboard-welcome, .admin-accounts-heading, .admin-restaurants-heading, .admin-promotions-heading) p { color: #5d685f; margin: 0; }
+.foodie-admin-shell .admin-pending-summary { background: #fff4d6; border: 1px solid #e4d3a4; color: #7a5700; border-radius: 6px; padding: 12px 16px; }
+.foodie-admin-shell .admin-pending-summary :is(strong, small) { color: #7a5700; }
+.foodie-admin-shell .admin-pending-icon { color: #7a5700; background: transparent; }
+.foodie-admin-shell :is(.admin-dashboard-stats, .admin-account-summary, .admin-promotion-summary, .admin-finance-cards) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: #fff; border: 1px solid #dce1da; border-radius: 8px; overflow: hidden; margin: 0 0 24px; }
+.foodie-admin-shell .admin-dashboard-stats { margin: 0; }
+.foodie-admin-shell :is(.admin-account-summary, .admin-promotion-summary) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.foodie-admin-shell :is(.admin-dashboard-stats, .admin-account-summary, .admin-promotion-summary, .admin-finance-cards) > article { padding: 20px; border: 0; border-right: 1px solid #dce1da; border-radius: 0; background: transparent; box-shadow: none; min-width: 0; transform: none; }
+.foodie-admin-shell :is(.admin-dashboard-stats, .admin-account-summary, .admin-promotion-summary, .admin-finance-cards) > article::before { content: none; }
+.foodie-admin-shell :is(.admin-stat-icon, .summary-icon, .admin-promotion-summary article > span) { color: #24584a; background: transparent; width: 28px; height: 28px; border-radius: 0; }
+.foodie-admin-shell .admin-stat-content strong, .foodie-admin-shell .admin-account-summary strong, .foodie-admin-shell .admin-promotion-summary strong, .foodie-admin-shell .admin-finance-card strong { color: #202923; font-size: 24px; font-weight: 600; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.foodie-admin-shell :is(.admin-analytics-toolbar, .admin-dashboard-panel, .admin-accounts-panel, .admin-restaurants-panel, .admin-contracts-panel, .admin-promotions-panel, .admin-contract-section) { background: #fff; border: 1px solid #dce1da; border-radius: 8px; padding: 20px; box-shadow: none; min-width: 0; }
+.foodie-admin-shell .admin-analytics-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 24px; }
+.foodie-admin-shell .admin-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 24px; }
+.foodie-admin-shell .admin-dashboard-panel-header { flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding: 0 0 16px; border-bottom: 1px solid #dce1da; background: transparent; }
+.foodie-admin-shell .admin-dashboard-panel-header h2 { color: #202923; }
+.foodie-admin-shell .admin-chart-period-summary strong { color: #24584a; font-variant-numeric: tabular-nums; }
+.foodie-admin-shell .admin-time-pills { background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; }
+.foodie-admin-shell .admin-time-pills button { background: transparent; color: #5d685f; border-radius: 4px; box-shadow: none; }
+.foodie-admin-shell .admin-time-pills button.is-active { background: #24584a; color: #fff; }
+.foodie-admin-shell .admin-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.foodie-admin-shell .admin-status-card { padding: 12px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: transparent; box-shadow: none; }
+.foodie-admin-shell .admin-tasks-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.foodie-admin-shell .admin-task-card { padding: 16px; background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; }
+.foodie-admin-shell .task-icon { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-admin-shell .task-info { min-width: 0; }
+.foodie-admin-shell .admin-ranking-item { padding: 16px 0; border: 0; border-bottom: 1px solid #dce1da; background: transparent; border-radius: 0; }
+.foodie-admin-shell .admin-ranking-info { min-width: 0; overflow-wrap: anywhere; }
+.foodie-admin-shell .admin-ranking-rating { color: #7a5700; background: #fff4d6; border-radius: 4px; }
+.foodie-admin-shell .admin-work-list { display: grid; grid-template-columns: 1fr; gap: 0; }
+.foodie-admin-shell .admin-work-list > a { padding: 16px 0; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: transparent; color: #202923; box-shadow: none; }
+.foodie-admin-shell .admin-work-icon { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-admin-shell .revenue-chart-svg path[fill^="url("] { fill: none; }
+/* Filters sit inside the panel they control. Tables retain local horizontal scrolling. */
+.foodie-admin-shell :is(.admin-accounts-toolbar, .admin-restaurants-toolbar, .admin-contracts-toolbar, .admin-promotions-toolbar, .admin-finance-filters) { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0 0 16px; padding: 0 0 16px; background: transparent; border-bottom: 1px solid #dce1da; }
+.foodie-admin-shell :is(.admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search) { flex: 1 1 240px; width: auto; min-width: 0; display: flex; align-items: center; gap: 8px; border: 1px solid #778478; background: #fff; border-radius: 6px; padding: 0 12px; color: #5d685f; }
+.foodie-admin-shell :is(.admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search) input { width: 100%; border: 0; padding-left: 0; }
+.foodie-admin-shell .admin-dashboard-stats .admin-dashboard-stat .admin-stat-icon { color: #24584a; background: #eaf0eb; }
+.foodie-admin-shell .admin-pro-topbar-user > span { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; }
+.foodie-admin-shell :is(.admin-stat-content span, .admin-stat-content small, .admin-account-summary small) { color: #5d685f; font-size: 12px; }
+.foodie-admin-shell .admin-dashboard-panel-header > div > span,
+.foodie-admin-shell :is(.admin-accounts-heading, .admin-restaurants-heading, .admin-promotions-heading) > div > span { display: none; }
+.foodie-admin-shell :is(.admin-account-filters, .admin-promotion-filters, .admin-promotions-heading-actions) { display: flex; flex-wrap: wrap; gap: 12px; }
+.foodie-admin-shell :is(.admin-account-table-scroll, .admin-contracts-table-scroll, .admin-promotions-table-scroll) { width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #b8c5ba #f7f5ef; }
+.foodie-admin-shell table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.foodie-admin-shell th { background: #f7f5ef; color: #5d685f; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.foodie-admin-shell :is(td, th) { padding: 14px 12px; border-bottom: 1px solid #dce1da; }
+.foodie-admin-shell td { color: #202923; font-variant-numeric: tabular-nums; }
+.foodie-admin-shell tr:hover td { background: #f6f8f3; }
+.foodie-admin-shell .admin-account-identity { min-width: 180px; }
+.foodie-admin-shell :is(.admin-account-role, .admin-account-state, .admin-promotion-state, .admin-waiting-badge) { font-size: 12px; border-radius: 4px; padding: 4px 8px; color: #24584a; background: #eaf0eb; }
+.foodie-admin-shell :is(.admin-account-state.locked, .admin-promotion-state.disabled, .admin-promotion-state.expired) { color: #a12f2a; background: #fcedeb; }
+.foodie-admin-shell .admin-promotion-state.upcoming, .foodie-admin-shell .admin-waiting-badge { color: #7a5700; background: #fff4d6; }
+.foodie-admin-shell :is(.admin-accounts-refresh, .admin-restaurants-refresh, button.refresh, .admin-account-toggle, .admin-promotion-actions button, .admin-contract-view-link) { min-height: 40px; padding: 8px 12px; background: #fff; color: #24584a; border: 1px solid #778478; border-radius: 6px; box-shadow: none; }
+.foodie-admin-shell :is(button.create, .approve, button[type=submit], .promotion-edit-actions .save) { color: #fff; background: #24584a; border: 1px solid #24584a; min-height: 44px; padding: 10px 16px; border-radius: 6px; box-shadow: none; }
+.foodie-admin-shell :is(.reject, .admin-contract-terminate-button, .admin-account-toggle.lock) { color: #a12f2a; border: 1px solid #a12f2a; background: #fff; }
+.foodie-admin-shell .admin-restaurants-overview { background: #eaf0eb; color: #24584a; border: 1px solid #c6d6c8; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+.foodie-admin-shell .admin-restaurants-overview strong { color: #24584a; }
+.foodie-admin-shell .admin-restaurant-request-list { display: grid; gap: 0; }
+.foodie-admin-shell .admin-restaurant-request { display: flex; flex-wrap: wrap; align-items: center; padding: 20px 0; gap: 16px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: #fff; box-shadow: none; }
+.foodie-admin-shell .admin-restaurant-request-info { flex: 1; min-width: 180px; overflow-wrap: anywhere; }
+.foodie-admin-shell .admin-restaurant-request-icon { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-admin-shell .admin-contract-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.foodie-admin-shell .admin-contract-section { margin-bottom: 24px; }
+.foodie-admin-shell .admin-contract-review-row { padding: 16px 0; border: 0; border-bottom: 1px solid #dce1da; background: transparent; border-radius: 0; gap: 16px; flex-wrap: wrap; }
+.foodie-admin-shell .admin-contract-review-decision { gap: 12px; }
+.foodie-admin-shell .merchant-contract-content { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; font-size: 14px; background: #f7f5ef; padding: 20px; border: 1px solid #dce1da; border-radius: 6px; }
+.foodie-admin-shell .admin-contract-review-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.foodie-admin-shell .admin-finance-debt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.foodie-admin-shell .admin-finance-debt-grid article { background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-admin-shell .admin-finance-debt-grid p b { color: #24584a; }
+.foodie-admin-shell .admin-finance-cards .admin-finance-card > span { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-admin-shell :is(.admin-contract-back, .admin-contract-number) { color: #24584a; }
+.foodie-admin-shell .admin-pending-count, .foodie-admin-shell .admin-pending-description { background: transparent; border: 0; box-shadow: none; }
+.foodie-admin-shell .admin-pending-count > span { background: #fff4d6; color: #7a5700; border-radius: 6px; }
+.foodie-admin-shell .admin-finance-page .admin-promotions-table :is(td, th):nth-child(n+3):nth-child(-n+5), .foodie-admin-shell .reconciliation-admin-table :is(td, th):nth-child(n+3):nth-child(-n+7) { text-align: right; }
+.foodie-admin-shell .finance-negative { color: #a12f2a; }
+.foodie-admin-shell .finance-positive { color: #24584a; }
+.foodie-admin-shell :is(.admin-promotions-error, .admin-accounts-error, .admin-restaurants-error, .auth-error, .dashboard-analytics-error) { background: #fcedeb; border: 1px solid #e6c3bf; color: #a12f2a; padding: 16px; border-radius: 6px; }
+.foodie-admin-shell .admin-promotions-success { background: #eaf0eb; color: #24584a; border: 1px solid #c6d6c8; border-radius: 6px; padding: 16px; }
+.foodie-admin-shell :is(.admin-promotions-loading, .admin-promotions-empty, .admin-accounts-loading, .admin-accounts-empty, .admin-restaurants-loading, .admin-restaurants-empty, .admin-dashboard-empty) { padding: 32px 16px; color: #5d685f; background: transparent; }
+.foodie-admin-shell .app-pagination { flex-wrap: wrap; padding: 16px 0 0; background: transparent; }
+.foodie-admin-shell .app-pagination-controls { flex-wrap: wrap; }
+.foodie-admin-shell .app-pagination-controls button { border-radius: 6px; background: #fff; border: 1px solid #dce1da; color: #24584a; min-width: 40px; }
+.foodie-admin-shell .app-pagination-controls button.is-active { background: #24584a; color: #fff; }
+/* Existing modals, including portals, keep their current workflow and callbacks. */
+.foodie-admin-shell .admin-promotion-modal-overlay, .foodie-admin-portal.admin-promotion-modal-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #20292380; backdrop-filter: none; z-index: 1100; padding: 24px; overflow-y: auto; }
+.foodie-admin-shell .admin-promotion-modal, .foodie-admin-portal .admin-promotion-modal { width: min(680px, 100%); max-width: 100%; max-height: calc(100dvh - 48px); overflow-y: auto; padding: 24px; background: #fff; border-radius: 12px; border: 0; box-shadow: 0 16px 48px #20292326; }
+.foodie-admin-portal .admin-promotion-modal.reconciliation-modal { width: min(1440px, 100%); }
+.foodie-admin-shell .admin-promotion-modal :is(input, select, textarea), .foodie-admin-portal .admin-promotion-modal :is(input, select, textarea) { max-width: 100%; }
+.foodie-admin-shell .merchant-promo-form { border: 0; box-shadow: none; background: #fff; padding: 0; }
+.foodie-admin-shell .merchant-promo-form-header { padding: 0 0 16px; background: #fff; border-bottom: 1px solid #dce1da; }
+.foodie-admin-shell .merchant-promo-form-header > button { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; }
+.foodie-admin-shell .merchant-promo-form-header > div > span { display: none; }
+.foodie-admin-shell .merchant-promo-form-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 20px 4px; }
+.foodie-admin-shell .merchant-promo-field { min-width: 0; display: grid; gap: 8px; }
+.foodie-admin-shell .merchant-promo-field.full { grid-column: 1 / -1; }
+.foodie-admin-shell .merchant-promo-form-footer { padding: 16px 0 0; background: #fff; border-top: 1px solid #dce1da; }
+.foodie-admin-shell .merchant-promo-form-footer .save { color: #fff; background: #24584a; }
+.foodie-admin-shell .merchant-promo-icon-input, .foodie-admin-shell .merchant-promo-money-input { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #778478; border-radius: 6px; background: #fff; }
+.foodie-admin-shell :is(.merchant-promo-icon-input, .merchant-promo-money-input) > svg { position: static; transform: none; flex-shrink: 0; color: #5d685f; }
+.foodie-admin-shell .merchant-promo-icon-input input, .foodie-admin-shell .merchant-promo-money-input input { border: 0; padding-left: 0; width: 100%; }
+.foodie-admin-portal .reconciliation-table-scroll { max-width: 100%; overflow-x: auto; }
+.foodie-admin-portal .reconciliation-metrics { gap: 0; border-top: 1px solid #dce1da; }
+.foodie-admin-portal .reconciliation-metrics article { background: #fff; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; padding: 16px; }
+.foodie-admin-portal .reconciliation-result { background: #eaf0eb; border-color: #c6d6c8; border-radius: 6px; }
+.foodie-admin-portal .reconciliation-orders { min-width: 0; border: 1px solid #dce1da; border-radius: 6px; }
+.foodie-admin-portal :is(th, td) { padding: 12px; font-variant-numeric: tabular-nums; border-color: #dce1da; }
+.foodie-admin-portal th { background: #f7f5ef; color: #5d685f; }
+.foodie-admin-portal .reconciliation-orders :is(th, td):nth-child(n+3) { text-align: right; }
+.foodie-admin-portal :is(.reconciliation-payment-box, .reconciliation-dispute-box) { background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; padding: 20px; }
+.foodie-admin-portal :is(button[type=submit], .promotion-edit-actions .save) { min-height: 44px; padding: 10px 16px; color: #fff; background: #24584a; border: 1px solid #24584a; }
+.foodie-admin-portal .reconciliation-restaurant-options { background: #fff; border: 1px solid #778478; border-radius: 6px; }
+.foodie-admin-access { min-height: 70vh; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 32px; }
+.foodie-admin-access .admin-pro-access-icon { color: #24584a; background: #eaf0eb; }
+@media (min-width: 1024px) { .foodie-admin-shell .admin-pro-menu-button, .foodie-admin-shell .admin-pro-sidebar-close { display: none; } }
+@media (max-width: 1279px) { .foodie-admin-shell .admin-analytics-grid, .foodie-admin-shell .admin-dashboard-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1023px) {
+  .foodie-admin-shell.admin-pro-layout { grid-template-columns: minmax(0, 1fr); }
+  .foodie-admin-shell .admin-pro-sidebar { position: fixed; width: min(280px, 88vw); left: 0; transform: translateX(-100%); z-index: 100; }
+  .foodie-admin-shell .admin-pro-sidebar.is-open { transform: none; }
+  .foodie-admin-shell .admin-pro-overlay { position: fixed; inset: 0; background: #20292366; z-index: 99; backdrop-filter: none; }
+  .foodie-admin-shell .admin-pro-menu-button, .foodie-admin-shell .admin-pro-sidebar-close { display: grid; place-items: center; }
+  .foodie-admin-shell .admin-pro-main { padding: 24px; }
+}
+@media (max-width: 639px) {
+  .foodie-admin-shell .admin-pro-main { padding: 24px 16px; }
+  .foodie-admin-shell .admin-pro-topbar { padding: 12px 16px; }
+  .foodie-admin-shell .admin-pro-topbar-user > div { display: none; }
+  .foodie-admin-shell :is(.admin-dashboard-stats, .admin-account-summary, .admin-promotion-summary, .admin-finance-cards, .admin-finance-debt-grid, .admin-contract-info, .admin-tasks-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodie-admin-shell :is(.admin-dashboard-stats, .admin-account-summary, .admin-promotion-summary, .admin-finance-cards) > article { padding: 16px; border-bottom: 1px solid #dce1da; }
+  .foodie-admin-shell .admin-stat-icon { display: none; }
+  .foodie-admin-shell :is(.admin-dashboard-panel, .admin-accounts-panel, .admin-restaurants-panel, .admin-promotions-panel, .admin-contract-section, .admin-contracts-panel) { padding: 16px; }
+  .foodie-admin-shell .admin-contract-info, .foodie-admin-shell .admin-finance-debt-grid, .foodie-admin-shell .merchant-promo-form-body { grid-template-columns: minmax(0, 1fr); }
+  .foodie-admin-shell .admin-promotion-modal-overlay, .foodie-admin-portal.admin-promotion-modal-overlay { padding: 12px; }
+  .foodie-admin-shell .admin-promotion-modal, .foodie-admin-portal .admin-promotion-modal { padding: 20px 16px; max-height: calc(100dvh - 24px); }
+  .foodie-admin-portal .reconciliation-metrics, .foodie-admin-portal .reconciliation-period-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodie-admin-shell :is(.admin-dashboard-welcome, .admin-accounts-heading, .admin-restaurants-heading, .admin-promotions-heading) h1 { font-size: 24px; }
+  .foodie-admin-shell button, .foodie-admin-portal button { min-height: 44px; }
+}
+/* Monetary headers and values share the same right-hand reading axis. */
+.foodie-admin-shell .admin-promotions-table .finance-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

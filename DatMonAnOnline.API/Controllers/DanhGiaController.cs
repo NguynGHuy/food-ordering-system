@@ -180,7 +180,7 @@ namespace DatMonAnOnline.API.Controllers
                 HinhAnh = string.IsNullOrWhiteSpace(req.HinhAnh)
                     ? null
                     : req.HinhAnh.Trim(),
-                NgayDanhGia = DateTime.Now
+                NgayDanhGia = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
 
             _context.Danhgiamonans.Add(model);
@@ -260,7 +260,7 @@ namespace DatMonAnOnline.API.Controllers
                 MaDonHang = req.MaDonHang,
                 SoSao = req.SoSao,
                 NoiDung = ChuanHoaNoiDung(req.NoiDung),
-                NgayDanhGia = DateTime.Now
+                NgayDanhGia = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
 
             _context.Danhgianhahangs.Add(model);

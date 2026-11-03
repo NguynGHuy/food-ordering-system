@@ -1,3 +1,4 @@
+import MotionPresence from "./MotionPresence";
 import {
     getNotifications,
     markNotificationAsRead,
@@ -177,11 +178,8 @@ function RealtimeToast() {
     }
 };
 
-    if (toasts.length === 0) {
-        return null;
-    }
-
     return (
+        <MotionPresence present={toasts.length > 0}>
         <aside
             className="realtime-toast-stack"
             aria-live="polite"
@@ -240,6 +238,7 @@ function RealtimeToast() {
                 </article>
             ))}
         </aside>
+        </MotionPresence>
     );
 }
 

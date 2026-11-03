@@ -64,6 +64,7 @@ export interface CustomerOrderListResult<T> extends PagedResult<T> {
 export async function getMyOrders<T = unknown>(
   params: PaginationParams & {
     filter?: "processing" | "completed" | "cancelled";
+    search?: string;
   } = {},
 ): Promise<CustomerOrderListResult<T>> {
   const token = localStorage.getItem("token");
@@ -117,7 +118,7 @@ export interface RestaurantOrderListResult<T> extends PagedResult<T> {
 }
 
 export async function getRestaurantOrders<T = unknown>(
-  params: PaginationParams & { maTrangThai?: number } = {},
+  params: PaginationParams & { maTrangThai?: number; search?: string } = {},
 ): Promise<RestaurantOrderListResult<T>> {
   const token = localStorage.getItem("token");
   return apiFetch(`/nha-hang/don-hang${buildQuery(params)}`, {
@@ -160,6 +161,7 @@ export interface OrderItem {
   donGia: number;
   thanhTien: number;
   toppings: OrderTopping[];
+  ghiChu?: string | null;
 }
 
 export interface OrderDetails {

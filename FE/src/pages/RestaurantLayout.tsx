@@ -22,6 +22,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getCurrentUser } from "../services/userService";
 import { getNotifications } from "../services/notificationService";
+import "../styles/MerchantTheme.css";
+import "../styles/MerchantOperations.css";
+import "../styles/MerchantCatalog.css";
+import "../styles/MerchantFinance.css";
 
 interface User {
   email: string;
@@ -231,7 +235,7 @@ function QuanLayout() {
 
   if (!user) {
     return (
-      <div className="quan-layout-loading">
+      <div className="quan-layout-loading foodie-merchant-loading">
         <div className="loading-spinner" />
         <p>Đang mở khu vực quản lý...</p>
       </div>
@@ -243,7 +247,7 @@ function QuanLayout() {
   const avatarLetter = restaurantName.charAt(0).toUpperCase();
 
   return (
-    <div className="quan-layout">
+    <div className="quan-layout foodie-merchant-shell">
       <button
         type="button"
         className={`quan-sidebar-overlay ${sidebarOpen ? "is-visible" : ""}`}
@@ -259,7 +263,7 @@ function QuanLayout() {
 
           <div>
             <strong>Foodie</strong>
-            <small>Restaurant Center</small>
+            <small>Quản lý nhà hàng</small>
           </div>
 
           <button

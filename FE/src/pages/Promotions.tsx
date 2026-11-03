@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import MotionPresence from "../components/MotionPresence";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
   Pencil,
@@ -61,6 +62,9 @@ function Promotions() {
   const PAGE_SIZE = 8;
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [filter, setFilter] = useState<PromotionFilter>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const requestSequence = useRef(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [changingId, setChangingId] = useState<number | null>(null);
@@ -73,6 +77,7 @@ function Promotions() {
   const [counts, setCounts] = useState({ all: 0, active: 0, upcoming: 0, ended: 0 });
 
   const loadPromotions = useCallback(async (showLoading = true) => {
+    const sequence = ++requestSequence.current;
     try {
       if (showLoading) setLoading(true);
       setError("");
@@ -81,22 +86,25 @@ function Promotions() {
         pageNumber,
         pageSize: PAGE_SIZE,
         state: filter === "all" ? undefined : filter,
+        search: search || undefined,
       });
+      if (sequence !== requestSequence.current) return;
       setPromotions(data.items);
       setTotalItems(data.totalItems);
       setTotalPages(data.totalPages);
       setCounts(data.counts);
       if (data.pageNumber !== pageNumber) setPageNumber(data.pageNumber);
     } catch (err) {
+      if (sequence !== requestSequence.current) return;
       setError(
         err instanceof Error
           ? err.message
           : "Không thể lấy danh sách khuyến mãi.",
       );
     } finally {
-      if (showLoading) setLoading(false);
+      if (sequence === requestSequence.current) setLoading(false);
     }
-  }, [filter, pageNumber]);
+  }, [filter, pageNumber, search]);
 
   useEffect(() => {
     const initialLoadTimer = window.setTimeout(() => {
@@ -138,12 +146,6 @@ function Promotions() {
 
   const countByFilter = (value: PromotionFilter) => counts[value];
 
-  if (loading) {
-    return (
-      <div className="quan-page-loading">Đang tải danh sách khuyến mãi...</div>
-    );
-  }
-
   const editingPromotion =
     promotions.find((item) => item.maKhuyenMai === editingId) ?? null;
 
@@ -184,6 +186,11 @@ function Promotions() {
       )}
 
       <ScrollReveal className="merchant-promotions-tabs-reveal" delay={80}>
+        <form className="merchant-list-search" onSubmit={event => { event.preventDefault(); setSearch(searchInput.trim()); setPageNumber(1); }}>
+          <label htmlFor="merchant-promotion-search">Tìm khuyến mãi<input id="merchant-promotion-search" type="search" maxLength={150} value={searchInput} placeholder="Mã giảm giá hoặc mô tả" onChange={event => setSearchInput(event.target.value)} /></label>
+          <button type="submit" disabled={loading}>Tìm kiếm</button>
+          {search && <button type="button" onClick={() => { setSearchInput(""); setSearch(""); setPageNumber(1); }}>Xóa tìm kiếm</button>}
+        </form>
         <nav className="merchant-promotions-tabs">
         {(
           [
@@ -209,19 +216,19 @@ function Promotions() {
         </nav>
       </ScrollReveal>
 
-      {promotions.length === 0 ? (
+      {loading ? <p role="status" className="quan-page-loading">Đang tải danh sách khuyến mãi...</p> : error ? <button type="button" onClick={() => void loadPromotions()}>Thử tải lại</button> : promotions.length === 0 ? (
         <ScrollReveal className="merchant-promotions-empty-reveal" delay={110}>
           <div className="merchant-promotions-empty">
           <span>
             <TicketPercent size={28} />
           </span>
           <h3>
-            {counts.all === 0
+            {search ? "Không tìm thấy khuyến mãi" : counts.all === 0
               ? "Chưa có mã giảm giá"
               : "Không có mã phù hợp"}
           </h3>
           <p>
-            {counts.all === 0
+            {search ? `Không có mã phù hợp với “${search}” trong bộ lọc hiện tại.` : counts.all === 0
               ? "Tạo chương trình ưu đãi đầu tiên cho khách hàng."
               : "Không có mã giảm giá thuộc trạng thái này."}
           </p>
@@ -383,7 +390,7 @@ function Promotions() {
         />
       )}
 
-      {createOpen && (
+      <MotionPresence present={Boolean(createOpen)}>{createOpen && (
         <div className="merchant-promotion-overlay">
           <div className="merchant-promotion-modal create">
             <CreatePromotionForm
@@ -396,9 +403,9 @@ function Promotions() {
             />
           </div>
         </div>
-      )}
+      )}</MotionPresence>
 
-      {editingPromotion && (
+      <MotionPresence present={Boolean(editingPromotion)}>{editingPromotion && (
         <div className="merchant-promotion-overlay">
           <div className="merchant-promotion-modal edit">
             <EditPromotionForm
@@ -417,7 +424,7 @@ function Promotions() {
             />
           </div>
         </div>
-      )}
+      )}</MotionPresence>
     </div>
   );
 }

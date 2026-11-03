@@ -268,7 +268,7 @@ public sealed class WalletService : IWalletService
             return new WalletOperationResult(false, "Số dư ví vượt giới hạn lưu trữ.");
 
         wallet.SoDu = soDuSau;
-        wallet.NgayCapNhat = DateTime.Now;
+        wallet.NgayCapNhat = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
 
         var transaction = new Giaodichvi
         {
@@ -284,7 +284,7 @@ public sealed class WalletService : IWalletService
             TrangThai = "ThanhCong",
             MaThamChieu = maThamChieu,
             NoiDung = string.IsNullOrWhiteSpace(noiDung) ? null : noiDung.Trim(),
-            NgayTao = DateTime.Now
+            NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
         };
 
         _context.Giaodichvis.Add(transaction);

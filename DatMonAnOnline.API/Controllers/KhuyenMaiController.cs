@@ -62,7 +62,7 @@ namespace DatMonAnOnline.API.Controllers
             int maNhaHang,
             [FromQuery] PaginationQuery pagination)
         {
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var homNay = DateOnly.FromDateTime(now);
             var maKhachHang = await GetCurrentCustomerId();
 
@@ -117,7 +117,7 @@ namespace DatMonAnOnline.API.Controllers
         public async Task<IActionResult> LayVoucherHeThong(
             [FromQuery] PaginationQuery pagination)
         {
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var maKhachHang = await GetCurrentCustomerId();
             if (!maKhachHang.HasValue)
                 return Unauthorized(new { message = "Không tìm thấy hồ sơ khách hàng." });
@@ -168,7 +168,7 @@ namespace DatMonAnOnline.API.Controllers
             [FromQuery] int? maNhaHang = null,
             [FromQuery] bool usableOnly = false)
         {
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var maKhachHang = await GetCurrentCustomerId();
             if (!maKhachHang.HasValue)
                 return Unauthorized(new { message = "Không tìm thấy hồ sơ khách hàng." });
@@ -241,7 +241,7 @@ namespace DatMonAnOnline.API.Controllers
             if (!maKhachHang.HasValue)
                 return Unauthorized(new { message = "Không tìm thấy hồ sơ khách hàng." });
 
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var voucher = await _context.Khuyenmais
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.MaKhuyenMai == id);
@@ -392,7 +392,7 @@ namespace DatMonAnOnline.API.Controllers
             if (nhaHang == null)
                 return BadRequest("Không tìm thấy thông tin nhà hàng.");
 
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var query = _context.Khuyenmais
                 .AsNoTracking()
                 .Where(x => x.MaNhaHang == nhaHang.MaNhaHang);
@@ -581,8 +581,8 @@ namespace DatMonAnOnline.API.Controllers
                     "Mã không hợp lệ hoặc đã bị khóa."
                 );
 
-            if (DateTime.Now < km.NgayBatDau ||
-                DateTime.Now > km.NgayKetThuc)
+            if (DatMonAnOnline.API.Common.VietnamBusinessTime.Now() < km.NgayBatDau ||
+                DatMonAnOnline.API.Common.VietnamBusinessTime.Now() > km.NgayKetThuc)
             {
                 return BadRequest(
                     "Mã đã hết hạn hoặc chưa đến thời gian sử dụng."

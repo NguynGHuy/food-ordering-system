@@ -132,7 +132,7 @@ public class HoSoPhapLyController : ControllerBase
             hoSo = new Hosophaplynhahang
             {
                 MaNhaHang = nhaHang.MaNhaHang,
-                NgayTao = DateTime.Now
+                NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
 
             _context.Hosophaplynhahangs.Add(hoSo);
@@ -285,7 +285,7 @@ public class HoSoPhapLyController : ControllerBase
             hoSo = new Hosophaplynhahang
             {
                 MaNhaHang = nhaHang.MaNhaHang,
-                NgayTao = DateTime.Now
+                NgayTao = DatMonAnOnline.API.Common.VietnamBusinessTime.Now()
             };
 
             _context.Hosophaplynhahangs.Add(hoSo);

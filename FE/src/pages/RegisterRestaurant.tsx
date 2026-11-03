@@ -1,3 +1,4 @@
+import CustomerAuthIntro from "../components/CustomerAuthIntro";
 import { useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -79,6 +80,7 @@ function RegisterRestaurant() {
 
     return (
         <main className="auth-page">
+      <CustomerAuthIntro restaurant />
             <div className="auth-card register-card">
                 <h2>Đăng ký nhà hàng</h2>
 

@@ -1,0 +1,307 @@
+/* Chợ ngon pilot. Every selector is scoped to this route, including shared children. */
+.foodie-restaurant {
+  --rd-green: #24584a;
+  --rd-green-hover: #1c463b;
+  --rd-soft: #eaf0eb;
+  --rd-page: #f7f5ef;
+  --rd-text: #202923;
+  --rd-muted: #5d685f;
+  --rd-line: #dce1da;
+  --rd-control: #778478;
+  --rd-error: #a12f2a;
+  --rd-bottom-nav: 0px;
+  background: var(--rd-page);
+  color: var(--rd-text);
+  font: 400 1rem/1.5 "Be Vietnam Pro", system-ui, sans-serif;
+  padding: 16px 24px 64px;
+  min-height: 65vh;
+}
+.foodie-restaurant *, .foodie-restaurant *::before, .foodie-restaurant *::after { box-sizing: border-box; }
+.foodie-restaurant :is(h1, h2, h3, p, dl, dd, ul) { margin: 0; }
+.foodie-restaurant :is(button, input, textarea, summary) { font: inherit; }
+.foodie-restaurant button { cursor: pointer; }
+.foodie-restaurant :is(button, a, input, textarea, summary):focus-visible { outline: 2px solid var(--rd-green); outline-offset: 3px; }
+.foodie-restaurant :is(button, input, textarea) { caret-color: var(--rd-green); }
+.foodie-restaurant ::selection { background: #dbe9df; color: var(--rd-text); }
+.foodie-restaurant button:disabled { cursor: not-allowed; opacity: 1; background: #edf0eb; color: #59635b; border-color: #b6c0b5; }
+.foodie-restaurant a { color: var(--rd-green); text-underline-offset: 4px; }
+.foodie-restaurant svg { flex-shrink: 0; }
+.foodie-restaurant .rd-container { max-width: 1280px; margin-inline: auto; min-width: 0; }
+.foodie-restaurant .rd-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.foodie-restaurant .rd-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.foodie-restaurant .rd-muted { color: var(--rd-muted); }
+.foodie-restaurant .rd-breadcrumb { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; color: var(--rd-muted); font-size: .8125rem; min-width: 0; }
+.foodie-restaurant .rd-breadcrumb a { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; min-height: 32px; }
+.foodie-restaurant .rd-breadcrumb a:hover { text-decoration: underline; }
+.foodie-restaurant .rd-breadcrumb > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.foodie-restaurant .rd-restaurant { overflow: hidden; border-radius: 8px; background: white; }
+.foodie-restaurant .rd-cover { height: 176px; background: var(--rd-soft); }
+.foodie-restaurant .rd-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.foodie-restaurant .rd-intro { padding: 20px 24px 16px; }
+.foodie-restaurant .rd-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.foodie-restaurant .rd-title-block { min-width: 0; }
+.foodie-restaurant .rd-opening { display: inline-flex; gap: 7px; align-items: center; color: var(--rd-green); font-size: .8125rem; font-weight: 500; margin-bottom: 6px; }
+.foodie-restaurant .rd-opening > span { height: 7px; width: 7px; border-radius: 50%; background: currentColor; }
+.foodie-restaurant .rd-opening.is-closed { color: var(--rd-error); }
+.foodie-restaurant h1 { font-size: 2rem; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-rating { display: grid; grid-template-columns: auto auto; align-items: center; gap: 2px 6px; flex-shrink: 0; text-align: right; padding-top: 8px; }
+.foodie-restaurant .rd-rating svg, .foodie-restaurant .rd-food-rating svg { color: #8a620c; }
+.foodie-restaurant .rd-rating strong { font-size: 1.25rem; font-weight: 600; }
+.foodie-restaurant .rd-rating > span { grid-column: 1 / -1; color: var(--rd-muted); font-size: .8125rem; }
+.foodie-restaurant .rd-description { max-width: 75ch; color: var(--rd-muted); margin-top: 12px; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-facts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 16px; }
+.foodie-restaurant .rd-facts dt { display: flex; align-items: center; gap: 6px; font-size: .8125rem; color: var(--rd-muted); margin-bottom: 4px; }
+.foodie-restaurant .rd-facts dd { font-size: .875rem; font-weight: 500; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-intro-footer { border-top: 1px solid var(--rd-line); margin-top: 12px; padding-top: 8px; display: flex; gap: 24px; align-items: center; }
+.foodie-restaurant .rd-menu-jump { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 8px 0; color: var(--rd-green); font-size: .875rem; font-weight: 600; white-space: nowrap; min-height: 44px; }
+.foodie-restaurant .rd-menu-jump:hover { text-decoration: underline; text-underline-offset: 4px; }
+.foodie-restaurant .rd-closed-note { color: var(--rd-error); font-size: .8125rem; display: flex; align-items: flex-start; gap: 8px; }
+.foodie-restaurant .rd-closed-note svg { margin-top: 2px; }
+.foodie-restaurant .rd-offers { margin-block: 12px 20px; border-block: 1px solid var(--rd-line); }
+.foodie-restaurant .rd-offers summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; cursor: pointer; list-style: none; font-size: .9375rem; font-weight: 600; }
+.foodie-restaurant .rd-offers summary::-webkit-details-marker { display: none; }
+.foodie-restaurant .rd-offers summary small { display: inline-block; color: var(--rd-muted); font-size: .8125rem; font-weight: 400; margin-left: 16px; }
+.foodie-restaurant .rd-offers[open] summary > svg { transform: rotate(180deg); }
+.foodie-restaurant .rd-offers-content { padding-bottom: 20px; }
+.foodie-restaurant .rd-offers-help { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; margin-bottom: 12px; font-size: .8125rem; color: var(--rd-muted); }
+.foodie-restaurant .rd-offers-help a { display: inline-flex; gap: 4px; align-items: center; }
+.foodie-restaurant .rd-voucher-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.foodie-restaurant .customer-voucher-card { border: 1px solid var(--rd-line); border-radius: 8px; box-shadow: none; background: white; min-width: 0; transform: none; }
+.foodie-restaurant .customer-voucher-ticket-side { background: var(--rd-soft); color: var(--rd-green); }
+.foodie-restaurant .customer-voucher-ticket-side::before, .foodie-restaurant .customer-voucher-ticket-side::after { display: none; }
+.foodie-restaurant .customer-voucher-heading { flex-wrap: wrap; }
+.foodie-restaurant .customer-voucher-content { min-width: 0; }
+.foodie-restaurant .customer-voucher-content :is(p, code, small, span) { overflow-wrap: anywhere; }
+.foodie-restaurant .customer-voucher-heading strong, .foodie-restaurant .customer-voucher-heading code { color: var(--rd-green); }
+.foodie-restaurant .customer-voucher-action { background: var(--rd-green); border-color: var(--rd-green); color: white; border-radius: 6px; min-height: 44px; box-shadow: none; }
+.foodie-restaurant .customer-voucher-source { color: var(--rd-green); background: var(--rd-soft); }
+.foodie-restaurant .customer-voucher-conditions span { color: var(--rd-muted); }
+.foodie-restaurant .rd-voucher-message { margin-bottom: 12px; font-size: .875rem; color: var(--rd-green); }
+.foodie-restaurant .rd-voucher-message.error { color: var(--rd-error); }
+.foodie-restaurant .rd-menu-section { scroll-margin-top: 100px; }
+.foodie-restaurant .rd-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+.foodie-restaurant .rd-section-heading h2 { font-size: 1.5rem; font-weight: 600; line-height: 1.35; }
+.foodie-restaurant .rd-section-heading h2::after { content: ""; display: block; width: 32px; height: 2px; margin-top: 10px; background: var(--rd-green); }
+.foodie-restaurant .rd-section-heading > span { font-size: .875rem; color: var(--rd-muted); }
+.foodie-restaurant .rd-menu-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr) 280px; gap: 24px; align-items: start; }
+.foodie-restaurant .rd-categories { position: sticky; top: 104px; min-width: 0; }
+.foodie-restaurant .rd-categories h3 { font-size: .8125rem; font-weight: 600; color: var(--rd-muted); padding: 12px 12px 10px; }
+.foodie-restaurant .rd-category-list { display: flex; flex-direction: column; gap: 4px; }
+.foodie-restaurant .rd-category-list button { min-height: 44px; width: 100%; border: 0; border-radius: 6px; padding: 10px 12px; background: transparent; color: var(--rd-muted); text-align: left; font-size: .875rem; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-category-list button:hover { background: #eeeee5; color: var(--rd-green); }
+.foodie-restaurant .rd-category-list button.is-active { background: var(--rd-soft); color: var(--rd-green); font-weight: 600; box-shadow: inset 2px 0 var(--rd-green); }
+.foodie-restaurant .rd-menu-main { --rd-menu-padding: 20px; min-width: 0; padding: 20px var(--rd-menu-padding) 8px; background: white; border-radius: 8px; }
+.foodie-restaurant .rd-search { display: flex; align-items: center; gap: 10px; border: 1px solid var(--rd-control); border-radius: 6px; padding: 0 12px; margin: 0 0 20px; color: var(--rd-muted); }
+.foodie-restaurant .rd-search:focus-within { outline: 2px solid var(--rd-green); outline-offset: 2px; }
+.foodie-restaurant .rd-menu-group-heading { padding: 14px 16px; margin: 12px calc(-1 * var(--rd-menu-padding)) 0; border-block: 1px solid var(--rd-line); background: var(--rd-soft); color: var(--rd-green); }
+.foodie-restaurant .rd-menu-group-heading:first-child { margin-top: 0; }
+.foodie-restaurant .rd-menu-group-heading h3 { font-size: 1rem; font-weight: 600; margin: 0; }
+.foodie-restaurant .rd-search input { min-width: 0; width: 100%; height: 52px; background: none; border: 0; color: var(--rd-text); font-size: .9375rem; border-radius: 0; padding: 8px 2px; }
+.foodie-restaurant .rd-search input::placeholder, .foodie-restaurant .rd-note textarea::placeholder { color: var(--rd-muted); opacity: 1; }
+.foodie-restaurant .rd-food { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding-block: 20px; border-bottom: 1px solid var(--rd-line); }
+.foodie-restaurant .rd-food:last-child { border-bottom: 0; }
+.foodie-restaurant .rd-food-image { width: 128px; height: 128px; overflow: hidden; border-radius: 6px; background: var(--rd-soft); }
+.foodie-restaurant .rd-food-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.foodie-restaurant .rd-food-content { min-width: 0; }
+.foodie-restaurant .rd-food-title { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.foodie-restaurant .rd-food-title h3 { font-size: 1rem; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-food-rating { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0; line-height: 1.5; padding-top: 2px; font-size: .875rem; color: #80600c; }
+.foodie-restaurant .rd-food-category { display: block; color: var(--rd-muted); font-size: .75rem; margin-top: 2px; }
+.foodie-restaurant .rd-food-description { color: var(--rd-muted); font-size: .875rem; margin-top: 8px; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-food-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.foodie-restaurant .rd-food-actions > strong { font-size: .9375rem; font-weight: 600; }
+.foodie-restaurant .rd-add { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 12px; min-height: 44px; min-width: 84px; background: var(--rd-green); color: white; border: 1px solid var(--rd-green); border-radius: 6px; font-size: .875rem; font-weight: 600; }
+.foodie-restaurant .rd-add:hover:not(:disabled) { background: var(--rd-green-hover); }
+.foodie-restaurant .rd-add.is-success { background: var(--rd-soft); color: var(--rd-green); }
+.foodie-restaurant .food-reviews { border: none; padding-top: 6px; margin-top: 0; }
+.foodie-restaurant .food-reviews-toggle { color: var(--rd-green); font-size: .75rem; background: transparent; padding: 8px 0; min-height: 36px; border: 0; }
+.foodie-restaurant .food-review-item { background: var(--rd-page); border: 0; border-radius: 6px; padding: 12px; box-shadow: none; }
+.foodie-restaurant .food-review-heading { flex-wrap: wrap; gap: 4px; }
+.foodie-restaurant .food-review-item p { overflow-wrap: anywhere; }
+.foodie-restaurant .food-review-stars, .foodie-restaurant .restaurant-review-stars { color: #8a620c; }
+.foodie-restaurant .food-reviews-empty { color: var(--rd-muted); font-size: .8125rem; }
+.foodie-restaurant .rd-cart { position: sticky; top: 104px; min-width: 0; background: white; border: 1px solid var(--rd-line); border-radius: 8px; padding: 20px; }
+.foodie-restaurant .rd-cart-title { display: flex; align-items: center; gap: 10px; color: var(--rd-green); }
+.foodie-restaurant .rd-cart-title h3 { color: var(--rd-text); font-size: 1rem; font-weight: 600; }
+.foodie-restaurant .rd-cart-restaurant { font-size: .8125rem; color: var(--rd-muted); margin-top: 8px; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-cart-items { list-style: none; padding: 0; margin: 16px 0; max-height: 280px; overflow-y: auto; scrollbar-width: thin; }
+.foodie-restaurant .rd-cart-items li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 4px 8px; padding-block: 12px; border-top: 1px solid var(--rd-line); font-size: .8125rem; }
+.foodie-restaurant .rd-cart-items li > div { min-width: 0; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-cart-items strong { font-weight: 500; }
+.foodie-restaurant .rd-cart-items small { display: block; margin-top: 4px; color: var(--rd-muted); font-size: .75rem; }
+.foodie-restaurant .rd-cart-items li > .rd-money { grid-column: 2; }
+.foodie-restaurant .rd-cart-quantity { color: var(--rd-muted); }
+.foodie-restaurant .rd-cart-total { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; border-top: 1px solid var(--rd-line); padding-top: 16px; font-size: .8125rem; }
+.foodie-restaurant .rd-cart-total strong { font-size: 1rem; }
+.foodie-restaurant .rd-cart-hint { color: var(--rd-muted); font-size: .75rem; margin-top: 8px; }
+.foodie-restaurant .rd-cart-empty { text-align: center; color: var(--rd-muted); padding: 28px 0; }
+.foodie-restaurant .rd-cart-empty svg { color: var(--rd-control); margin-bottom: 8px; }
+.foodie-restaurant .rd-cart-empty p { font-size: .875rem; color: var(--rd-text); }
+.foodie-restaurant .rd-cart-empty span { display: block; font-size: .75rem; margin-top: 6px; }
+.foodie-restaurant .rd-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; min-height: 44px; border: 1px solid transparent; border-radius: 6px; text-decoration: none; font-size: .875rem; font-weight: 600; line-height: 1.5; }
+.foodie-restaurant .rd-button-primary { background: var(--rd-green); color: white; }
+.foodie-restaurant .rd-button-primary:hover:not(:disabled) { background: var(--rd-green-hover); }
+.foodie-restaurant .rd-button-secondary { background: white; color: var(--rd-green); border-color: var(--rd-green); }
+.foodie-restaurant .rd-cart-open { width: 100%; margin-top: 20px; justify-content: space-between; }
+.foodie-restaurant .rd-cart-feedback { min-height: 18px; color: var(--rd-green); font-size: .75rem; margin-top: 8px; }
+.foodie-restaurant .rd-mobile-cart { display: none; }
+.foodie-restaurant .rd-reviews { margin-top: 40px; border-top: 1px solid var(--rd-line); padding-top: 24px; }
+.foodie-restaurant .restaurant-reviews { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.foodie-restaurant .restaurant-reviews-heading h2 { font-size: 1.25rem; font-weight: 600; }
+.foodie-restaurant .restaurant-reviews-heading span { color: var(--rd-muted); background: none; }
+.foodie-restaurant .restaurant-reviews-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.foodie-restaurant .restaurant-review-card { padding: 20px 0; border: 0; border-bottom: 1px solid var(--rd-line); background: none; border-radius: 0; box-shadow: none; }
+.foodie-restaurant .restaurant-review-top { flex-wrap: wrap; gap: 8px; }
+.foodie-restaurant .restaurant-review-card p { overflow-wrap: anywhere; }
+.foodie-restaurant .restaurant-reviews-empty { background: none; padding: 24px 0; color: var(--rd-muted); }
+.foodie-restaurant .app-pagination { flex-wrap: wrap; }
+.foodie-restaurant .app-pagination-controls { flex-wrap: wrap; }
+.foodie-restaurant .app-pagination button { color: var(--rd-green); border-color: var(--rd-line); border-radius: 6px; min-width: 40px; min-height: 40px; }
+.foodie-restaurant .app-pagination button[aria-current="page"] { color: white; background: var(--rd-green); border-color: var(--rd-green); }
+.foodie-restaurant .rd-state { display: flex; align-items: center; flex-direction: column; text-align: center; gap: 12px; padding: 48px 16px; color: var(--rd-muted); }
+.foodie-restaurant .rd-state h3 { color: var(--rd-text); font-size: 1.125rem; }
+.foodie-restaurant .rd-state p { max-width: 55ch; overflow-wrap: anywhere; font-size: .875rem; }
+.foodie-restaurant .rd-error { color: var(--rd-error); }
+.foodie-restaurant .rd-page-error { padding-block: 80px; }
+.foodie-restaurant .rd-page-error h1 { font-size: 1.5rem; }
+.foodie-restaurant .rd-skeleton { background: #e5e9e1; border-radius: 6px; }
+.foodie-restaurant .rd-skeleton-cover { height: 176px; }
+.foodie-restaurant .rd-skeleton-title { height: 28px; max-width: 360px; margin-block: 24px; }
+.foodie-restaurant .rd-loading p { color: var(--rd-muted); }
+.foodie-restaurant .rd-skeleton-row { display: grid; grid-template-columns: 112px 1fr; gap: 16px; padding-block: 24px; border-bottom: 1px solid var(--rd-line); }
+.foodie-restaurant .rd-skeleton-row > .rd-skeleton { height: 112px; }
+.foodie-restaurant .rd-skeleton-row > div > div { height: 16px; margin-block: 8px 16px; }
+.foodie-restaurant .rd-skeleton-row > div > div:last-child { width: 65%; }
+
+/* Dialog is a presentation-only layer; selection and cart handlers stay on the page. */
+.foodie-restaurant .rd-dialog-overlay { position: fixed; inset: 0; z-index: 2000; background: rgb(20 31 24 / 48%); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.foodie-restaurant .rd-dialog { display: flex; flex-direction: column; background: white; color: var(--rd-text); width: 640px; max-width: 100%; max-height: calc(100dvh - 48px); border-radius: 12px; overflow: hidden; }
+.foodie-restaurant .rd-dialog-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 8px 24px; border-bottom: 1px solid var(--rd-line); flex-shrink: 0; font-size: .875rem; font-weight: 500; }
+.foodie-restaurant .rd-dialog-close { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 6px; background: none; color: var(--rd-muted); }
+.foodie-restaurant .rd-dialog-close:hover:not(:disabled) { background: var(--rd-soft); }
+.foodie-restaurant .rd-dialog-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; scrollbar-width: thin; }
+.foodie-restaurant .rd-dialog-header { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 20px; padding: 24px; align-items: start; }
+.foodie-restaurant .rd-dialog-image { width: 112px; height: 112px; border-radius: 6px; object-fit: cover; background: var(--rd-soft); }
+.foodie-restaurant .rd-dialog-header h2 { font-size: 1.25rem; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-dialog-header p { margin-top: 8px; font-size: .8125rem; color: var(--rd-muted); overflow-wrap: anywhere; }
+.foodie-restaurant .rd-dialog-header strong { display: block; margin-top: 12px; color: var(--rd-green); }
+.foodie-restaurant .rd-dialog-body { padding: 0 24px 24px; }
+.foodie-restaurant .rd-topping-group { border-top: 1px solid var(--rd-line); padding-top: 20px; margin-bottom: 24px; scroll-margin-block: 16px; }
+.foodie-restaurant .rd-topping-group.is-invalid { padding: 16px; background: #fcedeb; border: 1px solid var(--rd-error); border-radius: 6px; }
+.foodie-restaurant .rd-topping-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.foodie-restaurant .rd-topping-heading h3 { font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-topping-heading p { font-size: .8125rem; color: var(--rd-muted); margin-top: 4px; }
+.foodie-restaurant .rd-topping-heading > span { font-size: .75rem; color: var(--rd-muted); white-space: nowrap; }
+.foodie-restaurant .rd-topping-option { display: flex; align-items: center; gap: 10px; padding-block: 12px; min-height: 48px; cursor: pointer; font-size: .875rem; }
+.foodie-restaurant .rd-topping-option + .rd-topping-option { border-top: 1px solid var(--rd-line); }
+.foodie-restaurant .rd-topping-option input { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: var(--rd-green); }
+.foodie-restaurant .rd-topping-option > span { min-width: 0; overflow-wrap: anywhere; }
+.foodie-restaurant .rd-topping-option strong { margin-left: auto; font-size: .8125rem; font-weight: 500; }
+.foodie-restaurant .rd-topping-error { display: flex; gap: 6px; align-items: flex-start; color: var(--rd-error); font-size: .8125rem; margin-top: 8px; }
+.foodie-restaurant .rd-topping-error svg { margin-top: 2px; }
+.foodie-restaurant .rd-note { display: block; font-size: .875rem; }
+.foodie-restaurant .rd-note > span { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 500; }
+.foodie-restaurant .rd-note small { margin-left: auto; color: var(--rd-muted); font-weight: 400; font-size: .75rem; }
+.foodie-restaurant .rd-note textarea { display: block; width: 100%; min-height: 88px; resize: vertical; border: 1px solid var(--rd-control); border-radius: 6px; padding: 12px; color: var(--rd-text); background: white; font-size: 1rem; }
+.foodie-restaurant .rd-dialog-footer { padding: 16px 24px; padding-bottom: max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--rd-line); background: white; flex-shrink: 0; }
+.foodie-restaurant .rd-dialog-error { display: flex; gap: 8px; align-items: flex-start; font-size: .8125rem; color: var(--rd-error); margin-bottom: 12px; }
+.foodie-restaurant .rd-dialog-error svg { margin-top: 2px; }
+.foodie-restaurant .rd-dialog-actions { display: flex; gap: 16px; align-items: center; }
+.foodie-restaurant .rd-quantity { display: inline-flex; align-items: center; border: 1px solid var(--rd-control); border-radius: 6px; flex-shrink: 0; }
+.foodie-restaurant .rd-quantity button { width: 44px; min-height: 44px; background: none; color: var(--rd-green); border: 0; display: inline-flex; align-items: center; justify-content: center; }
+.foodie-restaurant .rd-quantity button:hover { background: var(--rd-soft); }
+.foodie-restaurant .rd-quantity strong { min-width: 28px; text-align: center; font-size: .875rem; }
+.foodie-restaurant .rd-add-confirm { flex: 1; flex-wrap: wrap; }
+.foodie-restaurant .rd-add-confirm > strong { margin-left: auto; font-weight: 600; }
+.foodie-restaurant :is(.rd-add, .rd-button, .customer-voucher-action, .rd-dialog-close):disabled { background: #edf0eb; color: #59635b; border-color: #b6c0b5; cursor: not-allowed; }
+
+@media (max-width: 1199px) {
+  .foodie-restaurant .rd-menu-layout { grid-template-columns: 144px minmax(0, 1fr) 252px; gap: 16px; }
+  .foodie-restaurant .rd-menu-main { --rd-menu-padding: 16px; }
+  .foodie-restaurant .rd-food { grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+  .foodie-restaurant .rd-food-image { width: 96px; height: 96px; }
+  .foodie-restaurant .rd-cart { padding: 16px; }
+}
+@media (max-width: 1023px) {
+  .foodie-restaurant { padding-bottom: calc(110px + var(--rd-bottom-nav)); }
+  .foodie-restaurant .rd-cover { height: 176px; }
+  .foodie-restaurant .rd-menu-layout { grid-template-columns: 160px minmax(0, 1fr); gap: 24px; }
+  .foodie-restaurant .rd-cart { display: none; }
+  .foodie-restaurant .rd-mobile-cart { display: flex; position: fixed; z-index: 150; bottom: calc(16px + var(--rd-bottom-nav)); left: 24px; right: 24px; max-width: 720px; margin-inline: auto; gap: 12px; align-items: center; padding: 14px 18px; border: 0; border-radius: 8px; color: white; background: var(--rd-green); text-align: left; min-height: 68px; }
+  .foodie-restaurant .rd-mobile-cart > span { min-width: 0; flex: 1; }
+  .foodie-restaurant .rd-mobile-cart > span > strong { display: block; font-size: .875rem; font-weight: 600; }
+  .foodie-restaurant .rd-mobile-cart small { display: block; font-size: .75rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e0ebe2; }
+  .foodie-restaurant .rd-mobile-cart > strong { font-size: .875rem; }
+  .foodie-restaurant .rd-mobile-cart:hover { background: var(--rd-green-hover); }
+  .foodie-restaurant .rd-mobile-cart:focus-visible { outline-color: var(--rd-text); }
+  .foodie-restaurant .rd-voucher-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  .foodie-restaurant { padding: 12px 16px calc(110px + var(--rd-bottom-nav) + env(safe-area-inset-bottom)); }
+  .foodie-restaurant .rd-breadcrumb { gap: 8px; margin-bottom: 12px; font-size: .75rem; }
+  .foodie-restaurant .rd-cover { height: auto; aspect-ratio: 2 / 1; }
+  .foodie-restaurant .rd-intro { padding: 16px 16px 12px; }
+  .foodie-restaurant .rd-title-row { flex-wrap: wrap; gap: 12px; }
+  .foodie-restaurant h1 { font-size: 1.75rem; }
+  .foodie-restaurant .rd-rating { display: flex; padding-top: 0; gap: 6px; }
+  .foodie-restaurant .rd-rating strong { font-size: 1rem; }
+  .foodie-restaurant .rd-rating > span { font-size: .75rem; }
+  .foodie-restaurant .rd-description { font-size: .875rem; }
+  .foodie-restaurant .rd-facts { grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .foodie-restaurant .rd-facts > div:first-child { grid-column: 1 / -1; }
+  .foodie-restaurant .rd-facts dd { font-size: .8125rem; }
+  .foodie-restaurant .rd-intro-footer { flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 12px; padding-top: 8px; }
+  .foodie-restaurant .rd-closed-note { margin-bottom: 8px; }
+  .foodie-restaurant .rd-offers { margin-bottom: 16px; }
+  .foodie-restaurant .rd-offers summary small { display: block; margin: 4px 0 0; font-size: .75rem; }
+  .foodie-restaurant .rd-section-heading { margin-bottom: 12px; }
+  .foodie-restaurant .rd-section-heading h2 { font-size: 1.25rem; }
+  .foodie-restaurant .rd-menu-layout { display: flex; flex-direction: column; gap: 12px; }
+  .foodie-restaurant .rd-categories { width: 100%; position: static; }
+  .foodie-restaurant .rd-categories h3 { display: none; }
+  .foodie-restaurant .rd-category-list { flex-direction: row; overflow-x: auto; padding: 4px 0 8px; gap: 8px; scrollbar-width: thin; }
+  .foodie-restaurant .rd-category-list button { width: auto; flex-shrink: 0; max-width: 240px; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--rd-line); background: white; }
+  .foodie-restaurant .rd-category-list button.is-active { box-shadow: none; border-color: var(--rd-green); background: var(--rd-soft); }
+  .foodie-restaurant .rd-menu-main { --rd-menu-padding: 12px; width: 100%; padding-top: 16px; }
+  .foodie-restaurant .rd-food { grid-template-columns: 104px minmax(0, 1fr); gap: 12px; padding-block: 16px; }
+  .foodie-restaurant .rd-food-image { width: 104px; height: 104px; }
+  .foodie-restaurant .rd-food-title { flex-wrap: wrap; gap: 4px; }
+  .foodie-restaurant .rd-food-title h3 { font-size: .9375rem; }
+  .foodie-restaurant .rd-food-description { font-size: .875rem; }
+  .foodie-restaurant .rd-food-actions { gap: 8px; }
+  .foodie-restaurant .rd-food-actions > strong { font-size: .875rem; }
+  .foodie-restaurant .rd-add { padding-inline: 10px; }
+  .foodie-restaurant .rd-mobile-cart { left: 12px; right: 12px; bottom: calc(12px + var(--rd-bottom-nav) + env(safe-area-inset-bottom)); gap: 8px; padding: 12px; min-height: 64px; }
+  .foodie-restaurant .rd-mobile-cart > strong { font-size: .8125rem; }
+  .foodie-restaurant .rd-reviews { margin-top: 28px; }
+  .foodie-restaurant .restaurant-reviews-list { grid-template-columns: minmax(0, 1fr); }
+  .foodie-restaurant .rd-dialog-overlay { align-items: flex-end; padding: 0; }
+  .foodie-restaurant .rd-dialog { width: 100%; max-height: calc(100dvh - 16px); border-radius: 12px 12px 0 0; }
+  .foodie-restaurant .rd-dialog-top { padding-left: 16px; }
+  .foodie-restaurant .rd-dialog-header { padding: 20px 16px; gap: 12px; grid-template-columns: 88px minmax(0, 1fr); }
+  .foodie-restaurant .rd-dialog-image { width: 88px; height: 88px; }
+  .foodie-restaurant .rd-dialog-header h2 { font-size: 1.125rem; }
+  .foodie-restaurant .rd-dialog-body { padding: 0 16px 20px; }
+  .foodie-restaurant .rd-dialog-footer { padding-inline: 16px; }
+  .foodie-restaurant .rd-dialog-actions { flex-wrap: wrap; gap: 12px; }
+  .foodie-restaurant .rd-quantity { margin-left: auto; }
+  .foodie-restaurant .rd-add-confirm { flex-basis: 100%; }
+  .foodie-restaurant .rd-add-confirm > strong { margin-left: auto; }
+  .foodie-restaurant .rd-topping-heading { gap: 8px; }
+  .foodie-restaurant .rd-topping-group.is-invalid { padding: 12px; }
+}
+@media (max-width: 359px) {
+  .foodie-restaurant .rd-food { grid-template-columns: 96px minmax(0, 1fr); }
+  .foodie-restaurant .rd-food-image { width: 96px; height: 96px; }
+}
+@media (max-width: 768px) {
+  /* Match the existing shared Header's 58px mobile dock without editing that Header. */
+  .foodie-restaurant { --rd-bottom-nav: 58px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .foodie-restaurant *, .foodie-restaurant *::before, .foodie-restaurant *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+@media (max-width: 359px) {
+  .foodie-restaurant { --rd-bottom-nav: 72px; }
+}

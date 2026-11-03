@@ -16,7 +16,6 @@ import {
   MapPin,
   SlidersHorizontal,
   Star,
-  Store,
   X,
 } from "lucide-react";
 
@@ -134,12 +133,9 @@ function Restaurants() {
       {/* HERO SECTION */}
       <section className="restaurants-hero">
         <div className="restaurants-hero-content">
-          <div className="restaurants-eyebrow">
-            <Store size={16} strokeWidth={2.2} />
-            <span>Khám phá ẩm thực</span>
-          </div>
 
-          <h1>Hôm nay bạn muốn ăn gì?</h1>
+
+          <h1>Chọn quán cho bữa ăn của bạn</h1>
 
           <p>
             Tìm kiếm nhà hàng yêu thích theo tên hoặc địa chỉ để bắt đầu thưởng thức món ngon.
@@ -269,7 +265,7 @@ function Restaurants() {
         {/* RESTAURANTS GRID */}
         {!loading && !error && restaurants.length > 0 && (
           <div className="restaurants-grid">
-            {restaurants.map((restaurant, index) => {
+            {restaurants.map((restaurant) => {
               const isOpen = isRestaurantOpen(restaurant);
               const statusLabel = getRestaurantStatusLabel(restaurant);
               const rating = restaurant.danhGiaTrungBinh ?? 0;
@@ -278,7 +274,6 @@ function Restaurants() {
               return (
                 <ScrollReveal
                   key={restaurant.maNhaHang}
-                  delay={(index % 4) * 85}
                   className="restaurant-reveal-item"
                 >
                   <Link
@@ -322,9 +317,6 @@ function Restaurants() {
                     <div className="restaurant-card-info">
                       <div className="restaurant-card-title-row">
                         <h3>{restaurant.tenNhaHang}</h3>
-                        <span className="restaurant-arrow">
-                          <ArrowRight size={15} strokeWidth={2.2} />
-                        </span>
                       </div>
 
                       {restaurant.moTa ? (
@@ -333,7 +325,7 @@ function Restaurants() {
                         </p>
                       ) : (
                         <p className="restaurant-card-description placeholder">
-                          Nhà hàng đối tác chính thức của Foodie
+                          Quán chưa cập nhật mô tả.
                         </p>
                       )}
 

@@ -1,3 +1,4 @@
+import MotionPresence from "./MotionPresence";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
@@ -358,7 +359,7 @@ function Header() {
                     />
                   </button>
 
-                  {showMenu && (
+                  <MotionPresence present={Boolean(showMenu)}>{showMenu && (
                     <div className="user-dropdown" role="menu">
                       <div className="dropdown-user-info">
                         <div className="dropdown-avatar">
@@ -417,7 +418,7 @@ function Header() {
                             onClick={closeMenu}
                           >
                             <WalletCards size={17} />
-                            <span>Lịch sử ví Foodie</span>
+                            <span>Ví FoodPay</span>
                           </Link>
 
                           <Link
@@ -513,7 +514,7 @@ function Header() {
                         <span>Đăng xuất</span>
                       </button>
                     </div>
-                  )}
+                  )}</MotionPresence>
                 </div>
               </>
             ) : (

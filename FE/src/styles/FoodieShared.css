@@ -1,0 +1,32 @@
+/* Shared presentation only. No loader timers, request states or route guards change. */
+.page-loader-overlay { background: #f7f5ef; backdrop-filter: none; display: grid; place-items: center; }
+.page-loader-content { width: min(280px, calc(100vw - 48px)); margin: auto; text-align: center; }
+.page-loader-logo { margin-inline: auto; color: #24584a; background: #eaf0eb; box-shadow: none; border-radius: 8px; }
+.page-loader-content strong { color: #202923; font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 24px; }
+.page-loader-content small { color: #5d685f; letter-spacing: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+.page-loader-progress { background: #dce1da; }
+.page-loader-progress span { background: #24584a; }
+.foodie-merchant-shell .quan-sidebar .quan-nav-item > span:not(.quan-nav-notification-count) { white-space: nowrap; text-overflow: clip; overflow: visible; line-height: 1.4; min-width: 0; }
+.foodie-merchant-shell .wallet-history-panel-head > div > span { color: #5d685f; letter-spacing: 0; text-transform: none; }
+.foodie-admin-app .realtime-toast { background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: 0 8px 28px #2029231f; }
+.foodie-admin-app .realtime-toast::before { background: #24584a; width: 1px; }
+.foodie-admin-app .realtime-toast-icon { background: #eaf0eb; color: #24584a; border-radius: 6px; }
+.foodie-admin-app .realtime-toast-arrow { color: #24584a; }
+.foodie-admin-app .realtime-toast-content strong { color: #202923; }
+.foodie-admin-app .realtime-toast-content > span { color: #5d685f; }
+.foodie-admin-app .realtime-toast-close { min-width: 44px; min-height: 44px; }
+.foodie-customer-shell .order-detail-shell { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.foodie-customer-shell .order-detail-layout { background: transparent; padding-inline: 0; }
+.foodie-customer-shell :is(.checkout-compact-title, .checkout-summary-restaurant) > span { background: #eaf0eb; color: #24584a; }
+.foodie-customer-shell .checkout-compact-header > div > span { display: none; }
+.foodie-customer-shell .order-detail-grand-total { background: #eaf0eb; }
+.foodie-customer-shell .address-field > span svg { color: #24584a; }
+.foodie-customer-shell .address-field :is(input, textarea)::placeholder { color: #5d685f; }
+@media (max-width: 639px) {
+  .foodie-admin-shell .merchant-notification-row { flex-wrap: wrap; padding: 16px; gap: 12px; }
+  .foodie-admin-shell .merchant-notification-action { margin-left: auto; }
+}
+/* Wallet history is shared by Customer and Merchant; metadata remains readable. */
+:is(.foodie-customer-shell, .foodie-merchant-shell) .wallet-transaction-title-row time { color: #5d685f; font-size: .8125rem; }
+:is(.foodie-customer-shell, .foodie-merchant-shell) .wallet-transaction-meta a { color: #24584a; text-decoration: underline; text-underline-offset: 3px; }
+:is(.foodie-customer-shell, .foodie-merchant-shell) .wallet-type-filter label { color: #5d685f; font-size: .8125rem; }

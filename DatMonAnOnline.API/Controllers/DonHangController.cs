@@ -179,7 +179,7 @@ namespace DatMonAnOnline.API.Controllers
                     });
                 }
 
-                var thoiGianDat = DateTime.Now;
+                var thoiGianDat = VietnamBusinessTime.Now(_timeProvider);
                 // Current locking read: the tracked owner from pricing may be stale.
                 // Hold a shared account lock until commit so an account lock cannot pass
                 // between this eligibility check and order creation.
@@ -241,7 +241,7 @@ namespace DatMonAnOnline.API.Controllers
                         .ToListAsync();
 
                     var voucher = vouchers.SingleOrDefault();
-                    var now = DateTime.Now;
+                    var now = VietnamBusinessTime.Now(_timeProvider);
 
                     if (voucher == null ||
                         voucher.TrangThai != true ||
@@ -423,7 +423,7 @@ namespace DatMonAnOnline.API.Controllers
                         MaDonHang = donHang.MaDonHang,
                         MaTrangThai = 1,
                         MaTaiKhoan = maTaiKhoan.Value,
-                        ThoiGianTao = DateTime.Now,
+                        ThoiGianTao = VietnamBusinessTime.Now(_timeProvider),
                         GhiChu = "Khách hàng đặt đơn mới"
                     }
                 );
@@ -476,7 +476,7 @@ namespace DatMonAnOnline.API.Controllers
                     MaPhuongThuc = phuongThuc.MaPhuongThuc,
                     SoTien = thanhTien,
                     TrangThaiThanhToan = laFoodPay ? "ThanhCong" : "ChoThanhToan",
-                    ThoiGianThanhToan = laFoodPay ? DateTime.Now : null,
+                    ThoiGianThanhToan = laFoodPay ? VietnamBusinessTime.Now(_timeProvider) : null,
                     MaGiaoDich = laFoodPay
                         ? TaoMaGiaoDichFoodPay()
                         : null
@@ -506,7 +506,7 @@ namespace DatMonAnOnline.API.Controllers
                         Loai = "DonHang",
                         DuongDan = $"/quan/don-hang/{donHang.MaDonHang}",
                         DaDoc = false,
-                        NgayTao = DateTime.Now
+                        NgayTao = VietnamBusinessTime.Now(_timeProvider)
                     };
                     _context.Thongbaos.Add(thongBaoDonMoi);
                 }
@@ -521,6 +521,9 @@ namespace DatMonAnOnline.API.Controllers
                     .RemoveRange(gioHang.Chitietgiohangs);
                 _checkoutReservations.Release(gioHang);
 
+                OrderWorkflowTracking.Created(_context, donHang,
+                    laFoodPay || string.Equals(phuongThuc.TenPhuongThuc, "COD", StringComparison.OrdinalIgnoreCase),
+                    VietnamBusinessTime.Now(_timeProvider));
                 await _context.SaveChangesAsync();
 
                 var response = new
@@ -628,8 +631,11 @@ namespace DatMonAnOnline.API.Controllers
         [Authorize(Roles = "KhachHang")]
         public async Task<IActionResult> DonHangCuaToi(
             [FromQuery] PaginationQuery pagination,
-            [FromQuery] string? filter = null)
+            [FromQuery] string? filter = null,
+            [FromQuery, System.ComponentModel.DataAnnotations.MaxLength(150)] string? search = null)
         {
+            if (search?.Length > 150)
+                return BadRequest(new { message = "Từ khóa tìm kiếm tối đa 150 ký tự." });
             var maTaiKhoan = await LayMaTaiKhoan();
             if (maTaiKhoan == null) return Unauthorized();
 
@@ -642,6 +648,16 @@ namespace DatMonAnOnline.API.Controllers
                 .AsNoTracking()
                 .Where(d => d.MaKhachHang == khachHang.MaKhachHang)
                 .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+                var numericId = int.TryParse(keyword, out var parsedId) && parsedId > 0 ? parsedId : 0;
+                baseQuery = baseQuery.Where(d =>
+                    (numericId > 0 && d.MaDonHang == numericId) ||
+                    d.MaDonHangHienThi.Contains(keyword) ||
+                    (d.TenNhaHangLucDat ?? d.MaNhaHangNavigation!.TenNhaHang).Contains(keyword));
+            }
 
             var counts = new
             {
@@ -673,6 +689,7 @@ namespace DatMonAnOnline.API.Controllers
 
             var page = await query
                 .OrderByDescending(d => d.ThoiGianDat)
+                .ThenByDescending(d => d.MaDonHang)
                 .Select(d => new
                 {
                     d.MaDonHang,
@@ -791,6 +808,7 @@ namespace DatMonAnOnline.API.Controllers
                     ct.SoLuong,
                     ct.DonGia,
                     ct.ThanhTien,
+                    ct.GhiChu,
                     Toppings = ct.ChitietdonhangToppings.Select(tp => new
                     {
                         TenTopping =
@@ -806,7 +824,8 @@ namespace DatMonAnOnline.API.Controllers
         [Authorize(Roles = "Quan")]
         public async Task<IActionResult> DanhSachDonHangCuaQuan(
             [FromQuery] PaginationQuery pagination,
-            [FromQuery] int? maTrangThai)
+            [FromQuery] int? maTrangThai,
+            [FromQuery, System.ComponentModel.DataAnnotations.MaxLength(150)] string? search = null)
         {
             var maTaiKhoan = await LayMaTaiKhoan();
             if (maTaiKhoan == null) return Unauthorized();
@@ -887,6 +906,13 @@ namespace DatMonAnOnline.API.Controllers
             if (maTrangThai.HasValue)
             {
                 query = query.Where(d => d.MaTrangThai == maTrangThai);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+                query = query.Where(d => d.MaDonHangHienThi.Contains(keyword) ||
+                    d.TenNguoiNhan.Contains(keyword) || d.SoDienThoaiNhan.Contains(keyword));
             }
 
             var danhSach = await query
@@ -1051,6 +1077,7 @@ namespace DatMonAnOnline.API.Controllers
             var daHoanTien = false;
 
             donHang.MaTrangThai = 6;
+            await OrderWorkflowTracking.StateChangedAsync(_context, donHang.MaDonHang, 6, VietnamBusinessTime.Now(_timeProvider));
             donHang.LyDoHuy = lyDo;
 
             var khoanHoan = payments
@@ -1073,13 +1100,13 @@ namespace DatMonAnOnline.API.Controllers
                          payment.TrangThaiThanhToan == "ChoThanhToan"))
             {
                 payment.TrangThaiThanhToan = "ThatBai";
-                payment.ThoiGianThanhToan = DateTime.Now;
+                payment.ThoiGianThanhToan = VietnamBusinessTime.Now(_timeProvider);
             }
 
             await PromotionWriteHelper.ReturnUsageIfEligibleAsync(
                 _context,
                 donHang.MaKhuyenMai,
-                DateTime.Now,
+                VietnamBusinessTime.Now(_timeProvider),
                 HttpContext.RequestAborted);
 
             var ghiChuHuy = $"Huỷ đơn. Lý do: {lyDo}";
@@ -1090,7 +1117,7 @@ namespace DatMonAnOnline.API.Controllers
                     MaDonHang = donHang.MaDonHang,
                     MaTrangThai = 6,
                     MaTaiKhoan = maTaiKhoan.Value,
-                    ThoiGianTao = DateTime.Now,
+                    ThoiGianTao = VietnamBusinessTime.Now(_timeProvider),
                     GhiChu = ghiChuHuy.Length > 200
                         ? ghiChuHuy[..200]
                         : ghiChuHuy
@@ -1125,7 +1152,7 @@ namespace DatMonAnOnline.API.Controllers
                     Loai = "DonHang",
                     DuongDan = taiKhoanNhan.DuongDan,
                     DaDoc = false,
-                    NgayTao = DateTime.Now
+                    NgayTao = VietnamBusinessTime.Now(_timeProvider)
                 };
 
                 _context.Thongbaos.Add(thongBao);
@@ -1139,7 +1166,7 @@ namespace DatMonAnOnline.API.Controllers
 
             if (khoanHoan != null && donHang.ThanhTien > 0 && !daCoHoanTien)
             {
-                var bayGio = DateTime.Now;
+                var bayGio = VietnamBusinessTime.Now(_timeProvider);
                 soTienHoan = donHang.ThanhTien;
 
                 var hoanTien = new Hoantien
@@ -1513,9 +1540,16 @@ namespace DatMonAnOnline.API.Controllers
                 });
             }
 
+            if (request.MaTrangThai == 2 && OrderWorkflowRules.AcceptanceExpired(
+                await _context.OrderWorkflows.SingleOrDefaultAsync(x => x.OrderId == id), VietnamBusinessTime.Now(_timeProvider)))
+            {
+                await transaction.RollbackAsync();
+                return Conflict(new { message = "Đã hết hạn nhận đơn; hệ thống đang xác minh hủy/hoàn tiền." });
+            }
             donHang.MaTrangThai = request.MaTrangThai;
             decimal soTienDaCongVaoVi = 0;
             var changedAt = VietnamBusinessTime.Now(_timeProvider);
+            await OrderWorkflowTracking.StateChangedAsync(_context, id, request.MaTrangThai, changedAt);
 
             if (request.MaTrangThai == 5)
             {
@@ -1896,8 +1930,8 @@ namespace DatMonAnOnline.API.Controllers
                 if (km == null || km.TrangThai == false)
                     return (0, 0, 0, null, "Mã khuyến mãi không hợp lệ.");
 
-                if (DateTime.Now < km.NgayBatDau ||
-                    DateTime.Now > km.NgayKetThuc)
+                if (VietnamBusinessTime.Now(_timeProvider) < km.NgayBatDau ||
+                    VietnamBusinessTime.Now(_timeProvider) > km.NgayKetThuc)
                 {
                     return (
                         0,

@@ -336,6 +336,7 @@ DatMonAnOnline.API/wwwroot/uploads/restaurants/*
 
 # Private legal documents uploaded by restaurant owners
 DatMonAnOnline.API/App_Data/
+DatMonAnOnline.API/Database/App_Data/
 
 # Visual Studio 6 build log
 *.plg

@@ -1,4 +1,12 @@
 import "./App.css";
+import "./styles/CustomerTheme.css";
+import "./styles/CustomerAccount.css";
+import "./styles/CustomerOrders.css";
+import "./styles/FoodieShared.css";
+import "./styles/WorkspaceNotifications.css";
+import "./styles/FormControls.css";
+import "./styles/Motion.css";
+import "./styles/OrderWorkflow.css";
 import { lazy, Suspense } from "react";
 import RouteLoadBoundary from "./components/RouteLoadBoundary";
 
@@ -26,6 +34,7 @@ const Orders = lazy(() => import("./pages/Orders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Promotions = lazy(() => import("./pages/Promotions"));
+const AdminOrderSupport = lazy(() => import("./pages/AdminOrderSupport"));
 const AdminAccounts = lazy(() => import("./pages/AdminAccounts"));
 const AdminLayout = lazy(() => import("./pages/AdminLayout"));
 const AdminHome = lazy(() => import("./pages/AdminHome"));
@@ -85,12 +94,12 @@ function AppContent() {
     className={
         isCustomerArea
             ? [
-                "customer-app-shell",
-                isCustomerOrdersPage ? "customer-orders-shell" : "",
+                "foodie-customer-shell",
+                isCustomerOrdersPage ? "cg-orders-shell" : "",
               ]
                 .filter(Boolean)
                 .join(" ")
-            : undefined
+            : isQuanArea ? "foodie-merchant-app" : isAdminArea ? "foodie-admin-app" : undefined
         }
     >
         <RouteScrollManager />
@@ -101,7 +110,7 @@ function AppContent() {
         {!isAdminArea && !isQuanArea && <Header />}
 
             <RouteLoadBoundary key={location.pathname}>
-            <Suspense fallback={<p className="admin-access-message" role="status">Đang tải trang...</p>}>
+            <Suspense fallback={<p className={/^\/nha-hang\/[^/]+\/?$/.test(location.pathname) ? "customer-detail-loading" : "admin-access-message"} role="status">Đang tải trang...</p>}>
             <Routes>
 
                 {/* =========================
@@ -285,6 +294,8 @@ function AppContent() {
                         element={<AdminRestaurants />}
                     />
 
+                    <Route path="ho-tro-don-hang" element={<AdminOrderSupport />} />
+                    <Route path="ho-tro-don-hang/:id" element={<AdminOrderSupport />} />
                     <Route path="hop-dong" element={<AdminContracts />} />
                     <Route path="doi-soat" element={<AdminDoiSoat />} />
                     <Route path="tai-chinh" element={<AdminFinance />} />

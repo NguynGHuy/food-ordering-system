@@ -1,3 +1,4 @@
+import CustomerAccountNav from "../components/CustomerAccountNav";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -152,13 +153,14 @@ function WalletHistory() {
   return (
     <main className="wallet-history-page">
       <div className="wallet-history-container">
+      <CustomerAccountNav />
         <Link to="/ho-so" className="wallet-history-back">
           <ArrowLeft size={17} /> Quay lại hồ sơ
         </Link>
 
         <section className="wallet-history-hero">
           <div className="wallet-history-hero-copy">
-            <span className="wallet-history-eyebrow">Ví Foodie</span>
+
             <h1>Lịch sử giao dịch</h1>
             <p>Theo dõi rõ từng khoản tiền vào, tiền ra và số dư sau giao dịch.</p>
           </div>
@@ -185,7 +187,7 @@ function WalletHistory() {
         <section className="wallet-history-panel" aria-labelledby="wallet-transactions-title">
           <div className="wallet-history-panel-head">
             <div>
-              <span>Biến động số dư</span>
+
               <h2 id="wallet-transactions-title">Các giao dịch gần đây</h2>
             </div>
             <button type="button" className="wallet-refresh-button" onClick={retry} disabled={loadingTransactions}>

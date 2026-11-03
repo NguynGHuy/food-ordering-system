@@ -342,8 +342,8 @@ function AdminHome() {
                                 data={chartPoints}
                                 series1Name="Tổng giá trị đơn (GMV)"
                                 series2Name="Phí nền tảng thu được"
-                                series1Color="#f4511e"
-                                series2Color="#10b981"
+                                series1Color="#24584A"
+                                series2Color="#7A5700"
                                 height={240}
                             />
                         )}

@@ -1,3 +1,4 @@
+import CustomerAccountNav from "../components/CustomerAccountNav";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -118,7 +119,7 @@ function AddressFormEditor({
           <h2 id="address-form-title">
             {isEditing ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
           </h2>
-          <p>Điền thông tin để tài xế có thể giao món chính xác.</p>
+          <p>Điền thông tin người nhận và địa chỉ giao món chính xác.</p>
         </div>
         <button type="button" aria-label="Đóng biểu mẫu" onClick={onClose} disabled={saving}>
           <X size={19} />
@@ -169,7 +170,7 @@ function AddressFormEditor({
           />
         </label>
         <label className="address-field address-field-full">
-          <span><MessageSquareText size={15} /> Ghi chú cho tài xế</span>
+          <span><MessageSquareText size={15} /> Ghi chú giao hàng</span>
           <textarea
             name="ghiChu"
             rows={3}
@@ -459,6 +460,7 @@ function AddressPage() {
   return (
     <main className="address-page address-page-polished">
       <div className="address-container">
+      <CustomerAccountNav />
         <Link to="/ho-so" className="address-top-back">
           <ArrowLeft size={16} /> Hồ sơ của tôi
         </Link>
@@ -469,7 +471,7 @@ function AddressPage() {
               <MapPinned size={22} />
             </span>
             <div>
-              <span>Địa chỉ của bạn</span>
+
               <h1>Địa chỉ giao hàng</h1>
               <p>Lưu và quản lý những địa chỉ nhận món quen thuộc của bạn.</p>
             </div>
@@ -520,7 +522,7 @@ function AddressPage() {
         <section className="address-saved-section" aria-labelledby="saved-address-title">
           <div className="address-section-heading">
             <div>
-              <span>Danh sách của bạn</span>
+
               <h2 id="saved-address-title">Địa chỉ đã lưu</h2>
             </div>
             {!loading && addresses.length > 0 && (

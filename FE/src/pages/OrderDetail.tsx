@@ -1,3 +1,5 @@
+import OrderWorkflowPanel from "../components/OrderWorkflowPanel";
+import MotionPresence from "../components/MotionPresence";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getOrderById, getOrderStatusHistory } from "../services/orderService";
@@ -571,6 +573,7 @@ function OrderDetail() {
                         )}
                     </header>
 
+                        <OrderWorkflowPanel orderId={maDonHang} refreshToken={`${order.trangThai}:${paymentVersion}`} />
                         <div className="order-detail-layout">
     <div className="order-detail-main-column">
         <section className="order-detail-card order-detail-items-card">
@@ -1018,7 +1021,7 @@ function OrderDetail() {
 )}
                 </article>
             )}
-           {showQr && order && (
+           <MotionPresence present={Boolean(showQr && order)}>{showQr && order && (
     <div
         className="order-qr-overlay"
         role="dialog"
@@ -1144,7 +1147,7 @@ function OrderDetail() {
             </div>
         </section>
     </div>
-)}
+)}</MotionPresence>
         </main>
     );
 }

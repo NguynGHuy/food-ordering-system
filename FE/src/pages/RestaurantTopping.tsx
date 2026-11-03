@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import MotionPresence from "../components/MotionPresence";
+import Pagination from "../components/Pagination";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import type { PagedResult } from "../services/api";
 import {
   Check,
   CircleDollarSign,
@@ -16,8 +19,8 @@ import {
   createTopping,
   deleteNhomTopping,
   deleteTopping,
-  getNhomToppings,
-  getToppings,
+  getNhomToppingsPage,
+  getManagedToppings,
   updateNhomTopping,
   updateTopping,
   updateTrangThaiTopping,
@@ -83,39 +86,65 @@ function RestaurantTopping() {
 
   const [loading, setLoading] = useState(true);
   const [loadingToppings, setLoadingToppings] = useState(false);
+  const [toppingLoadError, setToppingLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busyGroupId, setBusyGroupId] = useState<number | null>(null);
   const [busyToppingId, setBusyToppingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [groupPage, setGroupPage] = useState<PagedResult<NhomTopping> | null>(null);
+  const [toppingPage, setToppingPage] = useState<(PagedResult<Topping> & { activeTotal: number }) | null>(null);
+  const groupPageRef = useRef(1);
+  const toppingPageRef = useRef(1);
+  const loadedGroupRef = useRef<number | null>(null);
+  const groupSequence = useRef(0);
+  const toppingSequence = useRef(0);
 
-  const loadToppings = useCallback(async (groupId: number, showLoading = true) => {
+  const loadToppings = useCallback(async (groupId: number, page?: number) => {
+    const sequence = ++toppingSequence.current;
+    const requestedPage = page ?? (loadedGroupRef.current === groupId ? toppingPageRef.current : 1);
+    loadedGroupRef.current = groupId;
+    setLoadingToppings(true);
+    setToppingLoadError(false);
+    setError("");
     try {
-      if (showLoading) setLoadingToppings(true);
-      const data = await getToppings(groupId);
-      setToppings(Array.isArray(data) ? data : []);
+      const data = await getManagedToppings(groupId, { pageNumber: requestedPage, pageSize: 10 });
+      if (sequence !== toppingSequence.current) return;
+      setToppings(data.items);
+      setToppingPage(data);
+      toppingPageRef.current = data.pageNumber;
     } catch (err) {
+      if (sequence !== toppingSequence.current) return;
       setError(err instanceof Error ? err.message : "Không thể tải topping.");
       setToppings([]);
+      setToppingPage(null);
+      setToppingLoadError(true);
     } finally {
-      if (showLoading) setLoadingToppings(false);
+      if (sequence === toppingSequence.current) setLoadingToppings(false);
     }
   }, []);
 
-  const loadGroups = useCallback(async (preferredGroupId?: number, showLoading = true) => {
+  const loadGroups = useCallback(async (preferredGroupId?: number, showLoading = true, page = groupPageRef.current) => {
+    const sequence = ++groupSequence.current;
     try {
       if (showLoading) setLoading(true);
       setError("");
 
       const restaurantId = await getRestaurantId();
-      const data = await getNhomToppings(restaurantId);
-      const nextGroups = Array.isArray(data) ? data : [];
+      const data = await getNhomToppingsPage(restaurantId, { pageNumber: page, pageSize: 8 });
+      if (sequence !== groupSequence.current) return;
+      const nextGroups = data.items;
+      setGroupPage(data);
+      groupPageRef.current = data.pageNumber;
 
       setGroups(nextGroups);
 
       if (nextGroups.length === 0) {
         setSelectedGroupId(null);
         setToppings([]);
+        toppingSequence.current++;
+        setToppingPage(null);
+        loadedGroupRef.current = null;
         return;
       }
 
@@ -130,11 +159,12 @@ function RestaurantTopping() {
       setSelectedGroupId(nextSelected);
       await loadToppings(nextSelected);
     } catch (err) {
+      if (sequence !== groupSequence.current) return;
       setError(
         err instanceof Error ? err.message : "Không thể tải nhóm topping.",
       );
     } finally {
-      if (showLoading) setLoading(false);
+      if (sequence === groupSequence.current && showLoading) setLoading(false);
     }
   }, [loadToppings]);
 
@@ -336,7 +366,7 @@ function RestaurantTopping() {
       setToppingEditorOpen(false);
       setEditingToppingId(null);
       setToppingForm(EMPTY_TOPPING);
-      await loadToppings(selectedGroupId, false);
+      await loadToppings(selectedGroupId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể lưu topping.");
     } finally {
@@ -356,7 +386,7 @@ function RestaurantTopping() {
 
       showMessage(item.trangThai ? "Đã tạm ngưng topping." : "Đã bật topping.");
 
-      await loadToppings(selectedGroupId, false);
+      await loadToppings(selectedGroupId);
     } catch (err) {
       setError(
         err instanceof Error
@@ -390,7 +420,7 @@ function RestaurantTopping() {
       }
 
       showMessage("Đã xóa topping.");
-      await loadToppings(selectedGroupId, false);
+      await loadToppings(selectedGroupId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể xóa topping.");
     } finally {
@@ -405,7 +435,7 @@ function RestaurantTopping() {
   const selectedGroup =
     groups.find((group) => group.maNhomTopping === selectedGroupId) ?? null;
 
-  const activeToppingCount = toppings.filter((item) => item.trangThai).length;
+  const activeToppingCount = toppingPage?.activeTotal ?? 0;
 
   return (
     <div className="merchant-options-page">
@@ -429,7 +459,7 @@ function RestaurantTopping() {
       </ScrollReveal>
 
       {error && !groupEditorOpen && !toppingEditorOpen && (
-        <div className="merchant-options-notice error">{error}</div>
+        <div className="merchant-options-notice error" role="alert">{error} <button type="button" onClick={() => void loadGroups(selectedGroupId ?? undefined)}>Tải lại</button></div>
       )}
 
       {success && (
@@ -442,7 +472,7 @@ function RestaurantTopping() {
           <div className="merchant-options-panel-title">
             <div>
               <h2>Nhóm topping</h2>
-              <p>{groups.length} nhóm đang được quản lý</p>
+              <p>{groupPage?.totalItems ?? 0} nhóm đang được quản lý</p>
             </div>
             <Layers3 size={18} />
           </div>
@@ -474,6 +504,7 @@ function RestaurantTopping() {
                     <button
                       type="button"
                       className="merchant-options-group-select"
+                      disabled={saving || busyGroupId !== null || busyToppingId !== null}
                       onClick={() =>
                         void handleSelectGroup(group.maNhomTopping)
                       }
@@ -520,6 +551,7 @@ function RestaurantTopping() {
               })}
             </div>
           )}
+          {groupPage && <Pagination {...groupPage} disabled={saving || busyGroupId !== null || busyToppingId !== null || loadingToppings} onPageChange={(page) => void loadGroups(undefined, true, page)} />}
           </aside>
         </ScrollReveal>
 
@@ -532,7 +564,7 @@ function RestaurantTopping() {
                   <span>NHÓM ĐANG CHỌN</span>
                   <h2>{selectedGroup.tenNhom}</h2>
                   <p>
-                    {activeToppingCount} đang bán · {toppings.length} topping
+                    {activeToppingCount} đang bán · {toppingPage?.totalItems ?? 0} topping
                   </p>
                 </div>
 
@@ -562,6 +594,11 @@ function RestaurantTopping() {
               {loadingToppings ? (
                 <div className="merchant-options-loading">
                   Đang tải topping...
+                </div>
+              ) : toppingLoadError ? (
+                <div className="merchant-options-loading">
+                  Không thể tải danh sách topping.
+                  <button type="button" onClick={() => void loadToppings(selectedGroup.maNhomTopping)}>Thử lại</button>
                 </div>
               ) : toppings.length === 0 ? (
                 <div className="merchant-options-topping-empty">
@@ -641,6 +678,7 @@ function RestaurantTopping() {
                   ))}
                 </div>
               )}
+              {toppingPage && <Pagination {...toppingPage} disabled={loadingToppings || saving || busyToppingId !== null} onPageChange={(page) => void loadToppings(selectedGroup.maNhomTopping, page)} />}
             </>
           ) : (
             <div className="merchant-options-no-group">
@@ -653,7 +691,7 @@ function RestaurantTopping() {
         </ScrollReveal>
       </div>
 
-      {groupEditorOpen && (
+      <MotionPresence present={Boolean(groupEditorOpen)}>{groupEditorOpen && (
         <div className="merchant-config-overlay" onMouseDown={closeGroupEditor}>
           <form
             className="merchant-config-dialog"
@@ -760,9 +798,9 @@ function RestaurantTopping() {
             </footer>
           </form>
         </div>
-      )}
+      )}</MotionPresence>
 
-      {toppingEditorOpen && (
+      <MotionPresence present={Boolean(toppingEditorOpen)}>{toppingEditorOpen && (
         <div
           className="merchant-config-overlay"
           onMouseDown={closeToppingEditor}
@@ -818,7 +856,7 @@ function RestaurantTopping() {
                   <input
                     type="number"
                     min={0}
-                    step={1000}
+                    step={1}
                     value={toppingForm.giaThem}
                     onChange={(event) =>
                       setToppingForm((current) => ({
@@ -855,7 +893,7 @@ function RestaurantTopping() {
             </footer>
           </form>
         </div>
-      )}
+      )}</MotionPresence>
     </div>
   );
 }

@@ -1,0 +1,73 @@
+/* A composed control has one border and one focus ring, on its outer container.
+   Native inputs retain focus, selection, validation and keyboard behavior. */
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(.home-hero-search-box, .restaurants-search, .rd-search,
+    .admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search,
+    .reconciliation-restaurant-search-wrap, .merchant-menu-search, .merchant-menu-select,
+    .merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price,
+    .merchant-promo-money-input, .merchant-promo-icon-input, .merchant-info-input-icon, .merchant-info-price-input) {
+  display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px;
+  border: 1px solid #778478; border-radius: 6px; background: #fff; padding: 0 12px;
+  box-shadow: none;
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(.header-search-form, .home-hero-search-box, .restaurants-search, .rd-search,
+    .admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search,
+    .reconciliation-restaurant-search-wrap, .merchant-menu-search, .merchant-menu-select,
+    .merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price,
+    .merchant-promo-money-input, .merchant-promo-icon-input, .merchant-info-input-icon, .merchant-info-price-input):focus-within {
+  border-color: #24584a; outline: 2px solid #24584a; outline-offset: 2px; box-shadow: none;
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(.header-search-form, .home-hero-search-box, .restaurants-search, .rd-search,
+    .admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search,
+    .reconciliation-restaurant-search-wrap, .merchant-menu-search, .merchant-menu-select,
+    .merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price,
+    .merchant-promo-money-input, .merchant-promo-icon-input, .merchant-info-input-icon, .merchant-info-price-input)
+:is(input, select, input:focus, input:focus-visible, select:focus, select:focus-visible) {
+  flex: 1 1 0%; min-width: 0; width: 100%; max-width: 100%; min-height: 42px;
+  height: auto; margin: 0; padding: 10px 0; border: 0; border-radius: 0;
+  outline: 0; box-shadow: none; background: transparent; color: #202923;
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(.header-search-form, .home-hero-search-box, .restaurants-search, .rd-search,
+    .admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search,
+    .reconciliation-restaurant-search-wrap, .merchant-menu-search, .merchant-menu-select,
+    .merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price,
+    .merchant-promo-money-input, .merchant-promo-icon-input, .merchant-info-input-icon, .merchant-info-price-input)
+> :is(svg, strong) {
+  position: static; inset: auto; transform: none; flex: 0 0 auto; margin: 0; color: #5d685f;
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(.header-search-form, .home-hero-search-box, .restaurants-search, .rd-search,
+    .admin-account-search-pro, .admin-restaurant-search, .admin-contracts-search, .admin-promotion-search,
+    .reconciliation-restaurant-search-wrap, .merchant-menu-search, .merchant-menu-select,
+    .merchant-menu-price-input, .merchant-menu-icon-input, .merchant-config-price,
+    .merchant-promo-money-input, .merchant-promo-icon-input, .merchant-info-input-icon, .merchant-info-price-input)
+> svg { width: 18px; height: 18px; }
+.foodie-customer-shell .header-search-form .header-search-clear { position: static; transform: none; flex-shrink: 0; }
+.foodie-merchant-shell .merchant-info-input-icon input[type=file] { font: inherit; padding-block: 6px; }
+.foodie-merchant-shell .merchant-info-input-icon input[type=file]::file-selector-button {
+  min-height: 32px; padding: 6px 10px; margin-right: 12px; border: 1px solid #c6d6c8;
+  border-radius: 4px; background: #eaf0eb; color: #24584a; font: inherit; cursor: pointer;
+}
+
+/* Keep native select behavior, with a predictable inset for its single chevron. */
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+:is(input:not([type=checkbox]):not([type=radio]), select, textarea):not([aria-invalid=true]):focus {
+  border-color: #24584a;
+  box-shadow: none;
+}
+:is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+select:not([multiple]):not([size]):is(select, :focus, :focus-visible) {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235d685f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-inline-end: 40px;
+}
+@media (forced-colors: active) {
+  :is(.foodie-customer-shell, .foodie-merchant-shell, .foodie-admin-shell, .foodie-merchant-portal, .foodie-admin-portal)
+  select:not([multiple]):not([size]):is(select, :focus, :focus-visible) { appearance: auto; background-image: none; }
+}

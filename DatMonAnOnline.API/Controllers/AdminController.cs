@@ -66,7 +66,7 @@ namespace DatMonAnOnline.API.Controllers
             [FromQuery] string? search = null,
             [FromQuery] string? state = null)
         {
-            var now = DateTime.Now;
+            var now = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
             var query = _context.Khuyenmais
                 .AsNoTracking()
                 .Where(x => x.MaNhaHang == null);
@@ -337,7 +337,7 @@ namespace DatMonAnOnline.API.Controllers
                     });
                 }
 
-                var homNay = DateOnly.FromDateTime(DateTime.Now);
+                var homNay = DateOnly.FromDateTime(DatMonAnOnline.API.Common.VietnamBusinessTime.Now());
 
                 if (homNay < hopDong.NgayBatDau ||
                     homNay > hopDong.NgayKetThuc)
@@ -359,7 +359,7 @@ namespace DatMonAnOnline.API.Controllers
                 }
             }
 
-            var thoiGian = DateTime.Now;
+            var thoiGian = DatMonAnOnline.API.Common.VietnamBusinessTime.Now();
 
             nhaHang.TrangThaiDuyet = duyet ? "DaDuyet" : "TuChoi";
             hopDong.TrangThai = duyet ? "HieuLuc" : "TuChoi";

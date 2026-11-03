@@ -1,3 +1,5 @@
+import MotionPresence from "../components/MotionPresence";
+import CustomerOrderSteps from "../components/CustomerOrderSteps";
 import MediaImage from "../components/MediaImage";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -388,6 +390,7 @@ if (cart.chiTiet.length === 0) {
             Xóa giỏ hàng
         </button>
     </header>
+<CustomerOrderSteps current="cart" />
 
     {cart.canLamMoi && (
         <div className="cart-refresh-notice" role="status">
@@ -631,7 +634,7 @@ if (cart.chiTiet.length === 0) {
     </div>
 </div>
 
-            {editingFood && (
+            <MotionPresence present={Boolean(editingFood)}>{editingFood && (
     <div
         className="food-option-overlay"
         onMouseDown={closeEditOptions}
@@ -835,7 +838,7 @@ if (cart.chiTiet.length === 0) {
             </div>
         </section>
     </div>
-)}
+)}</MotionPresence>
         </main>
     );
 }

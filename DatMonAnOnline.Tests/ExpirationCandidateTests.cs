@@ -8,6 +8,18 @@ namespace DatMonAnOnline.Tests;
 public class ExpirationCandidateTests
 {
     [Fact]
+    public void OnlineLifetimeBoundaryDoesNotResetAcrossMidnight()
+    {
+        var created = new DateTime(2026, 11, 2, 23, 55, 0);
+        var order = new Donhang { ThoiGianDat = created };
+        var deadline = created.AddMinutes(15);
+        Assert.False(OrderPaymentRules.IsOnlinePaymentExpired(order, deadline.AddTicks(-1)));
+        Assert.True(OrderPaymentRules.IsOnlinePaymentExpired(order, deadline));
+        Assert.True(OrderPaymentRules.IsOnlinePaymentExpired(order, deadline.AddTicks(1)));
+        Assert.Equal(new DateTime(2026, 11, 3, 0, 10, 0), deadline);
+    }
+
+    [Fact]
     public void OldPaidAndCodOrdersCannotStarveTheBatch()
     {
         var orders = Enumerable.Range(1, 150).Select(i => Order(i, "COD", "ChoThanhToan"))

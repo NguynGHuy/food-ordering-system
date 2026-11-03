@@ -1,3 +1,4 @@
+import MotionPresence from "../components/MotionPresence";
 import { useCallback, useEffect, useState } from "react";
 import {
     CalendarDays,
@@ -9,7 +10,6 @@ import {
     RefreshCw,
     Search,
     TicketPercent,
-    X,
 } from "lucide-react";
 import CreatePromotionForm from "../components/CreatePromotionForm";
 import EditPromotionForm from "../components/EditPromotionForm";
@@ -506,7 +506,7 @@ function AdminPromotions() {
                 )}
             </section>
 
-            {showCreate && (
+            <MotionPresence present={Boolean(showCreate)}>{showCreate && (
                 <div
                     className="admin-promotion-modal-overlay"
                     role="dialog"
@@ -517,15 +517,6 @@ function AdminPromotions() {
                         className="admin-promotion-modal"
                         onMouseDown={(event) => event.stopPropagation()}
                     >
-                        <button
-                            type="button"
-                            className="admin-promotion-modal-close"
-                            aria-label="Đóng"
-                            onClick={() => setShowCreate(false)}
-                        >
-                            <X size={18} />
-                        </button>
-
                         <CreatePromotionForm
                             admin
                             onCreated={handleCreated}
@@ -533,9 +524,9 @@ function AdminPromotions() {
                         />
                     </section>
                 </div>
-            )}
+            )}</MotionPresence>
 
-            {editingPromotion && (
+            <MotionPresence present={Boolean(editingPromotion)}>{editingPromotion && (
                 <div
                     className="admin-promotion-modal-overlay"
                     role="dialog"
@@ -546,15 +537,6 @@ function AdminPromotions() {
                         className="admin-promotion-modal edit-modal"
                         onMouseDown={(event) => event.stopPropagation()}
                     >
-                        <button
-                            type="button"
-                            className="admin-promotion-modal-close"
-                            aria-label="Đóng"
-                            onClick={() => setEditingPromotion(null)}
-                        >
-                            <X size={18} />
-                        </button>
-
                         <EditPromotionForm
                             key={editingPromotion.maKhuyenMai}
                             promotion={editingPromotion}
@@ -563,7 +545,7 @@ function AdminPromotions() {
                         />
                     </section>
                 </div>
-            )}
+            )}</MotionPresence>
         </div>
     );
 }

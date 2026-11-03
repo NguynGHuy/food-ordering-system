@@ -1,7 +1,6 @@
--- FOODIE - DATABASE SCHEMA (bảng + dữ liệu danh mục hệ thống)
--- Dữ liệu demo nằm ở SeedDemo.sql (chạy SAU file này).
--- Safe fresh-install script: NO database/table is dropped. If DB exists, stop.
--- Then run SeedDemo.sql. Never run on your active database.
+-- FOODIE: fresh-install SCHEMA ONLY. No demo or lookup rows.
+-- Run SeedDemo.sql separately after this file succeeds, on a fresh database.
+-- Never import into an existing database or use --force.
 
 CREATE DATABASE `DatMonAnOnline`
   CHARACTER SET utf8mb4
@@ -821,11 +820,7 @@ CREATE TABLE `phuongthucthanhtoan` (
 -- Dumping data for table `phuongthucthanhtoan`
 --
 
-LOCK TABLES `phuongthucthanhtoan` WRITE;
-/*!40000 ALTER TABLE `phuongthucthanhtoan` DISABLE KEYS */;
-INSERT INTO `phuongthucthanhtoan` VALUES (1,'COD',1),(2,'Momo',1),(3,'VNPay',1),(4,'ZaloPay',1),(5,'FoodPay',1);
-/*!40000 ALTER TABLE `phuongthucthanhtoan` ENABLE KEYS */;
-UNLOCK TABLES;
+
 
 --
 -- Table structure for table `role`
@@ -846,11 +841,7 @@ CREATE TABLE `role` (
 -- Dumping data for table `role`
 --
 
-LOCK TABLES `role` WRITE;
-/*!40000 ALTER TABLE `role` DISABLE KEYS */;
-INSERT INTO `role` VALUES (1,'Admin','Quan tri he thong'),(2,'Quan','Chu nha hang / quan an'),(3,'KhachHang','Nguoi dat mon');
-/*!40000 ALTER TABLE `role` ENABLE KEYS */;
-UNLOCK TABLES;
+
 
 --
 -- Table structure for table `taikhoan`
@@ -1128,11 +1119,55 @@ CREATE TABLE `trangthaidonhang` (
 -- Dumping data for table `trangthaidonhang`
 --
 
-LOCK TABLES `trangthaidonhang` WRITE;
-/*!40000 ALTER TABLE `trangthaidonhang` DISABLE KEYS */;
-INSERT INTO `trangthaidonhang` VALUES (1,'ChoXacNhan',1),(2,'DaXacNhan',2),(3,'DangChuanBi',3),(4,'DangGiao',4),(5,'HoanThanh',5),(6,'DaHuy',6);
-/*!40000 ALTER TABLE `trangthaidonhang` ENABLE KEYS */;
-UNLOCK TABLES;
+
+-- Order workflow/support: included in the fresh-install schema.
+-- Workflow tables are included once; no historical backfill.
+CREATE TABLE `orderworkflow` (
+ `OrderId` int NOT NULL,
+ `ReadyAt` datetime(6) DEFAULT NULL,
+ `StateEnteredAt` datetime(6) NOT NULL,
+ `StateCode` int NOT NULL,
+ `ReminderMask` int NOT NULL DEFAULT 0,
+ `EscalationMask` int NOT NULL DEFAULT 0,
+ PRIMARY KEY (`OrderId`),
+ KEY `IX_Workflow_State_Time` (`StateCode`,`StateEnteredAt`),
+ CONSTRAINT `FK_Workflow_Order` FOREIGN KEY (`OrderId`) REFERENCES `donhang` (`MaDonHang`),
+ CONSTRAINT `CK_Workflow_State` CHECK (`StateCode` BETWEEN 1 AND 6)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `ordersupport` (
+ `Id` bigint NOT NULL AUTO_INCREMENT,
+ `OrderId` int NOT NULL,
+ `RequesterId` int DEFAULT NULL,
+ `Kind` varchar(20) NOT NULL,
+ `Reason` varchar(1000) NOT NULL,
+ `Status` varchar(20) NOT NULL DEFAULT 'Pending',
+ `StateWhenRequested` int NOT NULL,
+ `StateEnteredAtWhenRequested` datetime(6) DEFAULT NULL,
+ `DecisionAdminId` int DEFAULT NULL,
+ `DecisionReason` varchar(1000) DEFAULT NULL,
+ `CreatedAt` datetime(6) NOT NULL,
+ `UpdatedAt` datetime(6) NOT NULL,
+ PRIMARY KEY (`Id`),
+ KEY `IX_Support_Status_Time` (`Status`,`CreatedAt`),
+ KEY `IX_Support_Order` (`OrderId`),
+ CONSTRAINT `FK_Support_Order` FOREIGN KEY (`OrderId`) REFERENCES `donhang` (`MaDonHang`),
+ CONSTRAINT `FK_Support_Requester` FOREIGN KEY (`RequesterId`) REFERENCES `taikhoan` (`MaTaiKhoan`),
+ CONSTRAINT `FK_Support_Admin` FOREIGN KEY (`DecisionAdminId`) REFERENCES `taikhoan` (`MaTaiKhoan`),
+ CONSTRAINT `CK_Support_Status` CHECK (`Status` IN ('Pending','Rejected','Cancelled','NeedsReview'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `ordersupportaudit` (
+ `Id` bigint NOT NULL AUTO_INCREMENT,
+ `SupportId` bigint NOT NULL,
+ `ActorId` int DEFAULT NULL,
+ `Action` varchar(30) NOT NULL,
+ `Reason` varchar(1000) NOT NULL,
+ `CreatedAt` datetime(6) NOT NULL,
+ PRIMARY KEY (`Id`),
+ KEY `IX_SupportAudit_Request` (`SupportId`),
+ CONSTRAINT `FK_SupportAudit_Request` FOREIGN KEY (`SupportId`) REFERENCES `ordersupport` (`Id`),
+ CONSTRAINT `FK_SupportAudit_Actor` FOREIGN KEY (`ActorId`) REFERENCES `taikhoan` (`MaTaiKhoan`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

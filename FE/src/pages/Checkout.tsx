@@ -1,3 +1,6 @@
+import OrderWorkflowPanel from "../components/OrderWorkflowPanel";
+import MotionPresence from "../components/MotionPresence";
+import CustomerOrderSteps from "../components/CustomerOrderSteps";
 import MediaImage from "../components/MediaImage";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -68,6 +71,7 @@ interface PhuongThucThanhToan {
 
 interface GioHangDong {
   tenMonAn: string;
+  ghiChu?: string | null;
   hinhAnh?: string | null;
   soLuong: number;
   thanhTien: number;
@@ -81,6 +85,10 @@ interface GioHang {
   maNhaHang: number | null;
   chiTiet: GioHangDong[];
   canLamMoi?: boolean;
+}
+
+interface CheckoutLine extends DongMonNho {
+  ghiChu?: string | null;
 }
 
 interface DonTamDaTao {
@@ -100,9 +108,10 @@ function soTien(raw: TienDonHang): CheckoutData {
 
 function mapDong(
   chiTiet: GioHangDong[],
-): DongMonNho[] {
+): CheckoutLine[] {
   return chiTiet.map((item) => ({
     tenMonAn: item.tenMonAn,
+    ghiChu: item.ghiChu,
     hinhAnh: item.hinhAnh?.trim() || null,
     soLuong: item.soLuong,
     thanhTien: item.thanhTien,
@@ -226,7 +235,15 @@ function Checkout() {
     useState<DonTamDaTao | null>(null);
 
   const [dongGio, setDongGio] =
-    useState<DongMonNho[]>([]);
+    useState<CheckoutLine[]>([]);
+
+  useEffect(() => {
+    if (!showBill) return;
+    const heading = document.querySelector<HTMLHeadingElement>(".checkout-review-title h1");
+    if (!heading) return;
+    heading.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [showBill]);
 
   const [tenNhaHang, setTenNhaHang] =
     useState("");
@@ -974,7 +991,7 @@ function Checkout() {
                 Xác nhận lần cuối
               </small>
 
-              <h1>
+              <h1 tabIndex={-1}>
                 Kiểm tra đơn hàng
               </h1>
 
@@ -997,6 +1014,7 @@ function Checkout() {
             Sửa thông tin
           </button>
         </header>
+<CustomerOrderSteps current="review" />
 
         {cartWasRefreshed && (
           <div className="checkout-retry-notice" role="status">
@@ -1107,6 +1125,9 @@ function Checkout() {
                             )
                             .join(", ")}
                         </p>
+                      )}
+                      {line.ghiChu && (
+                        <p className="checkout-item-note"><strong>Ghi chú món:</strong> {line.ghiChu}</p>
                       )}
                     </div>
 
@@ -1324,7 +1345,7 @@ function Checkout() {
         </div>
       </div>
 
-      {showQr && payment && (
+      <MotionPresence present={Boolean(showQr && payment)}>{showQr && payment && (
         <div
           className="qr-overlay qr-overlay-v2"
           role="dialog"
@@ -1332,6 +1353,7 @@ function Checkout() {
           aria-labelledby="qr-title"
         >
           <div className="qr-dialog qr-dialog-v2">
+            {donDaTao && <OrderWorkflowPanel orderId={donDaTao.maDonHang} compact />}
             <header className="qr-dialog-header">
               <div className="qr-dialog-icon">
                 <QrCode size={24} />
@@ -1449,7 +1471,7 @@ function Checkout() {
             </div>
           </div>
         </div>
-      )}
+      )}</MotionPresence>
     </main>
   );
 }
@@ -1506,6 +1528,7 @@ function Checkout() {
             hàng chuẩn bị món cho bạn.
           </p>
         </header>
+<CustomerOrderSteps current="checkout" />
 
         {cartWasRefreshed && (
           <div className="checkout-retry-notice" role="status">
@@ -1914,6 +1937,9 @@ function Checkout() {
                             .join(", ")}
                         </p>
                       )}
+                      {line.ghiChu && (
+                        <p className="checkout-item-note"><strong>Ghi chú món:</strong> {line.ghiChu}</p>
+                      )}
                     </div>
 
                     <strong>
@@ -2015,7 +2041,7 @@ function Checkout() {
         </div>
       </div>
 
-      {showVoucherPicker && (
+      <MotionPresence present={Boolean(showVoucherPicker)}>{showVoucherPicker && (
         <div
           className="checkout-voucher-overlay"
           role="presentation"
@@ -2170,7 +2196,7 @@ function Checkout() {
             </div>
           </section>
         </div>
-      )}
+      )}</MotionPresence>
     </main>
   );
 }

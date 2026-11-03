@@ -8,6 +8,7 @@ import "@fontsource/be-vietnam-pro/700.css";
 
 import "./App.css";
 import App from "./App";
+import "./styles/FirstGreenRestoration.css";
 
 createRoot(
     document.getElementById("root")!

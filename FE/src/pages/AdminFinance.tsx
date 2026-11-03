@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Pagination from "../components/Pagination";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -44,23 +45,30 @@ export default function AdminFinance() {
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [orderPage, setOrderPage] = useState(1);
+  const [periodPage, setPeriodPage] = useState(1);
+  const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     try {
       setLoading(true);
       setError("");
-      setData(await getFinanceOverview({
+      const result = await getFinanceOverview({
         tuNgay: appliedFilters.tuNgay || undefined,
         denNgay: appliedFilters.denNgay || undefined,
-      }));
+        orderPageNumber: orderPage,
+        periodPageNumber: periodPage,
+      });
+      if (sequence === loadSequence.current) setData(result);
     } catch (loadError) {
-      setError(loadError instanceof Error
+      if (sequence === loadSequence.current) setError(loadError instanceof Error
         ? loadError.message
         : "Không thể tải dữ liệu tài chính.");
     } finally {
-      setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [appliedFilters]);
+  }, [appliedFilters, orderPage, periodPage]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void load(), 0);
@@ -71,6 +79,8 @@ export default function AdminFinance() {
 
   const applyFilters = (event: React.FormEvent) => {
     event.preventDefault();
+    setOrderPage(1);
+    setPeriodPage(1);
     setAppliedFilters(filters);
   };
 
@@ -102,7 +112,7 @@ export default function AdminFinance() {
   ] : [];
 
   return (
-    <div className="admin-finance-page">
+    <div className="admin-finance-page" aria-busy={loading}>
       <header className="admin-promotions-heading">
         <div>
           <span>Kế toán & tài chính</span>
@@ -141,6 +151,7 @@ export default function AdminFinance() {
           <CircleAlert size={18} /> {error}
         </div>
       )}
+      {loading && data && <p role="status">Đang tải dữ liệu tài chính...</p>}
 
       {loading && !data ? (
         <div className="admin-promotions-loading">Đang tổng hợp dữ liệu tài chính...</div>
@@ -188,7 +199,7 @@ export default function AdminFinance() {
             <div className="admin-finance-table-heading">
               <div>
                 <span>Ghi nhận theo đơn hoàn thành</span>
-                <h2>Doanh thu Admin gần đây</h2>
+                <h2>Doanh thu theo đơn hàng</h2>
               </div>
               <strong>{data.tongSoDon} đơn hợp lệ</strong>
             </div>
@@ -198,9 +209,9 @@ export default function AdminFinance() {
                   <tr>
                     <th>Đơn hàng</th>
                     <th>Nhà hàng</th>
-                    <th>Phí nền tảng</th>
-                    <th>Voucher hệ thống</th>
-                    <th>Doanh thu Admin</th>
+                    <th className="finance-number">Phí nền tảng</th>
+                    <th className="finance-number">Voucher hệ thống</th>
+                    <th className="finance-number">Doanh thu Admin</th>
                     <th>Thanh toán</th>
                     <th>Đối soát</th>
                   </tr>
@@ -219,9 +230,9 @@ export default function AdminFinance() {
                         <small>{dateTime(order.thoiGianGiaoThucTe)}</small>
                       </td>
                       <td>{order.tenNhaHang}</td>
-                      <td>{money(order.phiNenTang)}</td>
-                      <td>{money(order.giamGiaHeThong)}</td>
-                      <td>
+                      <td className="finance-number">{money(order.phiNenTang)}</td>
+                      <td className="finance-number">{money(order.giamGiaHeThong)}</td>
+                      <td className="finance-number">
                         <strong className={order.doanhThuThuan < 0 ? "finance-negative" : "finance-positive"}>
                           {money(order.doanhThuThuan)}
                         </strong>
@@ -242,13 +253,14 @@ export default function AdminFinance() {
               Doanh thu Admin = phí nền tảng − voucher do hệ thống tài trợ. Số liệu lấy từ
               snapshot của đơn đã hoàn thành và chỉ ghi nhận khi khoản thanh toán khớp chính xác.
             </p>
+            <Pagination {...data.donDoanhThuPagination} disabled={loading} onPageChange={setOrderPage} />
           </section>
 
           <section className="admin-promotions-panel">
             <div className="admin-finance-table-heading">
               <div>
                 <span>Dấu vết kiểm toán</span>
-                <h2>Các kỳ đối soát gần đây</h2>
+                <h2>Các kỳ đối soát</h2>
               </div>
               <Link to="/admin/doi-soat">Mở trang đối soát</Link>
             </div>
@@ -258,9 +270,9 @@ export default function AdminFinance() {
                   <tr>
                     <th>Kỳ</th>
                     <th>Nhà hàng</th>
-                    <th>Phí nền tảng</th>
-                    <th>Voucher hệ thống</th>
-                    <th>Thuần</th>
+                    <th className="finance-number">Phí nền tảng</th>
+                    <th className="finance-number">Voucher hệ thống</th>
+                    <th className="finance-number">Thuần</th>
                     <th>Thanh toán</th>
                     <th>Trạng thái</th>
                   </tr>
@@ -282,9 +294,9 @@ export default function AdminFinance() {
                         {period.tenNhaHang}
                         <small>{period.tongSoDon} đơn</small>
                       </td>
-                      <td>{money(period.tongPhiNenTang)}</td>
-                      <td>{money(period.tongGiamGiaHeThong)}</td>
-                      <td>
+                      <td className="finance-number">{money(period.tongPhiNenTang)}</td>
+                      <td className="finance-number">{money(period.tongGiamGiaHeThong)}</td>
+                      <td className="finance-number">
                         <strong className={period.doanhThuThuan < 0 ? "finance-negative" : "finance-positive"}>
                           {money(period.doanhThuThuan)}
                         </strong>
@@ -308,6 +320,7 @@ export default function AdminFinance() {
                 </tbody>
               </table>
             </div>
+            <Pagination {...data.kyDoiSoatPagination} disabled={loading} onPageChange={setPeriodPage} />
           </section>
         </>
       )}

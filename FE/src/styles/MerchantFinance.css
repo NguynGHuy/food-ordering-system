@@ -1,0 +1,170 @@
+/* Restaurant identity, legal documents and contract share one document workspace. */
+.foodie-merchant-shell .merchant-info-page { max-width: none; padding: 0; margin: 0; }
+.foodie-merchant-shell .merchant-info-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: 24px; }
+.foodie-merchant-shell :is(.merchant-info-editor, .merchant-info-sidebar) { display: grid; gap: 24px; min-width: 0; }
+.foodie-merchant-shell :is(.merchant-info-section, .merchant-info-preview, .merchant-info-system) { padding: 24px; background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .merchant-info-section-title { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid #dce1da; margin-bottom: 20px; color: #24584a; }
+.foodie-merchant-shell .merchant-info-section-title > svg { flex-shrink: 0; margin-top: 4px; color: #24584a; }
+.foodie-merchant-shell .merchant-info-section-title h2 { color: #202923; font-size: 18px; margin: 0 0 4px; }
+.foodie-merchant-shell .merchant-info-section-title p { color: #5d685f; margin: 0; font-size: 13px; }
+.foodie-merchant-shell .merchant-info-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.foodie-merchant-shell .merchant-info-field { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin: 0; color: #202923; min-width: 0; font-size: 14px; font-weight: 500; }
+.foodie-merchant-shell .merchant-info-field.full { grid-column: 1 / -1; }
+.foodie-merchant-shell .merchant-info-field > :is(input, textarea, select) { width: 100%; }
+.foodie-merchant-shell .merchant-info-field small { color: #5d685f; font-size: 12px; font-weight: 400; }
+.foodie-merchant-shell :is(.merchant-info-input-icon, .merchant-info-price-input) { display: flex; align-items: center; gap: 8px; color: #5d685f; border: 1px solid #778478; border-radius: 6px; background: #fff; padding: 0 12px; }
+.foodie-merchant-shell :is(.merchant-info-input-icon, .merchant-info-price-input) input { width: 100%; border: 0; background: transparent; padding-left: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-info-operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.foodie-merchant-shell .merchant-info-operation-grid > :last-child { grid-column: 1 / -1; }
+.foodie-merchant-shell .merchant-info-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding: 20px 0 0; border-top: 1px solid #dce1da; background: transparent; box-shadow: none; }
+.foodie-merchant-shell .merchant-info-approval { border: 1px solid #e4d3a4; color: #7a5700; background: #fff4d6; border-radius: 6px; font-size: 13px; padding: 8px 12px; }
+.foodie-merchant-shell .merchant-info-approval.is-approved { color: #24584a; background: #eaf0eb; border-color: #c6d6c8; }
+.foodie-merchant-shell .merchant-info-preview { padding: 0; overflow: hidden; }
+.foodie-merchant-shell .merchant-info-cover { height: 180px; background: #edf0e8; }
+.foodie-merchant-shell .merchant-info-cover img { width: 100%; height: 100%; object-fit: cover; }
+.foodie-merchant-shell .merchant-info-cover-empty { color: #5d685f; background: #edf0e8; }
+.foodie-merchant-shell .merchant-info-open-badge { border-radius: 4px; background: #fff; color: #24584a; box-shadow: none; font-size: 12px; }
+.foodie-merchant-shell .merchant-info-open-badge.closed { color: #5d685f; background: #f7f5ef; }
+.foodie-merchant-shell .merchant-info-preview-body { padding: 20px; }
+.foodie-merchant-shell .merchant-info-preview-body > span { color: #5d685f; font-size: 12px; letter-spacing: 0; text-transform: none; }
+.foodie-merchant-shell .merchant-info-preview-body h2 { color: #202923; font-size: 20px; overflow-wrap: anywhere; }
+.foodie-merchant-shell :is(.merchant-info-preview-description, .merchant-info-preview-line) { color: #5d685f; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-info-preview-meta { background: transparent; padding: 12px 0 0; border-top: 1px solid #dce1da; }
+.foodie-merchant-shell .merchant-info-preview-meta > span { color: #24584a; background: transparent; }
+.foodie-merchant-shell .merchant-info-system > div { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; border-bottom: 1px solid #dce1da; padding: 12px 0; }
+.foodie-merchant-shell .merchant-info-system strong { text-align: right; color: #202923; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-info-system strong.open { color: #24584a; }
+.foodie-merchant-shell .merchant-info-system strong.closed { color: #5d685f; }
+.foodie-merchant-shell .merchant-legal-fieldset { min-width: 0; border: 0; padding: 0; margin: 0; display: grid; gap: 24px; }
+.foodie-merchant-shell .merchant-legal-documents { display: grid; gap: 0; }
+.foodie-merchant-shell .merchant-legal-document { display: grid; gap: 16px; padding: 20px 0; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: transparent; }
+.foodie-merchant-shell .merchant-legal-document:last-child { border-bottom: 0; }
+.foodie-merchant-shell .merchant-legal-document-heading { flex-wrap: wrap; gap: 8px; }
+.foodie-merchant-shell .merchant-legal-document-heading span { background: #f7f5ef; color: #5d685f; border-radius: 4px; }
+.foodie-merchant-shell .merchant-legal-document-heading span.is-uploaded { color: #24584a; background: #eaf0eb; }
+.foodie-merchant-shell .merchant-legal-download { color: #24584a; background: transparent; border: 1px solid #778478; border-radius: 6px; padding: 10px 14px; min-height: 44px; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-legal-file-picker { background: #f7f5ef; color: #24584a; border: 1px dashed #778478; border-radius: 6px; min-width: 0; padding: 16px; }
+.foodie-merchant-shell .merchant-legal-help { color: #5d685f; }
+.foodie-merchant-shell .merchant-contract-content { max-height: 540px; overflow-y: auto; padding: 20px; background: #f7f5ef; border: 1px solid #dce1da; border-radius: 6px; color: #202923; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.foodie-merchant-shell .merchant-contract-consent { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; background: transparent; border: 0; border-radius: 0; }
+.foodie-merchant-shell .merchant-contract-consent input { flex-shrink: 0; width: 20px; height: 20px; margin: 2px 0 0; }
+.foodie-merchant-shell .merchant-contract-sign { margin-top: 20px; padding: 0; background: transparent; border: 0; }
+.foodie-merchant-shell :is(.merchant-contract-sign-note, .merchant-contract-policy) { color: #5d685f; background: #f7f5ef; padding: 12px; border-radius: 6px; }
+.foodie-merchant-shell .merchant-contract-fee { padding: 16px 0; background: transparent; border-bottom: 1px solid #dce1da; border-radius: 0; }
+.foodie-merchant-shell .merchant-contract-fee strong { color: #24584a; font-size: 28px; }
+.foodie-merchant-shell .merchant-contract-dates > div { background: transparent; padding: 12px 0; border-bottom: 1px solid #dce1da; border-radius: 0; }
+.foodie-merchant-shell .merchant-contract-links { display: flex; flex-wrap: wrap; gap: 12px; }
+.foodie-merchant-shell .merchant-contract-links a { color: #24584a; min-height: 44px; padding: 10px 0; }
+.foodie-merchant-shell .merchant-contract-resubmit-notice { background: #fff4d6; color: #7a5700; border: 1px solid #e4d3a4; border-radius: 6px; padding: 16px; }
+.foodie-merchant-shell .merchant-contract-resubmit-steps { display: grid; gap: 12px; }
+.foodie-merchant-shell .merchant-contract-resubmit-steps > div { background: #f7f5ef; color: #202923; border: 1px solid #dce1da; border-radius: 6px; }
+/* Eligibility and operating mode remain separate, with deliberate choice rows. */
+.foodie-merchant-shell .merchant-status-page { padding: 0; max-width: none; margin: 0; }
+.foodie-merchant-shell .merchant-current-status { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding: 24px; margin-bottom: 24px; color: #24584a; background: #eaf0eb; border: 1px solid #c6d6c8; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .merchant-current-status.is-closed { background: #f0f0e9; color: #5d685f; border-color: #dce1da; }
+.foodie-merchant-shell .merchant-current-status::before, .foodie-merchant-shell .merchant-current-status::after { content: none; }
+.foodie-merchant-shell .merchant-current-status-content { flex: 1; min-width: 0; }
+.foodie-merchant-shell .merchant-current-status-content small { display: none; }
+.foodie-merchant-shell .merchant-current-status-content h2 { color: inherit; font-size: 22px; margin: 0 0 4px; }
+.foodie-merchant-shell .merchant-current-status-content p { color: inherit; margin: 0; }
+.foodie-merchant-shell .merchant-current-status-icon { color: inherit; background: transparent; border: 0; box-shadow: none; }
+.foodie-merchant-shell .merchant-current-mode { padding: 12px 16px; border: 1px solid #b9ccbe; background: #fff; border-radius: 6px; }
+.foodie-merchant-shell .merchant-current-mode :is(small, strong) { color: #24584a; }
+.foodie-merchant-shell .merchant-status-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+.foodie-merchant-shell .merchant-status-card { padding: 24px; background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .merchant-status-side { display: grid; gap: 20px; }
+.foodie-merchant-shell .merchant-mode-list { gap: 12px; }
+.foodie-merchant-shell .merchant-mode-option { min-width: 0; gap: 12px; padding: 20px 16px; border: 1px solid #dce1da; border-radius: 6px; background: #fff; box-shadow: none; text-align: left; }
+.foodie-merchant-shell .merchant-mode-option.selected { background: #eaf0eb; border-color: #24584a; opacity: 1; }
+.foodie-merchant-shell .merchant-mode-option > div { min-width: 0; }
+.foodie-merchant-shell .merchant-mode-option strong { color: #202923; }
+.foodie-merchant-shell .merchant-mode-option small { color: #5d685f; white-space: normal; }
+.foodie-merchant-shell :is(.merchant-mode-icon, .merchant-side-icon) { color: #24584a; background: #eaf0eb; border-radius: 6px; box-shadow: none; }
+.foodie-merchant-shell .merchant-mode-selected { color: #24584a; background: transparent; border-radius: 4px; font-size: 12px; }
+.foodie-merchant-shell .merchant-status-guide { background: #fff; }
+/* Wallet: account summary, then a ledger with aligned amounts and readable references. */
+.foodie-merchant-shell .restaurant-wallet-page { max-width: none; padding: 0; margin: 0; }
+.foodie-merchant-shell .restaurant-wallet-page.wallet-history-container { width: 100%; max-width: none; margin: 0; }
+.foodie-merchant-shell .wallet-history-hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: 24px; padding: 0; background: transparent; border: 0; box-shadow: none; margin-bottom: 24px; }
+.foodie-merchant-shell .wallet-history-hero::before, .foodie-merchant-shell .wallet-history-hero::after { content: none; }
+.foodie-merchant-shell .wallet-history-hero h1 { color: #202923; margin: 0 0 8px; font-size: 28px; }
+.foodie-merchant-shell .wallet-history-hero p { color: #5d685f; }
+.foodie-merchant-shell .wallet-balance-card { min-width: 0; padding: 20px; background: #24584a; color: #fff; border: 0; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .wallet-balance-card > strong { display: block; font-size: 28px; color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.foodie-merchant-shell .wallet-balance-card :is(small, p) { color: #eaf0eb; }
+.foodie-merchant-shell .wallet-balance-card::after { content: none; }
+.foodie-merchant-shell .wallet-status { color: #fff; background: transparent; border: 1px solid #9bb8a7; border-radius: 4px; }
+.foodie-merchant-shell .wallet-history-panel { padding: 24px; background: #fff; border: 1px solid #dce1da; border-radius: 8px; box-shadow: none; }
+.foodie-merchant-shell .wallet-history-panel-head { padding: 0 0 16px; border-bottom: 1px solid #dce1da; gap: 16px; flex-wrap: wrap; }
+.foodie-merchant-shell .wallet-refresh-button { color: #24584a; background: #fff; border: 1px solid #778478; min-height: 44px; }
+.foodie-merchant-shell .wallet-transaction-list { gap: 0; }
+.foodie-merchant-shell .wallet-transaction-item { padding: 20px 0; background: transparent; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; box-shadow: none; align-items: start; }
+.foodie-merchant-shell .wallet-transaction-main { min-width: 0; }
+.foodie-merchant-shell .wallet-transaction-icon { color: #24584a; background: #eaf0eb; border-radius: 6px; }
+.foodie-merchant-shell .wallet-transaction-icon.is-debit { color: #a12f2a; background: #fcedeb; }
+.foodie-merchant-shell .wallet-transaction-title-row { gap: 16px; }
+.foodie-merchant-shell .wallet-transaction-title-row h3 { font-size: 15px; color: #202923; }
+.foodie-merchant-shell .wallet-transaction-title-row strong { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 17px; }
+.foodie-merchant-shell .wallet-transaction-title-row .is-credit { color: #24584a; }
+.foodie-merchant-shell .wallet-transaction-title-row .is-debit { color: #a12f2a; }
+.foodie-merchant-shell .wallet-transaction-meta { gap: 8px 20px; color: #5d685f; overflow-wrap: anywhere; }
+.foodie-merchant-shell .wallet-transaction-meta a { color: #24584a; text-decoration: underline; text-underline-offset: 3px; }
+.foodie-merchant-shell :is(.wallet-history-empty, .wallet-history-loading) { background: transparent; color: #5d685f; padding: 40px 12px; }
+.foodie-merchant-shell .wallet-history-error { background: #fcedeb; color: #a12f2a; border: 1px solid #e6c3bf; border-radius: 6px; }
+/* Settlement tables keep every financial column. Horizontal scrolling is local. */
+.foodie-merchant-shell .reconciliation-explainer { display: flex; flex-wrap: wrap; gap: 12px; background: #eaf0eb; color: #24584a; border: 1px solid #c6d6c8; border-radius: 6px; padding: 16px; }
+.foodie-merchant-shell .reconciliation-explainer strong { color: #24584a; }
+.foodie-merchant-shell .reconciliation-list-panel { padding: 20px; }
+.foodie-merchant-shell .reconciliation-table-scroll, .foodie-merchant-portal .reconciliation-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #b8c5ba #f7f5ef; }
+.foodie-merchant-shell .reconciliation-list-table, .foodie-merchant-portal .reconciliation-orders table { background: #fff; border-collapse: collapse; font-size: 13px; }
+.foodie-merchant-shell .reconciliation-list-table :is(td, th), .foodie-merchant-portal .reconciliation-orders :is(td, th) { padding: 14px 12px; border-color: #dce1da; font-variant-numeric: tabular-nums; color: #202923; }
+.foodie-merchant-shell .reconciliation-list-table th, .foodie-merchant-portal .reconciliation-orders th { background: #f7f5ef; color: #5d685f; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.foodie-merchant-shell .reconciliation-list-table :is(td, th):nth-child(n+3):nth-child(-n+6), .foodie-merchant-portal .reconciliation-orders :is(td, th):nth-child(n+3) { text-align: right; }
+.foodie-merchant-shell .finance-negative, .foodie-merchant-portal .finance-negative { color: #a12f2a; }
+.foodie-merchant-shell .finance-positive, .foodie-merchant-portal .finance-positive { color: #24584a; }
+.foodie-merchant-portal .merchant-config-dialog.reconciliation-modal { width: min(1440px, 100%); }
+.foodie-merchant-portal .reconciliation-breakdown { display: grid; gap: 24px; min-width: 0; }
+.foodie-merchant-portal .reconciliation-period-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; background: #f7f5ef; padding: 16px; border-radius: 6px; }
+.foodie-merchant-portal .reconciliation-period-meta > div { padding: 0; border: 0; background: transparent; }
+.foodie-merchant-portal .reconciliation-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid #dce1da; }
+.foodie-merchant-portal .reconciliation-metrics article { padding: 16px; border: 0; border-bottom: 1px solid #dce1da; border-radius: 0; background: #fff; }
+.foodie-merchant-portal .reconciliation-metrics strong { color: #202923; font-size: 16px; font-variant-numeric: tabular-nums; }
+.foodie-merchant-portal .reconciliation-result { padding: 20px; background: #eaf0eb; border: 1px solid #c6d6c8; border-radius: 6px; }
+.foodie-merchant-portal .reconciliation-result.is-negative { background: #fcedeb; border-color: #e6c3bf; }
+.foodie-merchant-portal .reconciliation-result > div:last-child > strong { color: #24584a; }
+.foodie-merchant-portal .reconciliation-result.is-negative > div:last-child > strong { color: #a12f2a; }
+.foodie-merchant-portal :is(.reconciliation-period-meta, .reconciliation-metrics, .reconciliation-result) small { color: #5d685f; text-transform: none; letter-spacing: 0; }
+.foodie-merchant-portal :is(.reconciliation-orders, .reconciliation-audit) { min-width: 0; border: 1px solid #dce1da; border-radius: 6px; box-shadow: none; }
+.foodie-merchant-portal .reconciliation-orders-heading { background: #f7f5ef; padding: 16px; }
+.foodie-merchant-portal .reconciliation-orders-heading small { color: #24584a; }
+.foodie-merchant-portal .reconciliation-audit li { border-color: #dce1da; overflow-wrap: anywhere; }
+.foodie-merchant-portal :is(.reconciliation-confirm-box, .reconciliation-dispute-box, .reconciliation-dispute-status, .reconciliation-paid) { padding: 20px; margin-top: 24px; border: 1px solid #dce1da; border-radius: 6px; background: #f7f5ef; color: #202923; }
+.foodie-merchant-portal .reconciliation-confirm-box > button { color: #fff; background: #24584a; min-height: 44px; border: 1px solid #24584a; border-radius: 6px; padding: 10px 16px; }
+.foodie-merchant-portal .reconciliation-dispute-box textarea { width: 100%; margin: 12px 0; }
+.foodie-merchant-portal .reconciliation-dispute-box > button { color: #a12f2a; background: #fff; min-height: 44px; border: 1px solid #a12f2a; border-radius: 6px; padding: 10px 16px; }
+.foodie-merchant-portal .reconciliation-paid { background: #eaf0eb; color: #24584a; }
+@media (max-width: 1279px) {
+  .foodie-merchant-shell .merchant-info-layout { grid-template-columns: minmax(0, 1fr) 280px; }
+}
+@media (max-width: 1023px) {
+  .foodie-merchant-shell .merchant-info-layout, .foodie-merchant-shell .merchant-status-layout { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-info-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .foodie-merchant-shell .merchant-info-fields, .foodie-merchant-shell .merchant-info-operation-grid, .foodie-merchant-shell .merchant-info-sidebar, .foodie-merchant-shell .wallet-history-hero { grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell :is(.merchant-info-section, .merchant-info-system, .merchant-status-card, .wallet-history-panel) { padding: 16px; }
+  .foodie-merchant-shell .merchant-current-status { padding: 20px 16px; gap: 12px; }
+  .foodie-merchant-shell .merchant-current-mode { width: 100%; }
+  .foodie-merchant-shell .merchant-mode-option { flex-wrap: wrap; padding: 16px 12px; }
+  .foodie-merchant-shell .merchant-mode-option > div { flex: 1; }
+  .foodie-merchant-shell .wallet-history-hero h1 { font-size: 24px; }
+  .foodie-merchant-shell .wallet-transaction-title-row { flex-wrap: wrap; }
+  .foodie-merchant-shell .wallet-transaction-title-row > strong { width: 100%; text-align: right; }
+  .foodie-merchant-shell .wallet-transaction-meta { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .foodie-merchant-shell .merchant-notification-row { gap: 12px; padding: 16px; flex-wrap: wrap; }
+  .foodie-merchant-shell .merchant-notification-action { margin-left: auto; }
+  .foodie-merchant-portal .reconciliation-period-meta, .foodie-merchant-portal .reconciliation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodie-merchant-portal .reconciliation-result { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .foodie-merchant-portal .reconciliation-result > div:last-child { padding: 16px 0 0; border-left: 0; border-top: 1px solid #c6d6c8; }
+  .foodie-merchant-portal .reconciliation-audit li > div { flex-wrap: wrap; }
+}

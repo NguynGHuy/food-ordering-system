@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import OrderAttentionList from "../components/OrderAttentionList";
+import MotionPresence from "../components/MotionPresence";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Link } from "react-router-dom";
 
@@ -13,6 +15,7 @@ import {
   Copy,
   ReceiptText,
   RefreshCw,
+  Search,
   Store,
   TriangleAlert,
   Truck,
@@ -118,6 +121,10 @@ function Orders() {
   const PAGE_SIZE = 8;
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [searchDraft, setSearchDraft] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const loadGeneration = useRef(0);
   const [loadError, setLoadError] = useState("");
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>("TatCa");
@@ -157,6 +164,7 @@ function Orders() {
   };
 
   const loadOrders = useCallback(async (showFullLoading = true) => {
+    const generation = ++loadGeneration.current;
     try {
       if (showFullLoading) {
         setLoading(true);
@@ -168,14 +176,18 @@ function Orders() {
         pageNumber,
         pageSize: PAGE_SIZE,
         filter: FILTER_VALUES[activeFilter],
+        search: appliedSearch || undefined,
       });
+      if (generation !== loadGeneration.current) return;
 
       setOrders(data.items);
       setTotalItems(data.totalItems);
       setTotalPages(data.totalPages);
       setCounts(data.counts);
+      setHasLoaded(true);
       if (data.pageNumber !== pageNumber) setPageNumber(data.pageNumber);
     } catch (error) {
+      if (generation !== loadGeneration.current) return;
       // Lỗi làm mới nền không làm mất danh sách đang hiển thị.
       if (showFullLoading) {
         setLoadError(
@@ -185,11 +197,11 @@ function Orders() {
         );
       }
     } finally {
-      if (showFullLoading) {
+      if (generation === loadGeneration.current) {
         setLoading(false);
       }
     }
-  }, [activeFilter, pageNumber]);
+  }, [activeFilter, pageNumber, appliedSearch]);
 
   useEffect(() => {
     const handleRealtimeUpdate = () => {
@@ -279,7 +291,7 @@ function Orders() {
     }
   };
 
-  if (loading) {
+  if (loading && !hasLoaded) {
     return (
       <main className="customer-orders-page">
         <div className="loading-spinner" style={{ margin: "100px auto" }} />
@@ -290,6 +302,7 @@ function Orders() {
   return (
     <main className="customer-orders-page">
       <div className="customer-orders-container">
+        <OrderAttentionList />
         <header className="customer-orders-hero">
           <div className="customer-orders-title">
             <span className="customer-orders-title-icon">
@@ -306,9 +319,25 @@ function Orders() {
 
           <div className="customer-orders-total">
             <strong>{counts.all}</strong>
-            <span>đơn hàng</span>
+            <span>{appliedSearch ? "đơn phù hợp" : "đơn hàng"}</span>
           </div>
         </header>
+
+        <form className="customer-orders-search" onSubmit={(event) => {
+          event.preventDefault();
+          setPageNumber(1);
+          setAppliedSearch(searchDraft.trim());
+        }}>
+          <label htmlFor="customer-order-search">Tìm đơn hàng</label>
+          <div className="customer-orders-search-row">
+            <div className="customer-orders-search-field">
+              <Search size={18} aria-hidden="true" />
+              <input id="customer-order-search" type="search" maxLength={150} value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} placeholder="Mã đơn hoặc tên nhà hàng" />
+            </div>
+            <button type="submit" disabled={loading}>Tìm kiếm</button>
+            {(searchDraft || appliedSearch) && <button type="button" className="customer-orders-clear-search" disabled={loading} onClick={() => { setSearchDraft(""); setAppliedSearch(""); setPageNumber(1); }}>Xóa tìm kiếm</button>}
+          </div>
+        </form>
 
         {notice && (
           <div className="customer-orders-notice" role="status">
@@ -341,7 +370,8 @@ function Orders() {
           </div>
         )}
 
-        {!loadError && counts.all === 0 ? (
+        {loading && <p role="status" className="customer-orders-loading">Đang tải đơn hàng...</p>}
+        {!loadError && !loading && counts.all === 0 && !appliedSearch ? (
           <section className="customer-orders-empty">
             <span>
               <ReceiptText size={31} />
@@ -357,13 +387,14 @@ function Orders() {
             </Link>
           </section>
         ) : (
-          !loadError && (
+          !loadError && !loading && (
             <>
               <nav className="customer-order-filters" aria-label="Lọc đơn hàng">
                 {filterItems.map((filter) => (
                   <button
                     key={filter.key}
                     type="button"
+                    aria-pressed={activeFilter === filter.key}
                     className={activeFilter === filter.key ? "active" : ""}
                     onClick={() => {
                       setActiveFilter(filter.key);
@@ -380,13 +411,15 @@ function Orders() {
                 <section className="customer-orders-filter-empty">
                   <ReceiptText size={26} />
 
-                  <h3>Không có đơn hàng trong mục này</h3>
+                  <h3>{appliedSearch ? "Không tìm thấy đơn hàng phù hợp" : "Không có đơn hàng trong mục này"}</h3>
 
                   <button
                     type="button"
                     onClick={() => {
                       setActiveFilter("TatCa");
                       setPageNumber(1);
+                      setSearchDraft("");
+                      setAppliedSearch("");
                     }}
                   >
                     Xem tất cả đơn hàng
@@ -528,7 +561,7 @@ function Orders() {
         )}
       </div>
 
-      {cancelTarget && (
+      <MotionPresence present={Boolean(cancelTarget)}>{cancelTarget && (
         <div
           className="customer-cancel-overlay"
           role="dialog"
@@ -614,7 +647,7 @@ function Orders() {
             </div>
           </section>
         </div>
-      )}
+      )}</MotionPresence>
     </main>
   );
 }
