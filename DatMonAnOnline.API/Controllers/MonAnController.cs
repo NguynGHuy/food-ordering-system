@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 using DatMonAnOnline.API.Common;
 
 namespace DatMonAnOnline.API.Controllers
@@ -31,6 +32,7 @@ namespace DatMonAnOnline.API.Controllers
             public string? MoTa { get; set; }
 
             [VndAmount]
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
             public decimal Gia { get; set; }
 
             [MaxLength(255), FoodImageReference]
@@ -49,6 +51,7 @@ namespace DatMonAnOnline.API.Controllers
             public string? MoTa { get; set; }
 
             [VndAmount]
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
             public decimal Gia { get; set; }
 
             [MaxLength(255), FoodImageReference]
@@ -130,6 +133,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.TenMonAn,
                     x.MoTa,
                     x.Gia,
+                    GiaNhap = x.Gia.ToString(),
                     x.HinhAnh,
                     x.TrangThai,
                     x.DanhGiaTrungBinh
@@ -243,6 +247,7 @@ namespace DatMonAnOnline.API.Controllers
                     x.TenMonAn,
                     x.MoTa,
                     x.Gia,
+                    GiaNhap = x.Gia.ToString(),
                     x.HinhAnh,
                     x.TrangThai,
                     x.DanhGiaTrungBinh
@@ -621,6 +626,7 @@ namespace DatMonAnOnline.API.Controllers
                 monAn.TenMonAn,
                 monAn.MoTa,
                 monAn.Gia,
+                GiaNhap = monAn.Gia.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 monAn.HinhAnh,
                 monAn.TrangThai,
                 monAn.DanhGiaTrungBinh,

@@ -33,6 +33,8 @@ public static class ToppingValidator
 
         foreach (var nhom in nhomToppings)
         {
+            if (nhom.BatBuocChon && !nhom.Toppings.Any(topping => topping.TrangThai == true))
+                return $"Món hiện chưa đủ tùy chọn để đặt: nhóm \"{nhom.TenNhom}\" đã hết lựa chọn. Vui lòng chọn món khác hoặc liên hệ quán.";
             var soLuongDaChon = nhom.Toppings.Count(topping =>
                 maToppingDaChon.Contains(topping.MaTopping));
 

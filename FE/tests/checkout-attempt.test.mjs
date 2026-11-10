@@ -18,6 +18,18 @@ beforeEach(() => {
     localStorage.setItem('token', 'test-session-only');
 });
 const success = () => new Response(JSON.stringify({ maDonHang: 9, maThanhToan: 10 }), { status: 201 });
+
+test('explicit rolled-back price rejection permits a new reviewed attempt; generic 409 remains recoverable', async () => {
+    const attempt = await beginCheckout({ ...payload, maXacNhanGia: 'A'.repeat(64) });
+    globalThis.fetch = async () => new Response(JSON.stringify({ message: 'Review new prices', code: 'CHECKOUT_PRICE_CHANGED', orderNotCreated: true }), { status: 409 });
+    await assert.rejects(submitCheckout(attempt), /Review new prices/);
+    assert.equal(await getPendingCheckout(), null);
+    const next = await beginCheckout({ ...payload, maXacNhanGia: 'B'.repeat(64) });
+    assert.notEqual(next.key, attempt.key);
+    globalThis.fetch = async () => new Response(JSON.stringify({ message: 'Conflict' }), { status: 409 });
+    await assert.rejects(submitCheckout(next), /Conflict/);
+    assert.equal((await getPendingCheckout()).key, next.key);
+});
 test('persist minimal payload/key before request, never JWT/address text/balance', async () => {
     const a = await beginCheckout(payload);
     assert.deepEqual((await getPendingCheckout()).payload, payload);

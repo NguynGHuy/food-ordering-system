@@ -42,6 +42,7 @@ import {
 import { beginCheckout, getPendingCheckout, submitCheckout } from "../services/checkoutAttempt";
 import { getCart, reserveCartForCheckout } from "../services/cartService";
 import { getCustomerProfile } from "../services/customerService";
+import { ApiError } from "../services/api";
 import {
   checkPromotion,
   getVoucherWallet,
@@ -58,6 +59,7 @@ import PaymentQr from "../components/PaymentQr";
 import VoucherCard from "../components/VoucherCard";
 
 interface CheckoutData {
+  maXacNhanGia?: string;
   tongTienHang: number;
   phiShip: number;
   soTienGiam: number;
@@ -85,6 +87,7 @@ interface GioHang {
   maNhaHang: number | null;
   chiTiet: GioHangDong[];
   canLamMoi?: boolean;
+  giaDaThayDoi?: boolean;
 }
 
 interface CheckoutLine extends DongMonNho {
@@ -99,6 +102,7 @@ interface DonTamDaTao {
 
 function soTien(raw: TienDonHang): CheckoutData {
   return {
+    maXacNhanGia: raw.maXacNhanGia,
     tongTienHang: Number(raw.tongTienHang),
     phiShip: Number(raw.phiShip),
     soTienGiam: Number(raw.soTienGiam),
@@ -250,6 +254,7 @@ function Checkout() {
 
   const [cartWasRefreshed, setCartWasRefreshed] =
     useState(false);
+  const [priceNotice, setPriceNotice] = useState("");
 
   const [
     phuongThucList,
@@ -379,7 +384,7 @@ function Checkout() {
         );
 
         setDongGio(
-          mapDong(cart.chiTiet),
+          mapDong(money.chiTiet ?? cart.chiTiet),
         );
 
         setCheckoutData(
@@ -387,6 +392,7 @@ function Checkout() {
         );
 
         setCartWasRefreshed(Boolean(cart.canLamMoi));
+        if (cart.giaDaThayDoi) setPriceNotice("Giá topping đã thay đổi. Chi tiết và tổng tiền đã được cập nhật theo giá mới; vui lòng kiểm tra lại.");
 
         const defaultPayment =
           paymentData.find(
@@ -523,6 +529,7 @@ function Checkout() {
         setCheckoutData(
           soTien(money),
         );
+        if (money.chiTiet) setDongGio(mapDong(money.chiTiet));
 
         setPromotionId(
           result.maKhuyenMai,
@@ -581,6 +588,7 @@ function Checkout() {
         );
 
         setPromotionId(null);
+        if (money.chiTiet) setDongGio(mapDong(money.chiTiet));
         setMaCode("");
         setVoucherCodeDraft("");
         setPromoMessage("");
@@ -624,7 +632,7 @@ function Checkout() {
       }
 
       const lines = mapDong(
-        cart.chiTiet,
+        money.chiTiet ?? cart.chiTiet,
       );
 
       const moneyData =
@@ -632,10 +640,17 @@ function Checkout() {
 
       setDongGio(lines);
       setCheckoutData(moneyData);
+      const changed = checkoutData?.maXacNhanGia !== undefined &&
+        checkoutData.maXacNhanGia !== money.maXacNhanGia;
+      if (changed) {
+        setPriceNotice("Giá hoặc thông tin giỏ đã thay đổi. Số tiền mới đã được cập nhật; vui lòng xem lại rồi xác nhận lần nữa.");
+        setShowBill(false);
+      }
 
       return {
         lines,
         tien: moneyData,
+        changed,
       };
     };
 
@@ -703,7 +718,8 @@ function Checkout() {
     try {
       setConfirming(true);
 
-      await recheckBeforeOrder();
+      const review = await recheckBeforeOrder();
+      if (review.changed) return;
 
       setShowBill(true);
     } catch (error) {
@@ -733,7 +749,11 @@ function Checkout() {
       }
       await handleNewPayment();
     } catch (error) {
-      setRecoveryError(error instanceof Error ? error.message : "Không thể xác minh kết quả.");
+      if (error instanceof ApiError && error.code === "CHECKOUT_PRICE_CHANGED" && error.orderNotCreated) {
+        await recheckBeforeOrder();
+        setShowBill(false);
+        setPriceNotice(error.message);
+      } else setRecoveryError(error instanceof Error ? error.message : "Không thể xác minh kết quả.");
     } finally {
       submitting.current = false;
       setPaying(false);
@@ -814,10 +834,12 @@ function Checkout() {
         return;
       }
 
-      await recheckBeforeOrder();
+      const review = await recheckBeforeOrder();
+      if (review.changed) return;
 
       const response =
         await submitCheckout(await beginCheckout({
+          maXacNhanGia: review.tien.maXacNhanGia,
           maGioHang,
           maDiaChi:
             selectedAddressId,
@@ -859,7 +881,11 @@ function Checkout() {
           ? error.message
           : "Có lỗi xảy ra.";
 
-      if (await getPendingCheckout()) setRecoveryError(message);
+      if (error instanceof ApiError && error.code === "CHECKOUT_PRICE_CHANGED" && error.orderNotCreated) {
+        await recheckBeforeOrder();
+        setShowBill(false);
+        setPriceNotice(message);
+      } else if (await getPendingCheckout()) setRecoveryError(message);
       else alert(message);
     } finally {
       setPaying(false);
@@ -1015,6 +1041,7 @@ function Checkout() {
           </button>
         </header>
 <CustomerOrderSteps current="review" />
+        {priceNotice && <p className="cart-refresh-notice" role="status">{priceNotice}</p>}
 
         {cartWasRefreshed && (
           <div className="checkout-retry-notice" role="status">
@@ -1529,6 +1556,7 @@ function Checkout() {
           </p>
         </header>
 <CustomerOrderSteps current="checkout" />
+        {priceNotice && <p className="cart-refresh-notice" role="status">{priceNotice}</p>}
 
         {cartWasRefreshed && (
           <div className="checkout-retry-notice" role="status">

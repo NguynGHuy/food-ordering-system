@@ -33,6 +33,7 @@ function RouteScrollManager() {
   const location = useLocation();
   const navigationType = useNavigationType();
   const previousLocationKey = useRef(location.key);
+  const previousPath = useRef(location.pathname);
 
   useLayoutEffect(() => {
     const previousMode = window.history.scrollRestoration;
@@ -55,6 +56,12 @@ function RouteScrollManager() {
     });
 
     previousLocationKey.current = location.key;
+
+    const samePage = previousPath.current === location.pathname;
+    previousPath.current = location.pathname;
+    // Search/filter updates keep the reader and focused control in place.
+    // POP still restores the position saved for that history entry.
+    if (samePage && navigationType !== "POP" && !location.hash) return;
 
     const savedPosition = navigationType === "POP"
       ? routeScrollPositions.get(location.key)
@@ -82,7 +89,7 @@ function RouteScrollManager() {
       window.cancelAnimationFrame(frameId);
       if (restoreTimer !== undefined) window.clearTimeout(restoreTimer);
     };
-  }, [location.hash, location.key, navigationType]);
+  }, [location.hash, location.key, location.pathname, navigationType]);
 
   return null;
 }

@@ -42,7 +42,7 @@ interface MonForm {
   maDanhMuc: number;
   tenMonAn: string;
   moTa: string;
-  gia: number;
+  gia: string;
   hinhAnh: string;
 }
 
@@ -52,12 +52,12 @@ const EMPTY_FORM: MonForm = {
   maDanhMuc: 0,
   tenMonAn: "",
   moTa: "",
-  gia: 0,
+  gia: "",
   hinhAnh: "",
 };
 
-function formatMoney(value: number) {
-  return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
+function formatMoney(value: number | string) {
+  return `${(typeof value === "string" && /^\d+$/.test(value) ? BigInt(value) : Number(value || 0)).toLocaleString("vi-VN")} đ`;
 }
 
 function RestaurantMenu() {
@@ -106,6 +106,8 @@ function RestaurantMenu() {
   const [categoryFilter, setCategoryFilter] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [loading, setLoading] = useState(true);
+  const loadSequence = useRef(0);
+  const invalidateLoad = useCallback(() => { ++loadSequence.current; }, []);
   const [saving, setSaving] = useState(false);
   const [loadingTopping, setLoadingTopping] = useState(false);
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
@@ -128,6 +130,7 @@ function RestaurantMenu() {
   };
 
   const loadData = useCallback(async (showLoading = true) => {
+    const sequence = ++loadSequence.current;
     try {
       if (showLoading) setLoading(true);
       setError("");
@@ -146,6 +149,7 @@ function RestaurantMenu() {
         getNhomToppings(maNhaHang),
       ]);
 
+      if (sequence !== loadSequence.current) return;
       setMonAns(menuData.items);
       setTotalItems(menuData.totalItems);
       setTotalPages(menuData.totalPages);
@@ -154,9 +158,10 @@ function RestaurantMenu() {
       setDanhMucs(Array.isArray(categoryData) ? categoryData : []);
       setNhomToppings(Array.isArray(toppingData) ? toppingData : []);
     } catch (err) {
+      if (sequence !== loadSequence.current) return;
       setError(err instanceof Error ? err.message : "Không thể tải thực đơn.");
     } finally {
-      if (showLoading) setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
   }, [categoryFilter, pageNumber, searchText, statusFilter]);
 
@@ -165,8 +170,8 @@ function RestaurantMenu() {
       void loadData();
     }, 0);
 
-    return () => window.clearTimeout(initialLoadTimer);
-  }, [loadData]);
+    return () => { window.clearTimeout(initialLoadTimer); invalidateLoad(); };
+  }, [loadData, invalidateLoad]);
 
   const showMessage = (message: string) => {
     setSuccess(message);
@@ -192,7 +197,7 @@ function RestaurantMenu() {
       maDanhMuc: item.maDanhMuc,
       tenMonAn: item.tenMonAn,
       moTa: item.moTa ?? "",
-      gia: Number(item.gia),
+      gia: item.giaNhap ?? String(item.gia),
       hinhAnh: item.hinhAnh ?? "",
     });
     setEditorOpen(true);
@@ -221,8 +226,8 @@ function RestaurantMenu() {
       return;
     }
 
-    if (form.gia <= 0) {
-      setError("Giá món phải lớn hơn 0.");
+    if (!/^\d+$/.test(form.gia) || BigInt(form.gia) > 999999999999999999n) {
+      setError("Giá món phải là số nguyên VND không âm, không vượt giới hạn lưu trữ.");
       return;
     }
 
@@ -375,10 +380,6 @@ function RestaurantMenu() {
     }
   };
 
-  if (loading) {
-    return <div className="quan-page-loading">Đang tải thực đơn...</div>;
-  }
-
   return (
     <div className="merchant-menu-page">
       <ScrollReveal className="merchant-menu-header-reveal" delay={40}>
@@ -401,7 +402,7 @@ function RestaurantMenu() {
         </header>
       </ScrollReveal>
 
-      {danhMucs.length === 0 && (
+      {!loading && danhMucs.length === 0 && (
         <div className="merchant-menu-notice warning">
           Bạn cần tạo ít nhất một danh mục trước khi thêm món.
         </div>
@@ -482,7 +483,8 @@ function RestaurantMenu() {
         </section>
       </ScrollReveal>
 
-      {monAns.length === 0 ? (
+      {loading && <p role="status" className="quan-page-loading">Đang cập nhật thực đơn...</p>}
+      {!loading && monAns.length === 0 ? (
         <ScrollReveal className="merchant-menu-empty-reveal" delay={110}>
           <div className="merchant-menu-empty">
           <span>
@@ -541,7 +543,7 @@ function RestaurantMenu() {
                     <h2>{item.tenMonAn}</h2>
                   </div>
 
-                  <strong>{formatMoney(item.gia)}</strong>
+                  <strong>{formatMoney(item.giaNhap ?? item.gia)}</strong>
                 </div>
 
                 <p>{item.moTa || "Món ăn chưa có phần mô tả."}</p>
@@ -681,12 +683,13 @@ function RestaurantMenu() {
                   <input
                     type="number"
                     min={0}
-                    step={1000}
+                    step={1}
+                    max="999999999999999999"
                     value={form.gia}
                     onChange={(event) =>
                       setForm((current) => ({
                         ...current,
-                        gia: Number(event.target.value),
+                        gia: event.target.value.replace(/^0+(?=\d)/, ""),
                       }))
                     }
                   />

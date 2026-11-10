@@ -154,11 +154,11 @@ public class GioHangController : ControllerBase
                 {
                     tp.MaTopping,
                     tp.MaToppingNavigation.TenTopping,
-                    tp.GiaThem,
+                    GiaThem = tp.MaToppingNavigation.GiaThem,
                     tp.SoLuong
                 }).ToList(),
                 ThanhTien = (ct.MaMonAnNavigation.Gia +
-                    ct.ChitietgiohangToppings.Sum(tp => tp.GiaThem * tp.SoLuong)) * ct.SoLuong
+                    ct.ChitietgiohangToppings.Sum(tp => tp.MaToppingNavigation.GiaThem * tp.SoLuong)) * ct.SoLuong
             })
             .ToList();
 
@@ -171,6 +171,8 @@ public class GioHangController : ControllerBase
             gioHang.NgayCapNhat,
             gioHang.GiuCheckoutDenUtc,
             CanLamMoi = GioHangCanLamMoi(gioHang),
+            GiaDaThayDoi = gioHang.Chitietgiohangs.SelectMany(ct => ct.ChitietgiohangToppings)
+                .Any(tp => tp.GiaThem != tp.MaToppingNavigation.GiaThem),
             SoLuongMon = chiTiet.Sum(ct => ct.SoLuong),
             TongTienTamTinh = chiTiet.Sum(ct => ct.ThanhTien),
             ChiTiet = chiTiet
@@ -342,16 +344,8 @@ public class GioHangController : ControllerBase
         if (toppingDaChon.Any(id => !toppingHopLe.ContainsKey(id)))
             return BadRequest(new { message = "Có topping không hợp lệ hoặc đã ngừng bán." });
 
-        foreach (var nhom in monAn.MaNhomToppings)
-        {
-            var soLuongDaChon = nhom.Toppings.Count(tp => toppingDaChon.Contains(tp.MaTopping));
-
-            if (nhom.BatBuocChon && soLuongDaChon == 0)
-                return BadRequest(new { message = $"Vui lòng chọn topping cho nhóm {nhom.TenNhom}." });
-
-            if (nhom.ChonToiDa.HasValue && soLuongDaChon > nhom.ChonToiDa.Value)
-                return BadRequest(new { message = $"Nhóm {nhom.TenNhom} chỉ được chọn tối đa {nhom.ChonToiDa} topping." });
-        }
+        var loiTopping = ToppingValidator.KiemTra(monAn, toppingDaChon);
+        if (loiTopping != null) return BadRequest(new { message = loiTopping });
 
         var gioHang = await _context.Giohangs
             .Include(g => g.Chitietgiohangs)
@@ -524,16 +518,8 @@ public class GioHangController : ControllerBase
         if (toppingDaChon.Any(idTopping => !toppingHopLe.ContainsKey(idTopping)))
             return BadRequest(new { message = "Có topping không hợp lệ hoặc đã ngừng bán." });
 
-        foreach (var nhom in chiTiet.MaMonAnNavigation.MaNhomToppings)
-        {
-            var soLuongDaChon = nhom.Toppings.Count(tp => toppingDaChon.Contains(tp.MaTopping));
-
-            if (nhom.BatBuocChon && soLuongDaChon == 0)
-                return BadRequest(new { message = $"Vui lòng chọn topping cho nhóm {nhom.TenNhom}." });
-
-            if (nhom.ChonToiDa.HasValue && soLuongDaChon > nhom.ChonToiDa.Value)
-                return BadRequest(new { message = $"Nhóm {nhom.TenNhom} chỉ được chọn tối đa {nhom.ChonToiDa} topping." });
-        }
+        var loiTopping = ToppingValidator.KiemTra(chiTiet.MaMonAnNavigation, toppingDaChon);
+        if (loiTopping != null) return BadRequest(new { message = loiTopping });
 
         var toppingCanXoa = chiTiet.ChitietgiohangToppings
             .Where(tp => !toppingDaChon.Contains(tp.MaTopping))

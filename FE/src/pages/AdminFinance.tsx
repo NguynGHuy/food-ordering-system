@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Pagination from "../components/Pagination";
+import "../styles/AdminFinance.css";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -203,7 +204,7 @@ export default function AdminFinance() {
               </div>
               <strong>{data.tongSoDon} đơn hợp lệ</strong>
             </div>
-            <div className="admin-promotions-table-scroll">
+            <div className="admin-promotions-table-scroll finance-table-scroll" tabIndex={0} role="region" aria-label="Doanh thu theo đơn hàng, cuộn ngang để xem đủ cột">
               <table className="admin-promotions-table">
                 <thead>
                   <tr>
@@ -264,7 +265,7 @@ export default function AdminFinance() {
               </div>
               <Link to="/admin/doi-soat">Mở trang đối soát</Link>
             </div>
-            <div className="admin-promotions-table-scroll">
+            <div className="admin-promotions-table-scroll finance-table-scroll" tabIndex={0} role="region" aria-label="Các kỳ đối soát, cuộn ngang để xem đủ cột">
               <table className="admin-promotions-table">
                 <thead>
                   <tr>

@@ -1,5 +1,6 @@
 import { forgetIdempotencyKey, getIdempotencyKey } from "./idempotency";
 import { placeOrder, type DatHangRequest, type DatHangResult } from "./orderService";
+import { ApiError } from "./api";
 
 // Shorter than the backend's 48-hour idempotency retention. No token, address
 // text, wallet balance or payment credentials are written to this record.
@@ -40,6 +41,7 @@ export async function getPendingCheckout(): Promise<CheckoutAttempt | null> {
         || value.createdAt > Date.now() || !p
         || ![p.maGioHang, p.maDiaChi, p.maPhuongThuc].every(n => Number.isSafeInteger(n) && n > 0)
         || (p.maKhuyenMai != null && (!Number.isSafeInteger(p.maKhuyenMai) || p.maKhuyenMai <= 0))
+        || (p.maXacNhanGia !== undefined && (typeof p.maXacNhanGia !== "string" || !/^[A-F0-9]{64}$/.test(p.maXacNhanGia)))
         || (p.ghiChu !== undefined && (typeof p.ghiChu !== "string" || p.ghiChu.length > 300))) {
         sessionStorage.removeItem(storageKey);
         throw new Error("Thông tin khôi phục không hợp lệ. Vui lòng kiểm tra lịch sử đơn hàng.");
@@ -63,7 +65,19 @@ export async function submitCheckout(attempt: CheckoutAttempt): Promise<DatHangR
     const existing = inFlight.get(id);
     if (existing) return existing;
     const request = (async () => {
-        const result = await placeOrder(attempt.payload, attempt.key);
+        let result: DatHangResult;
+        try {
+            result = await placeOrder(attempt.payload, attempt.key);
+        } catch (error) {
+            // Only this explicit server guarantee permits a fresh price review.
+            // The endpoint checks replay before pricing and rolls back before this code.
+            if (error instanceof ApiError && error.code === "CHECKOUT_PRICE_CHANGED" && error.orderNotCreated) {
+                const pending = JSON.parse(sessionStorage.getItem(storageKey) ?? "null") as CheckoutAttempt | null;
+                if (pending?.key === attempt.key) sessionStorage.removeItem(storageKey);
+                await forgetIdempotencyKey(operation, attempt.payload, attempt.key);
+            }
+            throw error;
+        }
         if (!Number.isSafeInteger(result?.maDonHang) || result.maDonHang <= 0)
             throw new Error("Chưa xác minh được kết quả đặt hàng. Vui lòng thử khôi phục.");
         try {

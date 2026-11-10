@@ -20,6 +20,7 @@ namespace DatMonAnOnline.API.Controllers
         private readonly IWalletService _walletService;
         private readonly IOrderIncomeSettlementService _orderIncomeSettlement;
         private readonly TimeProvider _timeProvider;
+        private Giohang? _pricedCart;
 
         public DonHangController(
             DatMonAnOnlineContext context,
@@ -51,6 +52,8 @@ namespace DatMonAnOnline.API.Controllers
         public async Task<IActionResult> KiemTraCheckout(
             [FromBody] KiemTraDonHangYeuCau request)
         {
+            await using var readTransaction = await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.RepeatableRead, HttpContext.RequestAborted);
             var maTaiKhoan = await LayMaTaiKhoan();
 
             if (maTaiKhoan == null)
@@ -78,7 +81,9 @@ namespace DatMonAnOnline.API.Controllers
                 TongTienHang = tongTienHang,
                 PhiShip = phiShip,
                 SoTienGiam = soTienGiam,
-                ThanhTien = tongTienHang + phiShip - soTienGiam
+                ThanhTien = tongTienHang + phiShip - soTienGiam,
+                ChiTiet = CheckoutPriceReview.Lines(_pricedCart!),
+                MaXacNhanGia = CheckoutPriceReview.Fingerprint(_pricedCart!, request.MaKhuyenMai, tongTienHang, phiShip, soTienGiam)
             });
         }
 
@@ -299,6 +304,15 @@ namespace DatMonAnOnline.API.Controllers
                 }
 
                 // Công thức tính doanh thu và phí nền tảng
+                if (request.MaXacNhanGia != null && !string.Equals(request.MaXacNhanGia,
+                    CheckoutPriceReview.Fingerprint(_pricedCart!, request.MaKhuyenMai, tongTienHang, phiShip, soTienGiam),
+                    StringComparison.Ordinal))
+                {
+                    await transaction.RollbackAsync();
+                    return Conflict(new { Code = "CHECKOUT_PRICE_CHANGED", OrderNotCreated = true,
+                        Message = "Giá hoặc thông tin giỏ đã thay đổi. Vui lòng xem lại số tiền mới trước khi xác nhận." });
+                }
+
                 decimal doanhThuTinhPhi = tongTienHang - giamGiaNhaHang;
                 decimal phiNenTang = Math.Round(doanhThuTinhPhi * hopDongNhanDon.TyLePhiNenTang / 100,
                     0, MidpointRounding.AwayFromZero);
@@ -351,7 +365,7 @@ namespace DatMonAnOnline.API.Controllers
                         g.MaKhachHang == khachHang.MaKhachHang
                     );
 
-                foreach (var ctGio in gioHang.Chitietgiohangs)
+                foreach (var ctGio in _pricedCart!.Chitietgiohangs)
                 {
                     var ctDon = new Chitietdonhang
                     {
@@ -1746,7 +1760,20 @@ namespace DatMonAnOnline.API.Controllers
             int maGioHang,
             int? maKhuyenMai)
         {
+            // Current locking reads keep menu prices stable until checkout commits.
+            // Scope both queries to this customer's cart before taking any locks.
+            var lockedFoods = await _context.Monans.FromSqlInterpolated($@"SELECT m.* FROM monan m
+                WHERE m.MaMonAn IN (SELECT c.MaMonAn FROM chitietgiohang c JOIN giohang g ON g.MaGioHang=c.MaGioHang
+                WHERE g.MaGioHang={maGioHang} AND g.MaKhachHang={maKhachHang}) ORDER BY m.MaMonAn FOR SHARE")
+                .AsNoTracking().ToListAsync(HttpContext.RequestAborted);
+            var lockedToppings = await _context.Toppings.FromSqlInterpolated($@"SELECT t.* FROM topping t
+                WHERE t.MaTopping IN (SELECT ct.MaTopping FROM chitietgiohang_topping ct
+                JOIN chitietgiohang c ON c.MaChiTietGioHang=ct.MaChiTietGioHang
+                JOIN giohang g ON g.MaGioHang=c.MaGioHang
+                WHERE g.MaGioHang={maGioHang} AND g.MaKhachHang={maKhachHang}) ORDER BY t.MaTopping FOR SHARE")
+                .AsNoTracking().ToListAsync(HttpContext.RequestAborted);
             var gioHang = await _context.Giohangs
+                .AsNoTrackingWithIdentityResolution()
                 .Include(g => g.Chitietgiohangs)
                     .ThenInclude(ct => ct.MaMonAnNavigation)
                     .ThenInclude(m => m.MaNhomToppings)
@@ -1762,6 +1789,21 @@ namespace DatMonAnOnline.API.Controllers
                 !gioHang.Chitietgiohangs.Any())
             {
                 return (0, 0, 0, null, "Giỏ hàng trống.");
+            }
+            _pricedCart = gioHang;
+            foreach (var line in gioHang.Chitietgiohangs)
+            {
+                var currentFood = lockedFoods.SingleOrDefault(food => food.MaMonAn == line.MaMonAn);
+                if (currentFood == null) return (0, 0, 0, null, "Món trong giỏ không còn tồn tại.");
+                line.MaMonAnNavigation.Gia = currentFood.Gia;
+                line.MaMonAnNavigation.TrangThai = currentFood.TrangThai;
+                foreach (var topping in line.MaMonAnNavigation.MaNhomToppings.SelectMany(group => group.Toppings))
+                {
+                    var currentTopping = lockedToppings.SingleOrDefault(item => item.MaTopping == topping.MaTopping);
+                    if (currentTopping == null) continue;
+                    topping.GiaThem = currentTopping.GiaThem;
+                    topping.TrangThai = currentTopping.TrangThai;
+                }
             }
 
             var maNhaHang = gioHang.Chitietgiohangs
@@ -2014,6 +2056,8 @@ namespace DatMonAnOnline.API.Controllers
 
     public class DatHangYeuCau
     {
+        [MaxLength(64), RegularExpression("^[A-F0-9]{64}$")]
+        public string? MaXacNhanGia { get; set; }
         [Range(1, int.MaxValue)]
         public int MaGioHang { get; set; }
 

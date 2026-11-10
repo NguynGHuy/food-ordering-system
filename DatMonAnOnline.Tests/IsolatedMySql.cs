@@ -31,11 +31,14 @@ internal sealed class IsolatedMySql(string connectionString)
     public static async Task<IsolatedMySql> CreateAsync(bool installSchema = true)
     {
         // Deliberately never read production/user-secrets connection strings.
-        const string server = "Server=127.0.0.1;Port=13487;User ID=root;Connection Timeout=3;Default Command Timeout=15";
+        const string server = "Server=127.0.0.1;Port=13487;User ID=root;SslMode=None;Pooling=False;Connection Timeout=3;Default Command Timeout=15";
         await using var connection = new MySqlConnection(server);
         await connection.OpenAsync();
         var dataDirectory = (string)(await new MySqlCommand("SELECT @@datadir", connection).ExecuteScalarAsync())!;
-        if (!dataDirectory.Replace('\\', '/').TrimEnd('/').EndsWith("/.build-check/audit-mysql-20261024", StringComparison.OrdinalIgnoreCase))
+        var normalizedDirectory = Path.GetFullPath(dataDirectory).Replace('\\', '/').TrimEnd('/');
+        var taskDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.build-check/excel-fixes-20261108/mysql")).Replace('\\', '/');
+        if (!normalizedDirectory.EndsWith("/.build-check/audit-mysql-20261024", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedDirectory, taskDirectory, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Refusing to write outside the isolated audit MySQL instance.");
         var database = "foodie_audit_" + Guid.NewGuid().ToString("N");
         await new MySqlCommand($"CREATE DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", connection).ExecuteNonQueryAsync();

@@ -2,6 +2,7 @@ import { apiFetch, buildQuery, type PagedResult, type PaginationParams } from ".
 import { runIdempotentRequest } from "./idempotency";
 
 export interface DatHangRequest {
+  maXacNhanGia?: string;
   maGioHang: number;
   maDiaChi: number;
   maPhuongThuc: number;
@@ -10,6 +11,8 @@ export interface DatHangRequest {
 }
 
 export interface TienDonHang {
+  maXacNhanGia?: string;
+  chiTiet?: import("./cartService").CartItem[];
   tongTienHang: number;
   phiShip: number;
   soTienGiam: number;

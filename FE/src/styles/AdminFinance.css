@@ -1,0 +1,17 @@
+.foodie-admin-shell .finance-table-scroll .admin-promotions-table {
+  min-width: 1180px;
+  table-layout: fixed;
+}
+.foodie-admin-shell .finance-table-scroll th:nth-child(1) { width: 22%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(2) { width: 17%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(3) { width: 12%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(4) { width: 14%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(5) { width: 13%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(6) { width: 10%; }
+.foodie-admin-shell .finance-table-scroll th:nth-child(7) { width: 12%; }
+.foodie-admin-shell .finance-table-scroll td { overflow-wrap: anywhere; }
+.foodie-admin-shell .finance-table-scroll td:first-child strong,
+.foodie-admin-shell .finance-table-scroll td small { display: block; }
+.foodie-admin-shell .finance-table-scroll td small { margin-top: 4px; color: #5d685f; }
+.foodie-admin-shell .finance-table-scroll .admin-promotion-state { white-space: normal; text-align: left; }
+.foodie-admin-shell .finance-table-scroll .finance-number { white-space: nowrap; text-align: right; }

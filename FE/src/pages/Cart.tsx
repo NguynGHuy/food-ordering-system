@@ -391,6 +391,7 @@ if (cart.chiTiet.length === 0) {
         </button>
     </header>
 <CustomerOrderSteps current="cart" />
+    {cart.giaDaThayDoi && <p className="cart-refresh-notice" role="status">Giá topping đã thay đổi. Giỏ đang hiển thị giá mới từ quán; vui lòng kiểm tra lại trước khi thanh toán.</p>}
 
     {cart.canLamMoi && (
         <div className="cart-refresh-notice" role="status">

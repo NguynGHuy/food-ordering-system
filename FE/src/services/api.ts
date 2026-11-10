@@ -49,6 +49,19 @@ export function resolveMediaUrl(path: string | null | undefined) {
     return `${serverUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+export class ApiError extends Error {
+    readonly status: number;
+    readonly code?: string;
+    readonly orderNotCreated: boolean;
+    constructor(message: string, status: number, code?: string, orderNotCreated = false) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+        this.code = code;
+        this.orderNotCreated = orderNotCreated;
+    }
+}
+
 export async function apiFetch(
     endpoint: string,
     options: RequestInit = {}
@@ -94,7 +107,7 @@ export async function apiFetch(
             }
         }
 
-        throw new Error(message);
+        throw new ApiError(message, response.status, data?.code, data?.orderNotCreated === true);
     }
 
     return data;

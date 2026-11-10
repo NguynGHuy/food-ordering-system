@@ -104,7 +104,7 @@ function AppContent() {
     >
         <RouteScrollManager />
         <RealtimeBridge />
-        <PageLoader key={location.key} />
+        <PageLoader key={location.pathname} />
         <RealtimeToast />
 
         {!isAdminArea && !isQuanArea && <Header />}

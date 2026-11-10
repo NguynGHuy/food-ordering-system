@@ -91,6 +91,7 @@ function RestaurantTopping() {
   const [busyGroupId, setBusyGroupId] = useState<number | null>(null);
   const [busyToppingId, setBusyToppingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [groupLoadError, setGroupLoadError] = useState(false);
   const [success, setSuccess] = useState("");
   const [groupPage, setGroupPage] = useState<PagedResult<NhomTopping> | null>(null);
   const [toppingPage, setToppingPage] = useState<(PagedResult<Topping> & { activeTotal: number }) | null>(null);
@@ -129,6 +130,7 @@ function RestaurantTopping() {
     try {
       if (showLoading) setLoading(true);
       setError("");
+      setGroupLoadError(false);
 
       const restaurantId = await getRestaurantId();
       const data = await getNhomToppingsPage(restaurantId, { pageNumber: page, pageSize: 8 });
@@ -160,6 +162,7 @@ function RestaurantTopping() {
       await loadToppings(nextSelected);
     } catch (err) {
       if (sequence !== groupSequence.current) return;
+      setGroupLoadError(true);
       setError(
         err instanceof Error ? err.message : "Không thể tải nhóm topping.",
       );
@@ -459,7 +462,7 @@ function RestaurantTopping() {
       </ScrollReveal>
 
       {error && !groupEditorOpen && !toppingEditorOpen && (
-        <div className="merchant-options-notice error" role="alert">{error} <button type="button" onClick={() => void loadGroups(selectedGroupId ?? undefined)}>Tải lại</button></div>
+        <div className="merchant-options-notice error" role="alert"><span>{error}</span>{(groupLoadError || toppingLoadError) && <button type="button" onClick={() => void (toppingLoadError && selectedGroupId ? loadToppings(selectedGroupId) : loadGroups(selectedGroupId ?? undefined))}>Tải lại</button>}</div>
       )}
 
       {success && (

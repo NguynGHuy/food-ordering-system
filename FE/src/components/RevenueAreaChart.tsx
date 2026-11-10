@@ -356,13 +356,7 @@ export default function RevenueAreaChart({
         {activePoint && hoverIndex !== null && (
           <div
             className="revenue-chart-tooltip"
-            style={{
-              left: `${(getX(hoverIndex) / svgWidth) * 100}%`,
-              transform:
-                hoverIndex > data.length / 2
-                  ? "translateX(-105%)"
-                  : "translateX(8%)",
-            }}
+            style={{ left: Math.max(0, Math.min(getX(hoverIndex) + 8, svgWidth - Math.min(300, svgWidth))) }}
           >
             <div className="tooltip-date">{activePoint.fullDate}</div>
             <div className="tooltip-row series1">

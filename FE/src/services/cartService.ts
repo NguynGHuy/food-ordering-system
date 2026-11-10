@@ -43,6 +43,7 @@ export interface RestaurantCart {
   tongTienTamTinh: number;
   chiTiet: CartItem[];
   canLamMoi?: boolean;
+  giaDaThayDoi?: boolean;
   giuCheckoutDenUtc?: string | null;
 }
 

@@ -16,6 +16,7 @@ export interface MonAn {
     moTa: string | null;
 
     gia: number;
+    giaNhap?: string;
 
     hinhAnh: string | null;
 
@@ -62,7 +63,7 @@ export interface TaoMonAnRequest {
 
     moTa?: string | null;
 
-    gia: number;
+    gia: number | string;
 
     hinhAnh?: string | null;
 }
@@ -74,7 +75,7 @@ export interface CapNhatMonAnRequest {
 
     moTa?: string | null;
 
-    gia: number;
+    gia: number | string;
 
     hinhAnh?: string | null;
 }

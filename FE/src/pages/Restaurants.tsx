@@ -1,5 +1,5 @@
 import MediaImage from "../components/MediaImage";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getRestaurants } from "../services/restaurantService";
 import type { Restaurant } from "../services/restaurantService";
@@ -48,7 +48,12 @@ function Restaurants() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pageNumber, setPageNumber] = useState(1);
+  const pageNumber = Math.max(1, Number(searchParams.get("page")) || 1);
+  const setPageNumber = useCallback((page: number) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (page > 1) next.set("page", String(page)); else next.delete("page");
+    return next;
+  }), [setSearchParams]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -89,15 +94,15 @@ function Restaurants() {
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, [filter, pageNumber, search]);
+  }, [filter, pageNumber, search, setPageNumber]);
 
   const handleSearchChange = (value: string) => {
-    setPageNumber(1);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value.trim()) {
-          next.set("search", value.trim());
+        next.delete("page");
+        if (value) {
+          next.set("search", value);
         } else {
           next.delete("search");
         }
@@ -108,10 +113,10 @@ function Restaurants() {
   };
 
   const handleFilterChange = (newFilter: "all" | "open" | "rating") => {
-    setPageNumber(1);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
+        next.delete("page");
         if (newFilter !== "all") {
           next.set("filter", newFilter);
         } else {
@@ -124,7 +129,6 @@ function Restaurants() {
   };
 
   const handleResetFilters = () => {
-    setPageNumber(1);
     setSearchParams({}, { replace: true });
   };
 

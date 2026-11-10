@@ -31,6 +31,7 @@ function RestaurantCategory() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(false);
   const [success, setSuccess] = useState("");
   const [categoryPage, setCategoryPage] = useState<PagedResult<DanhMuc> | null>(null);
   const pageRef = useRef(1);
@@ -41,6 +42,7 @@ function RestaurantCategory() {
     try {
       if (showLoading) setLoading(true);
       setError("");
+      setLoadError(false);
 
       const data = await getManagedCategories({ pageNumber: page, pageSize: 12 });
       if (sequence !== loadSequence.current) return;
@@ -50,6 +52,7 @@ function RestaurantCategory() {
     } catch (err) {
       if (sequence !== loadSequence.current) return;
       setError(err instanceof Error ? err.message : "Không thể tải danh mục.");
+      setLoadError(true);
     } finally {
       if (sequence === loadSequence.current && showLoading) setLoading(false);
     }
@@ -191,7 +194,7 @@ function RestaurantCategory() {
       </ScrollReveal>
 
       {error && !editorOpen && (
-        <div className="merchant-category-notice error" role="alert">{error} <button type="button" onClick={() => void loadDanhMucs()}>Tải lại</button></div>
+        <div className="merchant-category-notice error" role="alert"><span>{error}</span>{loadError && <button type="button" onClick={() => void loadDanhMucs()}>Tải lại</button>}</div>
       )}
 
       {success && (
