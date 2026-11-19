@@ -138,6 +138,16 @@ function QuanLayout() {
 
   const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSidebarOpen(false);
+      document.querySelector<HTMLButtonElement>('button[aria-controls="restaurant-menu"]')?.focus();
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [sidebarOpen]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -255,7 +265,7 @@ function QuanLayout() {
         onClick={() => setSidebarOpen(false)}
       />
 
-      <aside className={`quan-sidebar ${sidebarOpen ? "is-open" : ""}`}>
+      <aside id="restaurant-menu" className={`quan-sidebar ${sidebarOpen ? "is-open" : ""}`}>
         <div className="quan-sidebar-brand">
           <span className="quan-brand-icon">
             <UtensilsCrossed size={21} />
@@ -349,7 +359,7 @@ function QuanLayout() {
             <button
               type="button"
               className="quan-mobile-menu"
-              aria-label="Mở menu"
+              aria-label="Mở menu" aria-controls="restaurant-menu" aria-expanded={sidebarOpen}
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={20} />

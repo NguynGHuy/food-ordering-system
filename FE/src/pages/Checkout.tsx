@@ -470,24 +470,7 @@ function Checkout() {
     };
   }, [restaurantId]);
 
-  useEffect(() => {
-    if (!showVoucherPicker) return;
 
-    const previousOverflow = document.body.style.overflow;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !promoBusy) {
-        setShowVoucherPicker(false);
-      }
-    };
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [promoBusy, showVoucherPicker]);
 
   const selectedPayment = phuongThucList.find(
     (item) => item.maPhuongThuc === selectedPaymentId,
@@ -1252,10 +1235,7 @@ function Checkout() {
                     key={checkoutData.soTienGiam}
                     className="checkout-money-change"
                 >
-                    -
-                    {formatCurrency(
-                        checkoutData.soTienGiam,
-                    )}
+                    {formatCurrency(-checkoutData.soTienGiam)}
                 </strong>
               </div>
 
@@ -2010,10 +1990,7 @@ function Checkout() {
                   </span>
 
                   <strong>
-                    -
-                    {formatCurrency(
-                      checkoutData.soTienGiam,
-                    )}
+                    {formatCurrency(-checkoutData.soTienGiam)}
                   </strong>
                 </div>
 
@@ -2069,7 +2046,7 @@ function Checkout() {
         </div>
       </div>
 
-      <MotionPresence present={Boolean(showVoucherPicker)}>{showVoucherPicker && (
+      <MotionPresence present={Boolean(showVoucherPicker)} dialogLabel="Chọn voucher">{showVoucherPicker && (
         <div
           className="checkout-voucher-overlay"
           role="presentation"
@@ -2081,8 +2058,6 @@ function Checkout() {
         >
           <section
             className="checkout-voucher-dialog"
-            role="dialog"
-            aria-modal="true"
             aria-labelledby="checkout-voucher-title"
           >
             <header className="checkout-voucher-dialog-header">
@@ -2098,7 +2073,7 @@ function Checkout() {
                 type="button"
                 aria-label="Đóng danh sách voucher"
                 disabled={promoBusy}
-                onClick={() => setShowVoucherPicker(false)}
+                data-dialog-close onClick={() => setShowVoucherPicker(false)}
               >
                 <X size={19} />
               </button>
@@ -2117,7 +2092,7 @@ function Checkout() {
                   <input
                     id="checkout-personal-voucher"
                     aria-label="Mã voucher cá nhân"
-                    placeholder="Nhập mã voucher của bạn"
+                    placeholder="Nhập mã voucher"
                     value={voucherCodeDraft}
                     disabled={promoBusy || donDaTao !== null}
                     onChange={(event) => {

@@ -8,8 +8,8 @@ export default function CustomerAuthIntro({ restaurant = false }: { restaurant?:
   return (
     <aside className="cg-auth-intro">
       <span className="cg-auth-mark" aria-hidden="true"><Utensils size={30} /></span>
-      <h1>{restaurant ? "Từ căn bếp của bạn, đến bàn ăn của khách." : "Một nơi cho những bữa ăn bạn yêu thích."}</h1>
-      <p>{restaurant ? "Không gian quản lý nhà hàng trên Foodie, từ thực đơn đến từng đơn đặt món." : "Đăng nhập Foodie để tiếp tục chọn món và quản lý những đơn hàng của bạn."}</p>
+      <p className="auth-intro-title">{restaurant ? "Từ căn bếp của bạn, đến bàn ăn của khách." : "Một nơi cho những bữa ăn bạn yêu thích."}</p>
+      <p>{restaurant ? "Không gian quản lý nhà hàng trên Foodie, từ thực đơn đến từng đơn đặt món." : "Khám phá thực đơn, đặt món và theo dõi đơn hàng của bạn trên Foodie."}</p>
       <ul>{steps.map(step => <li key={step}><Check size={17} aria-hidden="true" /><span>{step}</span></li>)}</ul>
       <small>Foodie là bản demo đồ án. Thanh toán online và FoodPay là mô phỏng.</small>
     </aside>

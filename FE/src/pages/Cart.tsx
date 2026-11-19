@@ -1,12 +1,13 @@
 import MotionPresence from "../components/MotionPresence";
 import CustomerOrderSteps from "../components/CustomerOrderSteps";
 import MediaImage from "../components/MediaImage";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
     clearCart,
     CART_TTL_MS,
     getRestaurantCart,
+    getLatestCart,
     removeCartItem,
     updateCartItemOptions,
     updateCartItemQty,
@@ -44,6 +45,7 @@ function Cart() {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
     const [editingItemId, setEditingItemId] = useState<number | null>(null);
+    const optionsTrigger = useRef<HTMLButtonElement | null>(null);
     const [editingFood, setEditingFood] = useState<MonAnChiTiet | null>(null);
     const [editingToppings, setEditingToppings] = useState<number[]>([]);
     const [editingNote, setEditingNote] = useState("");
@@ -52,6 +54,22 @@ function Cart() {
 
     const loadCart = useCallback(
     async (showPageLoading = true) => {
+        if (maNhaHang === 0 && !searchParams.has("maNhaHang")) {
+            try {
+                const latest = await getLatestCart();
+                if (latest?.maNhaHang) {
+                    navigate("/gio-hang?maNhaHang=" + latest.maNhaHang, { replace: true });
+                } else {
+                    setCart(null);
+                    setError("");
+                    setLoading(false);
+                }
+            } catch {
+                setError("Không thể tải giỏ hàng. Vui lòng thử lại.");
+                setLoading(false);
+            }
+            return;
+        }
         if (
             !Number.isInteger(maNhaHang) ||
             maNhaHang <= 0
@@ -87,7 +105,7 @@ function Cart() {
             }
         }
     },
-    [maNhaHang]
+    [maNhaHang, navigate, searchParams]
 );
 
     useEffect(() => {
@@ -307,7 +325,7 @@ if (loading) {
     );
 }
 
-if (error || !cart) {
+if (error) {
     return (
         <main className="cart-page cart-state-page">
             <div className="cart-state-icon error">
@@ -332,7 +350,7 @@ if (error || !cart) {
     );
 }
 
-if (cart.chiTiet.length === 0) {
+if (!cart || cart.chiTiet.length === 0) {
     return (
         <main className="cart-page cart-state-page">
             <div className="cart-state-icon">
@@ -342,17 +360,15 @@ if (cart.chiTiet.length === 0) {
             <h2>Giỏ hàng đang trống</h2>
 
             <p>
-                Bạn chưa chọn món nào tại{" "}
-                <strong>{cart.tenNhaHang}</strong>.
-                Những giỏ hàng ở quán khác vẫn được giữ nguyên.
+                {cart ? <>Bạn chưa chọn món nào tại <strong>{cart.tenNhaHang}</strong>. Những giỏ hàng ở quán khác vẫn được giữ nguyên.</> : "Chọn nhà hàng để bắt đầu đặt món."}
             </p>
 
             <Link
-                to={`/nha-hang/${cart.maNhaHang}`}
+                to={cart ? `/nha-hang/${cart.maNhaHang}` : "/nha-hang"}
                 className="cart-state-button"
             >
                 <ArrowLeft size={16} />
-                Chọn món tại quán
+                {cart ? "Chọn món tại quán" : "Khám phá nhà hàng"}
             </Link>
         </main>
     );
@@ -498,9 +514,10 @@ if (cart.chiTiet.length === 0) {
                                         busy ||
                                         openingOptionsId !== null
                                     }
-                                    onClick={() =>
-                                        void openEditOptions(item)
-                                    }
+                                    onClick={event => {
+                                        optionsTrigger.current = event.currentTarget;
+                                        void openEditOptions(item);
+                                    }}
                                 >
                                     <SlidersHorizontal size={14} />
 
@@ -635,15 +652,13 @@ if (cart.chiTiet.length === 0) {
     </div>
 </div>
 
-            <MotionPresence present={Boolean(editingFood)}>{editingFood && (
+            <MotionPresence present={Boolean(editingFood)} dialogLabel="Tùy chọn món" returnFocusTo={optionsTrigger}>{editingFood && (
     <div
         className="food-option-overlay"
         onMouseDown={closeEditOptions}
     >
         <section
             className="food-option-modal"
-            role="dialog"
-            aria-modal="true"
             aria-labelledby="edit-food-title"
             onMouseDown={(event) =>
                 event.stopPropagation()
@@ -654,7 +669,7 @@ if (cart.chiTiet.length === 0) {
                 className="food-option-close"
                 aria-label="Đóng form chỉnh sửa"
                 disabled={busy}
-                onClick={closeEditOptions}
+                data-dialog-close onClick={closeEditOptions}
             >
                 <X size={18} />
             </button>

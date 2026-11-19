@@ -59,12 +59,6 @@ function formatMoney(value: number) {
     return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
 }
 
-function formatShortOrderCode(code: string | null | undefined): string {
-    if (!code) return "";
-    const clean = code.trim();
-    if (clean.length <= 11) return clean;
-    return `${clean.slice(0, 5)}...${clean.slice(-4)}`;
-}
 
 interface ReviewDish {
     maMonAn: number;
@@ -429,7 +423,7 @@ function OrderDetail() {
                                 <div className="order-detail-title-row">
                                     <div className="order-code-badge-group">
                                         <h1 title={`Mã đơn đầy đủ: ${order.maDonHangHienThi}`}>
-                                            {formatShortOrderCode(order.maDonHangHienThi)}
+                                            {order.maDonHangHienThi}
                                         </h1>
                                         <button
                                             type="button"
@@ -688,7 +682,7 @@ function OrderDetail() {
 
                 <div className="order-history-code-pill">
                     <span className="order-detail-code" title={`Mã đơn đầy đủ: ${order.maDonHangHienThi}`}>
-                        {formatShortOrderCode(order.maDonHangHienThi)}
+                        {order.maDonHangHienThi}
                     </span>
                     <button
                         type="button"
@@ -776,7 +770,7 @@ function OrderDetail() {
 
                 <div className="order-detail-discount">
                     <span>Giảm giá</span>
-                    <strong>-{formatMoney(order.soTienGiam)}</strong>
+                    <strong>{formatMoney(-Math.abs(order.soTienGiam) || 0)}</strong>
                 </div>
 
                 <div className="order-detail-grand-total">
@@ -1070,7 +1064,7 @@ function OrderDetail() {
             </div>
 
             <div className="order-qr-order-code">
-                <span>Mã đơn: <strong>{formatShortOrderCode(order.maDonHangHienThi)}</strong></span>
+                <span>Mã đơn: <strong>{order.maDonHangHienThi}</strong></span>
                 <button
                     type="button"
                     className="order-detail-copy-mini"

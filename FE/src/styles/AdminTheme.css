@@ -44,7 +44,7 @@
 .foodie-admin-shell .admin-pro-nav a:hover { background: #f1f4ef; }
 .foodie-admin-shell .admin-pro-nav-icon { background: transparent; color: #24584a; width: 24px; }
 .foodie-admin-shell .admin-pro-nav-text { min-width: 0; }
-.foodie-admin-shell .admin-pro-nav-text strong { color: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.foodie-admin-shell .admin-pro-nav-text strong { color: inherit; font-size: 14px; font-weight: 500; white-space: normal; overflow: visible; line-height: 1.3; }
 .foodie-admin-shell .admin-pro-nav-text small { color: #5d685f; font-size: 11px; white-space: normal; }
 .foodie-admin-shell .admin-pro-sidebar-bottom { background: #fff; border-top: 1px solid #dce1da; padding: 12px 0 0; }
 .foodie-admin-shell .admin-pro-sidebar-user { padding: 8px; }

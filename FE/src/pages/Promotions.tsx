@@ -390,7 +390,7 @@ function Promotions() {
         />
       )}
 
-      <MotionPresence present={Boolean(createOpen)}>{createOpen && (
+      <MotionPresence present={Boolean(createOpen)} dialogLabel="Tạo khuyến mãi">{createOpen && (
         <div className="merchant-promotion-overlay">
           <div className="merchant-promotion-modal create">
             <CreatePromotionForm
@@ -405,7 +405,7 @@ function Promotions() {
         </div>
       )}</MotionPresence>
 
-      <MotionPresence present={Boolean(editingPromotion)}>{editingPromotion && (
+      <MotionPresence present={Boolean(editingPromotion)} dialogLabel="Sửa khuyến mãi">{editingPromotion && (
         <div className="merchant-promotion-overlay">
           <div className="merchant-promotion-modal edit">
             <EditPromotionForm

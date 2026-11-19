@@ -118,6 +118,9 @@
 .foodie-merchant-shell .reconciliation-table-scroll, .foodie-merchant-portal .reconciliation-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #b8c5ba #f7f5ef; }
 .foodie-merchant-shell .reconciliation-list-table, .foodie-merchant-portal .reconciliation-orders table { background: #fff; border-collapse: collapse; font-size: 13px; }
 .foodie-merchant-shell .reconciliation-list-table :is(td, th), .foodie-merchant-portal .reconciliation-orders :is(td, th) { padding: 14px 12px; border-color: #dce1da; font-variant-numeric: tabular-nums; color: #202923; }
+.foodie-merchant-shell .reconciliation-list-table :is(td, th) { padding-inline: clamp(6px, .65vw, 12px); }
+.foodie-merchant-shell .reconciliation-list-table th { white-space: normal; }
+.foodie-merchant-shell .reconciliation-list-table td:last-child button { white-space: nowrap; }
 .foodie-merchant-shell .reconciliation-list-table th, .foodie-merchant-portal .reconciliation-orders th { background: #f7f5ef; color: #5d685f; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .foodie-merchant-shell .reconciliation-list-table :is(td, th):nth-child(n+3):nth-child(-n+6), .foodie-merchant-portal .reconciliation-orders :is(td, th):nth-child(n+3) { text-align: right; }
 .foodie-merchant-shell .finance-negative, .foodie-merchant-portal .finance-negative { color: #a12f2a; }

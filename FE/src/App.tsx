@@ -64,6 +64,7 @@ const InformationPage = lazy(() => import("./pages/InformationPage"));
 
 import RealtimeBridge from "./components/RealtimeBridge";
 import RealtimeToast from "./components/RealtimeToast";
+import RouteTitle from "./components/RouteTitle";
 import PageLoader from "./components/PageLoader";
 import Footer from "./components/Footer";
 import RouteScrollManager from "./components/RouteScrollManager";
@@ -104,6 +105,7 @@ function AppContent() {
     >
         <RouteScrollManager />
         <RealtimeBridge />
+        <RouteTitle pathname={location.pathname} />
         <PageLoader key={location.pathname} />
         <RealtimeToast />
 

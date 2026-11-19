@@ -1,3 +1,4 @@
+import { formatDateOnly } from "../utils/formatDateOnly";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Pagination from "../components/Pagination";
 import "../styles/AdminFinance.css";
@@ -252,7 +253,7 @@ export default function AdminFinance() {
             </div>
             <p className="admin-finance-note">
               Doanh thu Admin = phí nền tảng − voucher do hệ thống tài trợ. Số liệu lấy từ
-              snapshot của đơn đã hoàn thành và chỉ ghi nhận khi khoản thanh toán khớp chính xác.
+              thông tin đã lưu của đơn hoàn thành và chỉ ghi nhận khi khoản thanh toán khớp chính xác.
             </p>
             <Pagination {...data.donDoanhThuPagination} disabled={loading} onPageChange={setOrderPage} />
           </section>
@@ -289,7 +290,7 @@ export default function AdminFinance() {
                     <tr key={period.maDoiSoat}>
                       <td>
                         <strong>#{period.maDoiSoat}</strong>
-                        <small>{period.tuNgay} – {period.denNgay}</small>
+                        <small><time dateTime={period.tuNgay}>{formatDateOnly(period.tuNgay)}</time> – <time dateTime={period.denNgay}>{formatDateOnly(period.denNgay)}</time></small>
                       </td>
                       <td>
                         {period.tenNhaHang}

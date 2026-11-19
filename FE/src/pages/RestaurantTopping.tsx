@@ -694,7 +694,7 @@ function RestaurantTopping() {
         </ScrollReveal>
       </div>
 
-      <MotionPresence present={Boolean(groupEditorOpen)}>{groupEditorOpen && (
+      <MotionPresence present={Boolean(groupEditorOpen)} dialogLabel="Nhóm topping">{groupEditorOpen && (
         <div className="merchant-config-overlay" onMouseDown={closeGroupEditor}>
           <form
             className="merchant-config-dialog"
@@ -714,7 +714,7 @@ function RestaurantTopping() {
               <button
                 type="button"
                 aria-label="Đóng"
-                onClick={closeGroupEditor}
+                data-dialog-close onClick={closeGroupEditor}
                 disabled={saving}
               >
                 <X size={18} />
@@ -803,7 +803,7 @@ function RestaurantTopping() {
         </div>
       )}</MotionPresence>
 
-      <MotionPresence present={Boolean(toppingEditorOpen)}>{toppingEditorOpen && (
+      <MotionPresence present={Boolean(toppingEditorOpen)} dialogLabel="Thông tin topping">{toppingEditorOpen && (
         <div
           className="merchant-config-overlay"
           onMouseDown={closeToppingEditor}
@@ -827,7 +827,7 @@ function RestaurantTopping() {
               <button
                 type="button"
                 aria-label="Đóng"
-                onClick={closeToppingEditor}
+                data-dialog-close onClick={closeToppingEditor}
                 disabled={saving}
               >
                 <X size={18} />

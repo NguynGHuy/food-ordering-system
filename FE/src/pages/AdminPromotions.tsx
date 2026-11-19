@@ -506,11 +506,9 @@ function AdminPromotions() {
                 )}
             </section>
 
-            <MotionPresence present={Boolean(showCreate)}>{showCreate && (
+            <MotionPresence present={Boolean(showCreate)} dialogLabel="Tạo khuyến mãi hệ thống">{showCreate && (
                 <div
                     className="admin-promotion-modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
                     onMouseDown={() => setShowCreate(false)}
                 >
                     <section
@@ -526,11 +524,9 @@ function AdminPromotions() {
                 </div>
             )}</MotionPresence>
 
-            <MotionPresence present={Boolean(editingPromotion)}>{editingPromotion && (
+            <MotionPresence present={Boolean(editingPromotion)} dialogLabel="Sửa khuyến mãi hệ thống">{editingPromotion && (
                 <div
                     className="admin-promotion-modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
                     onMouseDown={() => setEditingPromotion(null)}
                 >
                     <section

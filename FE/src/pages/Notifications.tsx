@@ -250,6 +250,7 @@ function Notifications() {
                 ).map(([value, label]) => (
                     <button
                         key={value}
+                        aria-pressed={filter === value}
                         type="button"
                         className={
                             filter === value

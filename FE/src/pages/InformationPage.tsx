@@ -26,7 +26,7 @@ const CONTENT: Record<Section, { title: string; sections: { title: string; text:
     title: "Điều khoản sử dụng",
     sections: [
       { title: "Môi trường đồ án", text: "Foodie là nền tảng đặt món được xây dựng để minh họa luồng Khách hàng, Quán và Admin. FoodPay, thanh toán trực tuyến và thanh toán đối soát đều là mô phỏng; không có giao dịch tiền thật hoặc tích hợp ngân hàng thật trong phạm vi này." },
-      { title: "Luồng chức năng hiện có", text: "Hệ thống kiểm tra quyền tài khoản, điều kiện nhận đơn của nhà hàng, voucher và trạng thái đơn. Giá trị thanh toán được backend xác định. Hoàn tiền hợp lệ được ghi vào FoodPay. Hồ sơ pháp lý/hợp đồng chỉ mô phỏng quy trình, không phải xác thực pháp lý hoặc chữ ký số thật." },
+      { title: "Luồng chức năng hiện có", text: "Hệ thống kiểm tra quyền tài khoản, điều kiện nhận đơn của nhà hàng, voucher và trạng thái đơn. Foodie hiển thị số tiền cuối cùng trước khi khách xác nhận đặt món. Hoàn tiền hợp lệ được ghi vào FoodPay. Hồ sơ pháp lý/hợp đồng chỉ mô phỏng quy trình, không phải xác thực pháp lý hoặc chữ ký số thật." },
       { title: "Chưa phải thỏa thuận chính thức", text: "Các nội dung về trách nhiệm các bên, giải quyết khiếu nại, giới hạn trách nhiệm và hiệu lực áp dụng cần chủ dự án quyết định và duyệt riêng. Trang này không thiết lập một thỏa thuận thương mại hoặc cam kết pháp lý chính thức." },
     ],
   },
@@ -34,7 +34,7 @@ const CONTENT: Record<Section, { title: string; sections: { title: string; text:
     title: "Chính sách giao hàng",
     sections: [
       { title: "Giao hàng trong bản demo", text: "Trạng thái xác nhận, chuẩn bị, đang giao và hoàn thành do Quán cập nhật theo luồng của hệ thống. Đồ án không có tài xế hoặc định vị GPS; dữ liệu giao hàng phục vụ trình diễn, không tổ chức dịch vụ giao nhận thực tế." },
-      { title: "Địa chỉ, phí và thời gian", text: "Khách chọn địa chỉ và kiểm tra phí giao hàng cùng tổng tiền tại checkout. Thời gian dự kiến trong bản demo chỉ là thông tin minh họa, không phải cam kết giao đúng giờ. Theo dõi trạng thái hiện tại trong chi tiết đơn." },
+      { title: "Địa chỉ, phí và thời gian", text: "Khách chọn địa chỉ và kiểm tra phí giao hàng cùng tổng tiền ở bước thanh toán. Thời gian dự kiến trong bản demo chỉ là thông tin minh họa, không phải cam kết giao đúng giờ. Theo dõi trạng thái hiện tại trong chi tiết đơn." },
       { title: "Nội dung còn chờ phê duyệt", text: "Khu vực phục vụ thực tế, thời hạn giao, xử lý giao thất bại và trách nhiệm bồi hoàn chưa được xác lập bởi bản dự thảo này. Chủ dự án cần phê duyệt các nội dung đó trước khi cung cấp dịch vụ thật." },
     ],
   },

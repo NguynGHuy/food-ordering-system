@@ -561,11 +561,9 @@ function Orders() {
         )}
       </div>
 
-      <MotionPresence present={Boolean(cancelTarget)}>{cancelTarget && (
+      <MotionPresence present={Boolean(cancelTarget)} dialogLabel="Hủy đơn hàng">{cancelTarget && (
         <div
           className="customer-cancel-overlay"
-          role="dialog"
-          aria-modal="true"
           aria-labelledby="cancel-order-title"
           onMouseDown={closeCancelDialog}
         >
@@ -578,7 +576,7 @@ function Orders() {
               className="customer-cancel-close"
               aria-label="Đóng"
               disabled={cancelBusy}
-              onClick={closeCancelDialog}
+              data-dialog-close onClick={closeCancelDialog}
             >
               <X size={17} />
             </button>

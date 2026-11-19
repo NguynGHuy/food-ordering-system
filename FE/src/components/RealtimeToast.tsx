@@ -51,6 +51,16 @@ function RealtimeToast() {
         []
     );
 
+    const pauseDismiss = useCallback((id: number) => {
+        window.clearTimeout(timersRef.current.get(id));
+        timersRef.current.delete(id);
+    }, []);
+
+    const scheduleDismiss = useCallback((id: number) => {
+        pauseDismiss(id);
+        timersRef.current.set(id, window.setTimeout(() => dismissToast(id), AUTO_CLOSE_MS));
+    }, [dismissToast, pauseDismiss]);
+
     useEffect(() => {
         const timers = timersRef.current;
 
@@ -89,28 +99,7 @@ function RealtimeToast() {
                 ),
             ].slice(0, 3));
 
-            const oldTimer =
-                timersRef.current.get(
-                    notification.maThongBao
-                );
-
-            if (oldTimer !== undefined) {
-                window.clearTimeout(oldTimer);
-            }
-
-            const timer = window.setTimeout(
-                () => {
-                    dismissToast(
-                        notification.maThongBao
-                    );
-                },
-                AUTO_CLOSE_MS
-            );
-
-            timersRef.current.set(
-                notification.maThongBao,
-                timer
-            );
+            scheduleDismiss(notification.maThongBao);
         };
 
         window.addEventListener(
@@ -131,7 +120,7 @@ function RealtimeToast() {
 
             timers.clear();
         };
-    }, [dismissToast]);
+    }, [scheduleDismiss]);
 
     const handleOpen = async (
     notification: Notification
@@ -189,6 +178,14 @@ function RealtimeToast() {
                 <article
                     key={item.maThongBao}
                     className="realtime-toast"
+                    onMouseEnter={() => pauseDismiss(item.maThongBao)}
+                    onMouseLeave={event => {
+                        if (!event.currentTarget.contains(document.activeElement)) scheduleDismiss(item.maThongBao);
+                    }}
+                    onFocus={() => pauseDismiss(item.maThongBao)}
+                    onBlur={event => {
+                        if (!event.currentTarget.contains(event.relatedTarget) && !event.currentTarget.matches(":hover")) scheduleDismiss(item.maThongBao);
+                    }}
                 >
                     <button
                         type="button"

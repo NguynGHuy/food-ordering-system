@@ -291,12 +291,13 @@ function RestaurantLegalProfile() {
                         <div className="merchant-info-section-title">
                             <FileText size={18} />
                             <div>
-                                <h2>Hoàn thiện hồ sơ</h2>
-                                <p>Chuẩn bị thông tin trước khi ký hợp đồng.</p>
+                                <h2>{data.duocChinhSua ? "Hoàn thiện hồ sơ" : "Hồ sơ đã lưu"}</h2>
+                                <p>{data.duocChinhSua ? "Chuẩn bị thông tin trước khi ký hợp đồng." : "Thông tin pháp lý dùng để đối chiếu hợp đồng."}</p>
                             </div>
                         </div>
 
                         <div className="merchant-legal-help">
+                            {data.duocChinhSua && <>
                             <p>
                                 Bạn có thể lưu thông tin đang nhập và quay lại
                                 hoàn thiện sau.
@@ -305,6 +306,7 @@ function RestaurantLegalProfile() {
                                 Lưu hồ sơ chưa gửi yêu cầu xét duyệt.
                                 Bước ký hợp đồng và gửi hồ sơ sẽ thực hiện tiếp theo.
                             </p>
+                            </>}
                             <Link to="/quan/thong-tin">
                                 Xem thông tin quán →
                             </Link>

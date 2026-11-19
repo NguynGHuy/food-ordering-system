@@ -92,6 +92,16 @@ function AdminLayout() {
 
     const mobileOpen = mobileOpenAt === location.key;
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMobileOpenAt(null);
+      document.querySelector<HTMLButtonElement>('button[aria-controls="admin-menu"]')?.focus();
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [mobileOpen]);
     const setMobileOpen = (open: boolean) => {
         setMobileOpenAt(open ? location.key : null);
     };
@@ -179,7 +189,7 @@ function AdminLayout() {
                 />
             )}</MotionPresence>
 
-            <aside
+            <aside id="admin-menu"
                 className={`admin-pro-sidebar ${
                     mobileOpen ? "is-open" : ""
                 }`}
@@ -283,7 +293,7 @@ function AdminLayout() {
                         <button
                             type="button"
                             className="admin-pro-menu-button"
-                            aria-label="Mở menu"
+                            aria-label="Mở menu" aria-controls="admin-menu" aria-expanded={mobileOpen}
                             onClick={() => setMobileOpen(true)}
                         >
                             <Menu size={20} />

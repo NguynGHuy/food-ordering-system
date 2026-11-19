@@ -135,7 +135,7 @@
   gap: 7px;
 }
 
-.admin-finance-card small { color: #64748b; font-weight: 700; }
+.admin-finance-card small { color: #526058; font-weight: 700; }
 .admin-finance-card strong { color: #0f172a; font-size: 21px; }
 
 .admin-finance-debt-grid {
@@ -165,7 +165,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 7px 0 0;
-  color: #64748b;
+  color: #526058;
   font-size: 14px;
 }
 
@@ -190,8 +190,8 @@
 
 .admin-finance-table-heading h2 { margin: 5px 0 0; color: #0f172a; font-size: 20px; }
 .admin-finance-table-heading a { color: #0f766e; font-weight: 800; text-decoration: none; }
-.admin-finance-empty { padding: 32px !important; text-align: center; color: #64748b; }
-.admin-finance-note { margin: 0; padding: 14px 22px 20px; color: #64748b; font-size: 13px; }
+.admin-finance-empty { padding: 32px !important; text-align: center; color: #526058; }
+.admin-finance-note { margin: 0; padding: 14px 22px 20px; color: #526058; font-size: 13px; }
 .finance-positive { color: #047857; }
 .finance-negative { color: #dc2626; }
 
@@ -346,7 +346,7 @@
 }
 
 .reconciliation-orders table { min-width: 1620px; }
-.reconciliation-list-table { min-width: 1050px; }
+.reconciliation-list-table { min-width: 800px; }
 
 .reconciliation-orders th,
 .reconciliation-orders td,
@@ -479,7 +479,7 @@
 .reconciliation-page .reconciliation-admin-table td { white-space: nowrap; }
 .reconciliation-page .reconciliation-admin-table td:nth-child(1),
 .reconciliation-page .reconciliation-admin-table td:nth-child(2) { white-space: normal; }
-.reconciliation-page .reconciliation-admin-table td small { display: block; margin-top: 4px; color: #64748b; }
+.reconciliation-page .reconciliation-admin-table td small { display: block; margin-top: 4px; color: #526058; }
 .reconciliation-page .reconciliation-admin-table .admin-promotion-state,
 .reconciliation-page .reconciliation-admin-table .admin-account-toggle { white-space: nowrap; }
 
@@ -1789,7 +1789,7 @@ img {
 .address-header p {
   margin: 0;
 
-  color: #777;
+  color: #526058;
 }
 
 .address-list {
@@ -1852,7 +1852,7 @@ img {
 .address-note {
   margin: 0 0 15px;
 
-  color: #777;
+  color: #526058;
 
   font-size: 14px;
 }
@@ -2013,7 +2013,7 @@ img {
 .profile-page-header p {
   margin: 0;
 
-  color: #777;
+  color: #526058;
 
   font-size: 14px;
 }
@@ -2075,7 +2075,7 @@ img {
 .profile-user-text p {
   margin: 0;
 
-  color: #777;
+  color: #526058;
 
   font-size: 13px;
 }
@@ -2370,7 +2370,7 @@ img {
 }
 
 .profile-address-text span {
-  color: #888;
+  color: #526058;
 
   font-size: 12px;
 }
@@ -2396,7 +2396,7 @@ img {
 .profile-loading {
   gap: 15px;
 
-  color: #777;
+  color: #526058;
 }
 
 .profile-error > div {
@@ -2418,7 +2418,7 @@ img {
 
   margin: 0 0 20px;
 
-  color: #777;
+  color: #526058;
 
   font-size: 14px;
 }
@@ -3592,7 +3592,7 @@ img {
 
   font-size: 12px;
 
-  color: #888;
+  color: #526058;
 
   margin-top: 4px;
 }
@@ -3951,7 +3951,7 @@ img {
 
   margin-top: 5px;
 
-  color: #888;
+  color: #526058;
 }
 
 .admin-account-table tr:last-child td {
@@ -4138,7 +4138,7 @@ img {
 }
 
 .admin-topbar span {
-  color: #777;
+  color: #526058;
 
   font-size: 13px;
 }
@@ -4180,7 +4180,7 @@ img {
 }
 
 .admin-home-heading p {
-  color: #777;
+  color: #526058;
 }
 
 .admin-home-grid {
@@ -4220,7 +4220,7 @@ img {
 }
 
 .admin-home-card p {
-  color: #777;
+  color: #526058;
 
   min-height: 42px;
 }
@@ -4276,7 +4276,7 @@ img {
 }
 
 .admin-pending-card small {
-  color: #888;
+  color: #526058;
 }
 
 .admin-pending-badge {
@@ -4322,7 +4322,7 @@ img {
 }
 
 .admin-pending-empty > span {
-  color: #16a34a;
+  color: #276548;
 
   font-size: 40px;
 }
@@ -4332,7 +4332,7 @@ img {
 }
 
 .admin-pending-empty p {
-  color: #777;
+  color: #526058;
 }
 
 /* =========================================================
@@ -4410,7 +4410,7 @@ img {
 
 .restaurant-reviews-heading span,
 .restaurant-review-top time {
-  color: #888;
+  color: #526058;
 
   font-size: 14px;
 }
@@ -4513,7 +4513,7 @@ img {
 }
 
 .admin-top-item > div small {
-  color: #888;
+  color: #526058;
 
   font-size: 13px;
 }
@@ -5503,12 +5503,12 @@ img {
 }
 
 .address-page-polished .address-actions button:hover {
-  color: #e45e28;
-  background: #fff0e7;
+  color: var(--primary-hover, #1c463b);
+  background: var(--primary-soft, #eaf0eb);
 }
 
 .address-page-polished .address-actions .address-action-default {
-  color: #d85a27;
+  color: #88471e;
 }
 
 .address-page-polished .address-actions .address-action-delete:hover {
@@ -5597,7 +5597,7 @@ img {
 }
 
 .address-bottom-back:hover {
-  color: #e76029;
+  color: var(--primary-hover, #1c463b);
 }
 
 .address-bottom-back:hover svg:last-child {
@@ -5878,7 +5878,7 @@ img {
 }
 
 .checkout-voucher-select-label small {
-  color: #918b87;
+  color: #526058;
   font-size: 10px;
   line-height: 1.45;
 }
@@ -5992,8 +5992,8 @@ img {
   width: 42px;
   height: 42px;
   place-items: center;
-  color: #ff5228;
-  background: #fff0ea;
+  color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
   border-radius: 12px;
 }
 
@@ -6005,7 +6005,7 @@ img {
 
 .checkout-voucher-dialog-header p {
   margin: 0;
-  color: #918b87;
+  color: #526058;
   font-size: 11px;
   line-height: 1.45;
 }
@@ -6078,8 +6078,8 @@ img {
 }
 
 .checkout-voucher-code-form input:focus {
-  border-color: #ff8b6e;
-  box-shadow: 0 0 0 3px rgba(255, 82, 40, .09);
+  border-color: var(--primary, #24584a);
+  box-shadow: none;
 }
 
 .checkout-voucher-code-form button {
@@ -6096,8 +6096,8 @@ img {
 
 .checkout-voucher-code-form button:hover:not(:disabled) {
   color: #fff;
-  background: #db3f11;
-  box-shadow: 0 7px 16px rgba(244, 81, 30, .18);
+  background: var(--primary-hover, #1c463b);
+  box-shadow: none;
 }
 
 .checkout-voucher-code-form button:disabled {
@@ -6134,7 +6134,7 @@ img {
 
 .checkout-voucher-dialog-section-heading strong { color: #292524; font-size: 13px; }
 .checkout-voucher-dialog-section-heading small { color: #9a9490; font-size: 10px; }
-.checkout-voucher-dialog-section-heading > a { color: #ff5228; font-size: 10px; font-weight: 750; text-decoration: none; }
+.checkout-voucher-dialog-section-heading > a { color: var(--primary-hover, #1c463b); font-size: 10px; font-weight: 750; text-decoration: none; }
 
 .checkout-voucher-dialog-list {
   display: grid;
@@ -6157,7 +6157,7 @@ img {
   text-align: center;
 }
 
-.checkout-voucher-dialog-empty svg { color: #ff8061; }
+.checkout-voucher-dialog-empty svg { color: var(--primary, #24584a); }
 .checkout-voucher-dialog-empty strong { color: #4b4542; font-size: 12px; }
 
 .checkout-voucher-unavailable { margin-top: 8px; }
@@ -6329,7 +6329,7 @@ img {
 }
 
 .customer-voucher-content > small {
-  color: #a8a29e;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -6509,7 +6509,7 @@ img {
 }
 
 .app-pagination-total {
-  color: #817971;
+  color: #526058;
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -6538,9 +6538,9 @@ img {
 
 .app-pagination-controls > button:hover:not(:disabled) {
   transform: translateY(-2px);
-  border-color: #ffb197;
-  color: var(--food-primary);
-  box-shadow: 0 6px 14px rgba(249, 115, 22, 0.1);
+  border-color: var(--primary, #24584a);
+  color: var(--primary-hover, #1c463b);
+  box-shadow: none;
 }
 
 .app-pagination-controls > button.is-active {
@@ -7028,12 +7028,12 @@ img {
 
 .quan-nav-item:hover {
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .quan-nav-item.active {
   background: #fff1e6;
-  color: #f97316;
+  color: #88471e;
   font-weight: 600;
 }
 
@@ -7147,7 +7147,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #777;
+  color: #526058;
   font-size: 15px;
 }
 
@@ -7175,7 +7175,7 @@ img {
 
 .quan-page-title p {
   margin: 7px 0 0;
-  color: #888;
+  color: #526058;
   font-size: 14px;
 }
 
@@ -7667,7 +7667,7 @@ img {
 
 .quan-status-circle.open {
   background: #dcfce7;
-  color: #16a34a;
+  color: #276548;
 }
 
 .quan-status-circle.closed {
@@ -10292,7 +10292,7 @@ img {
   align-items: center;
   gap: 8px;
   margin-bottom: 30px;
-  color: #777;
+  color: #526058;
   text-decoration: none;
   font-size: 13px;
   font-weight: 650;
@@ -10328,7 +10328,7 @@ img {
 .quan-promotions-hero p {
   max-width: 520px;
   margin: 0;
-  color: #777;
+  color: #526058;
   font-size: 14px;
   line-height: 1.7;
 }
@@ -10426,7 +10426,7 @@ img {
 
 .quan-promotions-section-heading p {
   margin: 7px 0 0;
-  color: #888;
+  color: #526058;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -10494,7 +10494,7 @@ img {
   border-radius: 20px;
   background: #fff;
   border: 1px solid #e7e7e5;
-  color: #777;
+  color: #526058;
   font-size: 12px;
   font-weight: 650;
 }
@@ -10575,7 +10575,7 @@ img {
 .quan-promotion-description {
   min-height: 42px;
   margin: 14px 0 20px;
-  color: #777;
+  color: #526058;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -10684,7 +10684,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 13px;
-  color: #888;
+  color: #526058;
   font-size: 13px;
 }
 
@@ -10923,7 +10923,7 @@ img {
 .quan-promotion-header p {
   margin: 0;
 
-  color: #777;
+  color: #526058;
 
   font-size: 14px;
 }
@@ -10953,7 +10953,7 @@ img {
 
 .quan-promotion-status.inactive {
   background: #f1f1f1;
-  color: #777;
+  color: #526058;
 }
 
 /* THÔNG TIN */
@@ -10979,7 +10979,7 @@ img {
 
   margin-bottom: 7px;
 
-  color: #888;
+  color: #526058;
 
   font-size: 13px;
 }
@@ -11020,7 +11020,7 @@ img {
 
   margin-bottom: 5px;
 
-  color: #888;
+  color: #526058;
 
   font-size: 12px;
 }
@@ -11345,7 +11345,7 @@ img {
 
 .quan-order-row span,
 .quan-order-row em {
-  color: #777;
+  color: #526058;
   font-size: 13px;
   font-style: normal;
 }
@@ -11472,7 +11472,7 @@ img {
 
 .quan-management-item p {
   margin: 5px 0 0;
-  color: #777;
+  color: #526058;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -11577,7 +11577,7 @@ img {
 
 .quan-placeholder p {
   margin: 7px 0 0;
-  color: #888;
+  color: #526058;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -12079,7 +12079,7 @@ img {
 
 .order-review-stars span {
   margin-left: 10px;
-  color: #777;
+  color: #526058;
 }
 
 .order-review-form textarea {
@@ -12140,7 +12140,7 @@ img {
 
 .food-reviews-count,
 .food-reviews-empty {
-  color: #777;
+  color: #526058;
   font-size: 13px;
 }
 
@@ -12160,7 +12160,7 @@ img {
 }
 
 .food-review-heading time {
-  color: #777;
+  color: #526058;
   font-size: 12px;
 }
 
@@ -12261,7 +12261,7 @@ img {
 
 .food-order-state p {
   margin: 0;
-  color: #777777;
+  color: #526058;
 }
 
 .food-order-state.error strong {
@@ -12328,7 +12328,7 @@ img {
 
 .food-order-summary p {
   margin: 0 0 14px;
-  color: #777777;
+  color: #526058;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -14374,7 +14374,7 @@ img {
 }
 .order-review-stars span {
   margin-left: 8px;
-  color: #777;
+  color: #526058;
 }
 .order-review-form textarea {
   box-sizing: border-box;
@@ -14442,7 +14442,7 @@ img {
 }
 .food-reviews-count,
 .food-reviews-empty {
-  color: #777;
+  color: #526058;
   font-size: 13px;
 }
 .food-review-item {
@@ -14459,7 +14459,7 @@ img {
   font-size: 13px;
 }
 .food-review-heading time {
-  color: #777;
+  color: #526058;
   font-size: 12px;
 }
 .food-review-stars {
@@ -16781,7 +16781,7 @@ img {
 .customer-add-cart-button:disabled {
   border-color: #e1e1e3;
   background: #eeeeef;
-  color: #96999e;
+  color: #526058;
   cursor: not-allowed;
 }
 
@@ -16794,7 +16794,7 @@ img {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #74777d;
+  color: #526058;
   font-family: inherit;
   font-size: 11px;
   font-weight: 600;
@@ -17768,7 +17768,7 @@ img {
   padding: 6px 9px;
   border-radius: 999px;
   background: #f3f3f4;
-  color: #74777d;
+  color: #526058;
   font-size: 10px;
   font-weight: 600;
 }
@@ -17891,7 +17891,7 @@ img {
 .restaurant-cart-container .item-note svg {
   flex-shrink: 0;
   margin-top: 1px;
-  color: #a0a3a8;
+  color: #526058;
 }
 
 .cart-item-footer {
@@ -18016,7 +18016,7 @@ img {
 
 .cart-summary-heading span {
   display: block;
-  color: #96999e;
+  color: #526058;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -18058,7 +18058,7 @@ img {
   padding: 10px 11px;
   border-radius: 9px;
   background: #f7f7f8;
-  color: #85888d;
+  color: #526058;
   font-size: 10px;
   line-height: 1.55;
 }
@@ -18673,7 +18673,7 @@ img {
 
 .checkout-note-count {
   margin-top: 6px;
-  color: #a0a3a8;
+  color: #526058;
   font-size: 9px;
   text-align: right;
 }
@@ -18808,7 +18808,7 @@ img {
 
 .checkout-summary-title span {
   display: block;
-  color: #96999e;
+  color: #526058;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -18833,7 +18833,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  color: #74777d;
+  color: #526058;
   font-size: 12px;
 }
 
@@ -19075,7 +19075,7 @@ img {
 
 .checkout-compact-card-title p {
   margin: 2px 0 0;
-  color: #96999e;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -19138,13 +19138,13 @@ img {
   margin-left: 7px;
   padding-left: 7px;
   border-left: 1px solid #d5d6d8;
-  color: #787b81;
+  color: #526058;
   font-weight: 500;
 }
 
 .checkout-selected-address p {
   margin: 3px 0 0;
-  color: #7d8086;
+  color: #526058;
   font-size: 10px;
   line-height: 1.5;
 }
@@ -19202,7 +19202,7 @@ img {
 }
 
 .checkout-compact-note small {
-  color: #a0a3a8;
+  color: #526058;
   font-size: 9px;
   text-align: right;
 }
@@ -19248,7 +19248,7 @@ img {
 }
 
 .checkout-compact-payment.selected .payment-compact-icon {
-  background: #fff0e9;
+  background: transparent;
   color: var(--primary, #f4511e);
 }
 
@@ -19281,7 +19281,7 @@ img {
 }
 
 .checkout-compact-payment small {
-  color: #91949a;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -19391,7 +19391,7 @@ img {
 
 .checkout-summary-restaurant small {
   display: block;
-  color: #999ca1;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -19460,7 +19460,7 @@ img {
 }
 
 .checkout-compact-item-info span {
-  color: #96999e;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -19550,7 +19550,7 @@ img {
   justify-content: center;
   gap: 5px;
   margin-top: 9px;
-  color: #96999e;
+  color: #526058;
   font-size: 8px;
 }
 
@@ -19663,7 +19663,7 @@ img {
 
 .checkout-review-title p {
   margin: 4px 0 0;
-  color: #85888d;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -19770,7 +19770,7 @@ img {
   padding: 5px 8px;
   border-radius: 999px;
   background: #f3f3f4;
-  color: #74777d;
+  color: #526058;
   font-size: 9px;
   font-weight: 600;
 }
@@ -20406,7 +20406,7 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #85888d;
+  color: #526058;
   font-size: 10px;
   line-height: 1.4;
 }
@@ -20495,11 +20495,11 @@ img {
 .order-progress-step.is-upcoming .order-progress-marker {
   border-color: #e2e8f0;
   background: #f8fafc;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .order-progress-label {
-  color: #94a3b8;
+  color: #526058;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.35;
@@ -20526,17 +20526,17 @@ img {
 
 .order-progress-step.is-passed .order-progress-status-badge {
   background: #ecfdf5;
-  color: #059669;
+  color: #276548;
 }
 
 .order-progress-step.is-current .order-progress-status-badge {
   background: #fff0eb;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .order-progress-step.is-upcoming .order-progress-status-badge {
   background: #f1f5f9;
-  color: #94a3b8;
+  color: #526058;
 }
 
 /* CANCELLED */
@@ -20688,7 +20688,7 @@ img {
 
 .order-detail-section-heading p {
   margin: 3px 0 0;
-  color: #8a837d;
+  color: #526058;
   font-size: 12px;
   line-height: 1.4;
 }
@@ -20720,7 +20720,7 @@ img {
   justify-content: center;
   border-radius: 9px;
   background: #f7f5f2;
-  color: #817971;
+  color: #526058;
   font-size: 12px;
   font-weight: 700;
 }
@@ -20748,7 +20748,7 @@ img {
 .order-detail-food-name > span {
   flex: 0 0 auto;
   margin-top: 2px;
-  color: #8f8780;
+  color: #526058;
   font-size: 12px;
   font-weight: 600;
 }
@@ -20764,7 +20764,7 @@ img {
   padding: 4px 7px;
   border-radius: 7px;
   background: #f7f5f2;
-  color: #77706a;
+  color: #526058;
   font-size: 11px;
   line-height: 1.3;
 }
@@ -20798,7 +20798,7 @@ img {
 
 .order-delivery-recipient span,
 .order-delivery-note span {
-  color: #918981;
+  color: #526058;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -20865,7 +20865,7 @@ img {
 .order-detail-empty-history {
   margin: 0;
   padding: 18px 16px;
-  color: #8a837d;
+  color: #526058;
   font-size: 13px;
 }
 
@@ -20945,7 +20945,7 @@ img {
 .order-history-content time {
   display: block;
   margin-top: 3px;
-  color: #9a928b;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -21029,7 +21029,7 @@ img {
 }
 
 .order-payment-heading > div span {
-  color: #948c84;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -21110,7 +21110,7 @@ img {
   align-items: flex-start;
   gap: 6px;
   margin-top: 12px;
-  color: #958d86;
+  color: #526058;
   font-size: 10px;
   line-height: 1.45;
 }
@@ -21212,7 +21212,7 @@ img {
 }
 
 .order-retry-method small {
-  color: #958d86;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -21261,7 +21261,7 @@ img {
 
 .order-review-callout p {
   margin: 4px 0 0;
-  color: #81766b;
+  color: #526058;
   font-size: 10px;
   line-height: 1.5;
 }
@@ -21463,7 +21463,7 @@ img {
 
 .order-qr-header p {
   margin: 4px 0 0;
-  color: #8a827b;
+  color: #526058;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -21612,7 +21612,7 @@ img {
   border: 0;
   padding: 3px 8px;
   background: transparent;
-  color: #8b837c;
+  color: #526058;
   font:
     550 10px/1.4 "Be Vietnam Pro",
     sans-serif;
@@ -21897,7 +21897,7 @@ img {
 }
 
 .order-detail-review-panel .order-review-form textarea::placeholder {
-  color: #aaa29b;
+  color: #526058;
 }
 
 .order-detail-review-panel .order-review-form textarea:focus {
@@ -22430,7 +22430,7 @@ img {
 .customer-order-restaurant time {
   display: block;
   margin-top: 3px;
-  color: #9a928b;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -22462,7 +22462,7 @@ img {
   border-radius: 999px;
   padding: 0 9px;
   background: #fff4ee;
-  color: #d84f27;
+  color: #88471e;
   font-size: 9px;
   font-weight: 700;
   white-space: nowrap;
@@ -22534,7 +22534,7 @@ img {
 
 .customer-order-code span,
 .customer-order-amount span {
-  color: #989089;
+  color: #526058;
   font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -22566,7 +22566,7 @@ img {
 }
 
 .customer-order-footer-note {
-  color: #9a928b;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -22935,7 +22935,7 @@ img {
 
 .merchant-orders-count span {
   margin-top: 4px;
-  color: #989089;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -22969,7 +22969,7 @@ img {
 }
 
 .merchant-order-filter-heading span {
-  color: #9a928b;
+  color: #526058;
   font-size: 9px;
 }
 
@@ -23025,7 +23025,7 @@ img {
   border-radius: 9px;
   padding: 0 10px;
   background: #fff;
-  color: #777069;
+  color: #526058;
   font:
     600 9px/1 "Be Vietnam Pro",
     sans-serif;
@@ -23240,7 +23240,7 @@ img {
 
 .merchant-order-primary time {
   margin-top: 4px;
-  color: #9c948d;
+  color: #526058;
 }
 
 .merchant-order-payment {
@@ -23291,7 +23291,7 @@ img {
 }
 
 .merchant-order-price span {
-  color: #9b938c;
+  color: #526058;
   font-size: 8px;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -23341,7 +23341,7 @@ img {
 
 .merchant-orders-loading p {
   margin: 13px 0 0;
-  color: #8d857e;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -23359,7 +23359,7 @@ img {
 .merchant-orders-error p,
 .merchant-orders-empty p {
   margin: 6px 0 0;
-  color: #918981;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -23926,7 +23926,7 @@ img {
   flex-wrap: wrap;
   gap: 13px;
   margin-top: 8px;
-  color: #8d857e;
+  color: #526058;
   font-size: 9px;
 }
 .merchant-detail-meta span {
@@ -24077,7 +24077,7 @@ img {
 }
 .merchant-detail-card-title p {
   margin: 3px 0 0;
-  color: #968e87;
+  color: #526058;
   font-size: 9px;
 }
 .merchant-detail-items {
@@ -24111,7 +24111,7 @@ img {
   font-size: 11px;
 }
 .merchant-detail-item h3 small {
-  color: #918981;
+  color: #526058;
   font-size: 9px;
   font-weight: 600;
 }
@@ -24131,7 +24131,7 @@ img {
   border-radius: 6px;
   padding: 3px 6px;
   background: #f6f3f0;
-  color: #777069;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-delivery-info {
@@ -24147,7 +24147,7 @@ img {
   border-radius: 10px;
   padding: 10px;
   background: #faf8f6;
-  color: #817971;
+  color: #526058;
 }
 .merchant-delivery-info span {
   display: flex;
@@ -24155,7 +24155,7 @@ img {
   gap: 3px;
 }
 .merchant-delivery-info small {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
   text-transform: uppercase;
 }
@@ -24221,12 +24221,12 @@ img {
 .merchant-detail-history time {
   display: block;
   margin-top: 3px;
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-detail-history p {
   margin: 4px 0 0;
-  color: #777069;
+  color: #526058;
   font-size: 9px;
 }
 .merchant-history-empty {
@@ -24285,7 +24285,7 @@ img {
   display: block;
 }
 .merchant-payment-state span {
-  color: #8b837c;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-payment-state strong {
@@ -24295,7 +24295,7 @@ img {
 .merchant-payment-state small {
   grid-column: 2;
   margin-top: 2px;
-  color: #9a928b;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-payment-state.state-ThanhCong {
@@ -24423,7 +24423,7 @@ img {
 }
 .quan-sidebar-brand small {
   margin-top: 2px;
-  color: #9b938c;
+  color: #526058;
   font-size: 8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -24480,7 +24480,7 @@ img {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #958d86;
+  color: #526058;
   font-size: 8px;
 }
 .quan-restaurant-card svg {
@@ -24584,7 +24584,7 @@ img {
   font-size: 9px;
 }
 .quan-sidebar-account small {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
 }
 .quan-logout {
@@ -24649,7 +24649,7 @@ img {
   gap: 2px;
 }
 .quan-topbar-left span {
-  color: #9b938c;
+  color: #526058;
   font-size: 8px;
   text-transform: uppercase;
 }
@@ -24693,7 +24693,7 @@ img {
   font-size: 9px;
 }
 .quan-topbar-user small {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
 }
 .quan-content {
@@ -24836,7 +24836,7 @@ img {
   gap: 2px;
 }
 .merchant-dashboard-status small {
-  color: #9b938c;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-dashboard-status strong {
@@ -24898,7 +24898,7 @@ img {
   gap: 3px;
 }
 .merchant-dashboard-stats small {
-  color: #9a928b;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-dashboard-stats strong {
@@ -24938,7 +24938,7 @@ img {
 .merchant-dashboard-card-title p,
 .merchant-quick-heading p {
   margin: 3px 0 0;
-  color: #989089;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-dashboard-card-title button {
@@ -24985,7 +24985,7 @@ img {
   font-size: 11px;
 }
 .merchant-profile-name small {
-  color: #989089;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-profile-information {
@@ -25052,7 +25052,7 @@ img {
   margin-top: 13px;
 }
 .merchant-operation-card > div > span {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
   text-transform: uppercase;
 }
@@ -25134,7 +25134,7 @@ img {
 }
 .merchant-quick-grid small {
   overflow: hidden;
-  color: #9a928b;
+  color: #526058;
   font-size: 7px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -25397,7 +25397,7 @@ img {
 }
 .merchant-recent-orders header p {
   margin: 4px 0 0;
-  color: #958d86;
+  color: #526058;
   font-size: 10px;
 }
 .merchant-recent-orders header button {
@@ -25446,7 +25446,7 @@ img {
   justify-content: center;
   border-radius: 10px;
   background: #f4f1ee;
-  color: #777069;
+  color: #526058;
   transition: 0.16s ease;
 }
 .merchant-recent-main {
@@ -25463,11 +25463,11 @@ img {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #8d857e;
+  color: #526058;
   font-size: 9px;
 }
 .merchant-recent-list time {
-  color: #948c85;
+  color: #526058;
   font-size: 9px;
   white-space: nowrap;
 }
@@ -25572,7 +25572,7 @@ img {
   color: #ba4d44;
 }
 .merchant-operation-heading small {
-  color: #958d86;
+  color: #526058;
   font-size: 9px;
   text-transform: uppercase;
 }
@@ -25602,7 +25602,7 @@ img {
   gap: 3px;
 }
 .merchant-operation-hours small {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-operation-hours strong {
@@ -25670,7 +25670,7 @@ img {
   font-size: 10px;
 }
 .merchant-live-quick small {
-  color: #99918a;
+  color: #526058;
   font-size: 8px;
 }
 .merchant-live-quick button > svg {
@@ -25692,7 +25692,7 @@ img {
 .merchant-live-loading p,
 .merchant-live-error p {
   margin: 0;
-  color: #918981;
+  color: #526058;
   font-size: 10px;
 }
 .merchant-live-error h2 {
@@ -26232,13 +26232,13 @@ img {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #16a34a;
+  color: #276548;
   font-size: 11px;
   font-weight: 600;
 }
 
 .quan-sidebar .quan-restaurant-card svg {
-  color: #16a34a;
+  color: #276548;
   flex-shrink: 0;
 }
 
@@ -26601,7 +26601,7 @@ img {
 }
 .merchant-current-status-content small,
 .merchant-current-mode small {
-  color: #938b84;
+  color: #526058;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -26652,7 +26652,7 @@ img {
 }
 .merchant-mode-section header p {
   margin: 4px 0 0;
-  color: #938b84;
+  color: #526058;
   font-size: 9px;
 }
 .merchant-mode-list {
@@ -26728,7 +26728,7 @@ img {
   font-size: 11px;
 }
 .merchant-mode-option small {
-  color: #8f8780;
+  color: #526058;
   font-size: 9px;
   line-height: 1.45;
 }
@@ -26789,7 +26789,7 @@ img {
   color: #23815a;
 }
 .merchant-status-side small {
-  color: #9a928b;
+  color: #526058;
   font-size: 8px;
   letter-spacing: 0.05em;
 }
@@ -26802,7 +26802,7 @@ img {
 }
 .merchant-status-side p {
   margin: 6px 0 0;
-  color: #8a827b;
+  color: #526058;
   font-size: 9px;
   line-height: 1.55;
 }
@@ -26848,7 +26848,7 @@ img {
 .merchant-status-loading p,
 .merchant-status-error p {
   margin: 0;
-  color: #918981;
+  color: #526058;
   font-size: 10px;
 }
 .merchant-status-error h2 {
@@ -26919,9 +26919,9 @@ img {
 
 .merchant-status-refresh:hover:not(:disabled) {
   transform: translateY(-2px);
-  border-color: #ffb59d;
-  color: var(--food-primary);
-  box-shadow: 0 7px 18px rgba(255, 90, 54, 0.11);
+  border-color: var(--primary, #24584a);
+  color: var(--primary-hover, #1c463b);
+  box-shadow: none;
 }
 
 .merchant-status-notice {
@@ -27273,7 +27273,7 @@ img {
 .merchant-info-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -27290,7 +27290,7 @@ img {
 
 .merchant-info-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -27373,7 +27373,7 @@ img {
 .merchant-info-section-title > svg {
   flex: 0 0 auto;
   margin-top: 2px;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-info-section-title h2 {
@@ -27386,7 +27386,7 @@ img {
 
 .merchant-info-section-title p {
   margin: 4px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12.5px;
   line-height: 1.5;
 }
@@ -27452,7 +27452,7 @@ img {
 
 .merchant-info-field input::placeholder,
 .merchant-info-field textarea::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-info-field input:hover,
@@ -27469,7 +27469,7 @@ img {
 .merchant-info-field > small {
   align-self: flex-end;
   margin-top: -2px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -27485,7 +27485,7 @@ img {
   position: absolute;
   left: 12px;
   z-index: 1;
-  color: #a1a1aa;
+  color: #526058;
   pointer-events: none;
 }
 
@@ -27497,7 +27497,7 @@ img {
 .merchant-info-price-input strong {
   position: absolute;
   right: 12px;
-  color: #71717a;
+  color: #526058;
   font-size: 12px;
   font-weight: 650;
   pointer-events: none;
@@ -27676,7 +27676,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.82);
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-info-cover > img {
@@ -27732,7 +27732,7 @@ img {
 .merchant-info-preview-body > span:first-child {
   display: block;
   margin-bottom: 8px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   line-height: 1.4;
@@ -27752,7 +27752,7 @@ img {
   display: -webkit-box;
   overflow: hidden;
   margin: 9px 0 15px;
-  color: #71717a;
+  color: #526058;
   font-size: 12.5px;
   line-height: 1.55;
   -webkit-box-orient: vertical;
@@ -27773,7 +27773,7 @@ img {
 .merchant-info-preview-line svg {
   flex: 0 0 auto;
   margin-top: 1px;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-info-preview-meta {
@@ -27798,7 +27798,7 @@ img {
 }
 
 .merchant-info-preview-meta svg {
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-info-system {
@@ -27827,7 +27827,7 @@ img {
 }
 
 .merchant-info-system > div > span {
-  color: #8a8a91;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.45;
 }
@@ -27940,7 +27940,7 @@ img {
 .merchant-info-input-icon:focus-within > svg,
 .merchant-info-price-input:focus-within > svg {
   transform: scale(1.08);
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-info-actions-reveal.is-visible .merchant-info-actions {
@@ -28237,7 +28237,7 @@ img {
 .merchant-category-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -28254,7 +28254,7 @@ img {
 
 .merchant-category-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -28338,7 +28338,7 @@ img {
 
 .merchant-category-panel-header p {
   margin: 4px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12.5px;
   line-height: 1.45;
 }
@@ -28381,7 +28381,7 @@ img {
 }
 
 .merchant-category-position {
-  color: #a1a1aa;
+  color: #526058;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.04em;
@@ -28397,7 +28397,7 @@ img {
   border: 1px solid #fed7aa;
   border-radius: 10px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-category-info {
@@ -28421,7 +28421,7 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.4;
 }
@@ -28465,9 +28465,9 @@ img {
 }
 
 .merchant-category-actions .edit:hover:not(:disabled) {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #c2410c;
+  border-color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
+  color: var(--primary-hover, #1c463b);
 }
 
 .merchant-category-actions .delete {
@@ -28499,7 +28499,7 @@ img {
   margin-bottom: 15px;
   border-radius: 17px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-category-empty h3 {
@@ -28512,7 +28512,7 @@ img {
 .merchant-category-empty p {
   max-width: 330px;
   margin: 7px 0 16px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12.5px;
   line-height: 1.55;
 }
@@ -28570,7 +28570,7 @@ img {
 .merchant-category-dialog-header div > span {
   display: block;
   margin-bottom: 6px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.1em;
@@ -28586,7 +28586,7 @@ img {
 
 .merchant-category-dialog-header p {
   margin: 5px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -28602,7 +28602,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
 }
 
@@ -28652,11 +28652,11 @@ img {
 }
 
 .merchant-category-field input::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-category-field small {
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10.5px;
   line-height: 1.45;
 }
@@ -28816,7 +28816,7 @@ img {
 .merchant-menu-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -28833,7 +28833,7 @@ img {
 
 .merchant-menu-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -28947,7 +28947,7 @@ img {
 }
 
 .merchant-menu-summary span {
-  color: #8a8a91;
+  color: #526058;
   font-size: 10.5px;
   line-height: 1.4;
 }
@@ -28970,7 +28970,7 @@ img {
   border: 1px solid #dedee2;
   border-radius: 8px;
   background: #fff;
-  color: #a1a1aa;
+  color: #526058;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease;
@@ -29003,7 +29003,7 @@ img {
 }
 
 .merchant-menu-search input::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-menu-select select {
@@ -29104,7 +29104,7 @@ img {
 .merchant-menu-image > span.hidden {
   border-color: rgba(228, 228, 231, 0.9);
   background: rgba(250, 250, 250, 0.97);
-  color: #71717a;
+  color: #526058;
 }
 
 .merchant-menu-card.is-hidden .merchant-menu-image > img {
@@ -29134,7 +29134,7 @@ img {
   display: block;
   overflow: hidden;
   margin-bottom: 4px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.06em;
@@ -29157,7 +29157,7 @@ img {
 
 .merchant-menu-card-heading > strong {
   flex: 0 0 auto;
-  color: #ea580c;
+  color: #88471e;
   font-size: 12.5px;
   font-weight: 750;
   line-height: 1.4;
@@ -29168,7 +29168,7 @@ img {
   display: -webkit-box;
   overflow: hidden;
   margin: 9px 0 13px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
@@ -29207,9 +29207,9 @@ img {
 }
 
 .merchant-menu-card-actions button:hover:not(:disabled) {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #c2410c;
+  border-color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
+  color: var(--primary-hover, #1c463b);
 }
 
 .merchant-menu-card-actions button:disabled {
@@ -29258,7 +29258,7 @@ img {
   margin-bottom: 15px;
   border-radius: 18px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-menu-empty h3 {
@@ -29271,7 +29271,7 @@ img {
 .merchant-menu-empty p {
   max-width: 360px;
   margin: 7px 0 16px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12.5px;
   line-height: 1.55;
 }
@@ -29422,7 +29422,7 @@ img {
 .merchant-menu-drawer-header div > span {
   display: block;
   margin-bottom: 6px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -29438,7 +29438,7 @@ img {
 
 .merchant-menu-drawer-header p {
   margin: 5px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -29454,7 +29454,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
   transition:
     background 0.18s ease,
@@ -29529,7 +29529,7 @@ img {
 
 .merchant-menu-field input::placeholder,
 .merchant-menu-field textarea::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-menu-field input:hover,
@@ -29548,7 +29548,7 @@ img {
 .merchant-menu-field > small {
   align-self: flex-end;
   margin-top: -2px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10.5px;
 }
 
@@ -29564,7 +29564,7 @@ img {
   position: absolute;
   left: 12px;
   z-index: 1;
-  color: #a1a1aa;
+  color: #526058;
   pointer-events: none;
 }
 
@@ -29576,7 +29576,7 @@ img {
 .merchant-menu-price-input > strong {
   position: absolute;
   right: 12px;
-  color: #71717a;
+  color: #526058;
   font-size: 12px;
   pointer-events: none;
 }
@@ -29714,7 +29714,7 @@ img {
 .merchant-topping-header div > span {
   display: block;
   margin-bottom: 6px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -29730,7 +29730,7 @@ img {
 
 .merchant-topping-header p {
   margin: 5px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -29746,7 +29746,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
 }
 
@@ -29856,13 +29856,13 @@ img {
 
 .merchant-topping-row p {
   margin: 3px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 10.5px;
   line-height: 1.4;
 }
 
 .merchant-topping-row em {
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10px;
   font-style: normal;
   font-weight: 650;
@@ -29888,7 +29888,7 @@ img {
   border: 1px dashed #dedee2;
   border-radius: 10px;
   background: #fafafa;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   line-height: 1.5;
   text-align: center;
@@ -30070,7 +30070,7 @@ img {
 .merchant-options-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -30087,7 +30087,7 @@ img {
 
 .merchant-options-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -30182,12 +30182,12 @@ img {
 
 .merchant-options-panel-title p {
   margin: 4px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11px;
 }
 
 .merchant-options-panel-title > svg {
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-options-group-list {
@@ -30244,12 +30244,12 @@ img {
   justify-content: center;
   border-radius: 8px;
   background: #fff;
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-options-group.selected .merchant-options-group-select > span {
   background: #ffedd5;
-  color: #ea580c;
+  color: #88471e;
 }
 
 .merchant-options-group-select > div {
@@ -30270,7 +30270,7 @@ img {
 .merchant-options-group-select p {
   overflow: hidden;
   margin: 3px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 10px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -30294,14 +30294,14 @@ img {
   border: 1px solid #dedee2;
   border-radius: 7px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
 }
 
 .merchant-options-group-actions button:hover:not(:disabled) {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #c2410c;
+  border-color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
+  color: var(--primary-hover, #1c463b);
 }
 
 .merchant-options-group-actions button.delete {
@@ -30325,7 +30325,7 @@ img {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  color: #a1a1aa;
+  color: #526058;
   text-align: center;
 }
 
@@ -30365,7 +30365,7 @@ img {
 .merchant-options-topping-header > div > span {
   display: block;
   margin-bottom: 5px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.1em;
@@ -30381,7 +30381,7 @@ img {
 
 .merchant-options-topping-header p {
   margin: 4px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -30458,7 +30458,7 @@ img {
   justify-content: center;
   border-radius: 9px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-options-topping-info {
@@ -30496,11 +30496,11 @@ img {
 
 .merchant-options-topping-info > span.inactive {
   background: #f4f4f5;
-  color: #71717a;
+  color: #526058;
 }
 
 .merchant-options-price {
-  color: #ea580c;
+  color: #88471e;
   font-size: 12px;
   font-weight: 750;
   text-align: right;
@@ -30533,9 +30533,9 @@ img {
 }
 
 .merchant-options-topping-actions button:hover:not(:disabled) {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #c2410c;
+  border-color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
+  color: var(--primary-hover, #1c463b);
 }
 
 .merchant-options-topping-actions button.delete {
@@ -30563,14 +30563,14 @@ img {
   align-items: center;
   justify-content: center;
   padding: 30px;
-  color: #8a8a91;
+  color: #526058;
   text-align: center;
 }
 
 .merchant-options-topping-empty > svg,
 .merchant-options-no-group > svg {
   margin-bottom: 12px;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-options-topping-empty h3,
@@ -30719,7 +30719,7 @@ img {
 .merchant-config-header div > span {
   display: block;
   margin-bottom: 6px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -30735,7 +30735,7 @@ img {
 
 .merchant-config-header p {
   margin: 5px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.45;
 }
@@ -30751,7 +30751,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
   transition:
     background 0.18s ease,
@@ -30817,11 +30817,11 @@ img {
 }
 
 .merchant-config-field input::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-config-field > small {
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10.5px;
   line-height: 1.45;
 }
@@ -30904,7 +30904,7 @@ img {
 
 .merchant-config-switch p {
   margin: 3px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 10.5px;
   line-height: 1.45;
 }
@@ -30921,7 +30921,7 @@ img {
   position: absolute;
   left: 12px;
   z-index: 1;
-  color: #a1a1aa;
+  color: #526058;
   pointer-events: none;
 }
 
@@ -30933,7 +30933,7 @@ img {
 .merchant-config-price > strong {
   position: absolute;
   right: 12px;
-  color: #71717a;
+  color: #526058;
   font-size: 12px;
   pointer-events: none;
 }
@@ -31073,7 +31073,7 @@ img {
 .merchant-promotions-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -31090,7 +31090,7 @@ img {
 
 .merchant-promotions-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -31166,7 +31166,7 @@ img {
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #71717a;
+  color: #526058;
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 650;
@@ -31196,7 +31196,7 @@ img {
   padding: 0 5px;
   border-radius: 999px;
   background: #f1f1f2;
-  color: #71717a;
+  color: #526058;
   font-size: 9.5px;
 }
 
@@ -31285,7 +31285,7 @@ img {
   justify-content: center;
   border-radius: 10px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-promotion-code > div {
@@ -31295,7 +31295,7 @@ img {
 .merchant-promotion-code small {
   display: block;
   margin-bottom: 2px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -31345,7 +31345,7 @@ img {
 .merchant-promotion-status.expired,
 .merchant-promotion-status.inactive {
   background: #f4f4f5;
-  color: #71717a;
+  color: #526058;
 }
 
 .merchant-promotion-description {
@@ -31353,7 +31353,7 @@ img {
   min-height: 37px;
   overflow: hidden;
   margin: 13px 18px 0;
-  color: #71717a;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.55;
   -webkit-box-orient: vertical;
@@ -31394,7 +31394,7 @@ img {
 
 .merchant-promotion-value > strong {
   margin-top: 2px;
-  color: #ea580c;
+  color: #88471e;
   font-size: 24px;
   font-weight: 800;
   line-height: 1.2;
@@ -31427,7 +31427,7 @@ img {
 
 .merchant-promotion-meta svg {
   flex: 0 0 auto;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-promotion-meta span {
@@ -31435,7 +31435,7 @@ img {
   min-width: 0;
   flex-direction: column;
   gap: 2px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 9.5px;
 }
 
@@ -31459,7 +31459,7 @@ img {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 9.5px;
 }
 
@@ -31497,7 +31497,7 @@ img {
 
 .merchant-promotion-period > svg {
   flex: 0 0 auto;
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-promotion-period > div {
@@ -31507,7 +31507,7 @@ img {
 .merchant-promotion-period span {
   display: block;
   margin-bottom: 4px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 9.5px;
 }
 
@@ -31523,7 +31523,7 @@ img {
 }
 
 .merchant-promotion-period b {
-  color: #f97316;
+  color: #88471e;
   font-weight: 700;
 }
 
@@ -31564,9 +31564,9 @@ img {
 }
 
 .merchant-promotion-actions .edit:hover:not(:disabled) {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #c2410c;
+  border-color: var(--primary, #24584a);
+  background: var(--primary-soft, #eaf0eb);
+  color: var(--primary-hover, #1c463b);
 }
 
 .merchant-promotion-actions .disable {
@@ -31609,7 +31609,7 @@ img {
   margin-bottom: 14px;
   border-radius: 18px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-promotions-empty h3 {
@@ -31621,7 +31621,7 @@ img {
 .merchant-promotions-empty p {
   max-width: 350px;
   margin: 7px 0 16px;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   line-height: 1.55;
 }
@@ -31735,7 +31735,7 @@ img {
 .merchant-promo-form-header div > span {
   display: block;
   margin-bottom: 6px;
-  color: #f97316;
+  color: #88471e;
   font-size: 9.5px;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -31751,7 +31751,7 @@ img {
 
 .merchant-promo-form-header p {
   margin: 5px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.5;
 }
@@ -31767,7 +31767,7 @@ img {
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #fff;
-  color: #71717a;
+  color: #526058;
   cursor: pointer;
   transition:
     background 0.18s ease,
@@ -31874,13 +31874,13 @@ fieldset.merchant-promo-form-body {
 
 .merchant-promo-field input::placeholder,
 .merchant-promo-field textarea::placeholder {
-  color: #a1a1aa;
+  color: #526058;
 }
 
 .merchant-promo-field > small {
   align-self: flex-end;
   margin-top: -2px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -31898,7 +31898,7 @@ fieldset.merchant-promo-form-body {
   position: absolute;
   left: 12px;
   z-index: 1;
-  color: #a1a1aa;
+  color: #526058;
   pointer-events: none;
 }
 
@@ -31914,7 +31914,7 @@ fieldset.merchant-promo-form-body {
 .merchant-promo-money-input > strong {
   position: absolute;
   right: 12px;
-  color: #71717a;
+  color: #526058;
   font-size: 11.5px;
   pointer-events: none;
 }
@@ -31966,7 +31966,7 @@ fieldset.merchant-promo-form-body {
   justify-content: center;
   border-radius: 9px;
   background: #ffedd5;
-  color: #ea580c;
+  color: #88471e;
 }
 
 .merchant-promo-edit-summary > div {
@@ -32047,8 +32047,8 @@ fieldset.merchant-promo-form-body {
 }
 
 .merchant-promo-form-footer .save:hover:not(:disabled) {
-  border-color: #ea580c;
-  background: #ea580c;
+  border-color: var(--primary-hover, #1c463b);
+  background: var(--primary-hover, #1c463b);
 }
 
 @keyframes merchant-promo-overlay-in {
@@ -32154,7 +32154,7 @@ fieldset.merchant-promo-form-body {
 .merchant-notifications-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #f97316;
+  color: #88471e;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -32171,7 +32171,7 @@ fieldset.merchant-promo-form-body {
 
 .merchant-notifications-header p {
   margin: 7px 0 0;
-  color: #71717a;
+  color: #526058;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -32243,7 +32243,7 @@ fieldset.merchant-promo-form-body {
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #71717a;
+  color: #526058;
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 650;
@@ -32273,7 +32273,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 5px;
   border-radius: 999px;
   background: #f1f1f2;
-  color: #71717a;
+  color: #526058;
   font-size: 9.5px;
 }
 
@@ -32308,7 +32308,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .merchant-notifications-panel-title svg {
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-notifications-panel-title h2 {
@@ -32325,7 +32325,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 9px;
   border-radius: 999px;
   background: #f4f4f5;
-  color: #71717a;
+  color: #526058;
   font-size: 10.5px;
   font-weight: 650;
 }
@@ -32384,12 +32384,12 @@ fieldset.merchant-promo-form-body {
   justify-content: center;
   border-radius: 10px;
   background: #f4f4f5;
-  color: #8a8a91;
+  color: #526058;
 }
 
 .merchant-notification-row.unread .merchant-notification-icon {
   background: #ffedd5;
-  color: #ea580c;
+  color: #88471e;
 }
 
 .merchant-notification-content {
@@ -32434,7 +32434,7 @@ fieldset.merchant-promo-form-body {
   display: -webkit-box;
   overflow: hidden;
   margin: 5px 0;
-  color: #71717a;
+  color: #526058;
   font-size: 11.5px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
@@ -32445,7 +32445,7 @@ fieldset.merchant-promo-form-body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #a1a1aa;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -32463,7 +32463,7 @@ fieldset.merchant-promo-form-body {
   justify-content: center;
   border-radius: 50%;
   background: #f0fdf4;
-  color: #16a34a;
+  color: #276548;
 }
 
 .merchant-notification-action > button {
@@ -32511,7 +32511,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid #e7e7e9;
   border-radius: 14px;
   background: #fff;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   text-align: center;
 }
@@ -32525,7 +32525,7 @@ fieldset.merchant-promo-form-body {
   margin-bottom: 14px;
   border-radius: 18px;
   background: #fff7ed;
-  color: #f97316;
+  color: #88471e;
 }
 
 .merchant-notifications-empty h3 {
@@ -32538,7 +32538,7 @@ fieldset.merchant-promo-form-body {
 .merchant-notifications-empty p {
   max-width: 380px;
   margin: 7px 0 0;
-  color: #8a8a91;
+  color: #526058;
   font-size: 12px;
   line-height: 1.55;
 }
@@ -32722,7 +32722,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-pro-role > div {
@@ -32990,7 +32990,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-pro-topbar-user span {
   margin-top: 2px;
-  color: #929297;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -33044,7 +33044,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-pro-access p {
   margin: 0;
-  color: #77777d;
+  color: #526058;
   font-size: 13px;
 }
 
@@ -33178,7 +33178,7 @@ fieldset.merchant-promo-form-body {
 .admin-dashboard-eyebrow {
   display: block;
   margin-bottom: 6px;
-  color: #f4511e;
+  color: #88471e;
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.09em;
@@ -33196,7 +33196,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-dashboard-welcome p {
   margin: 7px 0 0;
-  color: #77777d;
+  color: #526058;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -33239,12 +33239,12 @@ fieldset.merchant-promo-form-body {
   place-items: center;
   border-radius: 10px;
   background: #ecfdf5;
-  color: #059669;
+  color: #276548;
 }
 
 .admin-pending-summary.has-pending .admin-pending-icon {
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-pending-summary > span:nth-child(2) {
@@ -33320,7 +33320,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-dashboard-stat.tone-orange .admin-stat-icon {
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-dashboard-stat.tone-purple .admin-stat-icon {
@@ -33397,7 +33397,7 @@ fieldset.merchant-promo-form-body {
 .admin-dashboard-panel-header span {
   display: block;
   margin-bottom: 3px;
-  color: #949499;
+  color: #526058;
   font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.07em;
@@ -33417,7 +33417,7 @@ fieldset.merchant-promo-form-body {
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
-  color: #f4511e;
+  color: #88471e;
   font-size: 10px;
   font-weight: 650;
   text-decoration: none;
@@ -33460,24 +33460,24 @@ fieldset.merchant-promo-form-body {
   place-items: center;
   border-radius: 9px;
   background: #f0f0f2;
-  color: #737379;
+  color: #526058;
   font-size: 11px;
   font-weight: 750;
 }
 
 .admin-ranking-number.rank-1 {
   background: #fff3cf;
-  color: #a66f00;
+  color: #88471e;
 }
 
 .admin-ranking-number.rank-2 {
   background: #f0f2f5;
-  color: #67707d;
+  color: #526058;
 }
 
 .admin-ranking-number.rank-3 {
   background: #fff0e8;
-  color: #b85d30;
+  color: #88471e;
 }
 
 .admin-ranking-info {
@@ -33502,7 +33502,7 @@ fieldset.merchant-promo-form-body {
   align-items: center;
   gap: 5px;
   overflow: hidden;
-  color: #929298;
+  color: #526058;
   font-size: 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -33569,7 +33569,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-work-icon.restaurants {
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-work-icon.promotions {
@@ -33594,7 +33594,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-work-list small {
   overflow: hidden;
-  color: #929298;
+  color: #526058;
   font-size: 9px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -33650,7 +33650,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-dashboard-loading svg {
-  color: #f4511e;
+  color: #88471e;
   animation: admin-dashboard-spin 0.8s linear infinite;
 }
 
@@ -33667,7 +33667,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-dashboard-error p {
   margin: 7px 0 18px;
-  color: #85858b;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -33793,7 +33793,7 @@ fieldset.merchant-promo-form-body {
 .admin-accounts-heading > div > span {
   display: block;
   margin-bottom: 5px;
-  color: #f4511e;
+  color: #88471e;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -33899,7 +33899,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-account-summary small {
-  color: #7f7f85;
+  color: #526058;
   font-size: 11px;
   font-weight: 550;
 }
@@ -33942,7 +33942,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid #dedee1;
   border-radius: 9px;
   background: #fafafa;
-  color: #929297;
+  color: #526058;
   box-sizing: border-box;
   transition:
     border-color 0.18s ease,
@@ -34009,7 +34009,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 17px;
   border-bottom: 1px solid #eeeeef;
   background: #fafafa;
-  color: #85858a;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -34037,7 +34037,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 17px;
   border-bottom: 1px solid #e9e9eb;
   background: #fbfbfc;
-  color: #77777d;
+  color: #526058;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.035em;
@@ -34131,7 +34131,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-account-identity small {
   overflow: hidden;
-  color: #939398;
+  color: #526058;
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -34283,7 +34283,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-accounts-loading svg {
-  color: #f4511e;
+  color: #88471e;
   animation: admin-account-spin 0.8s linear infinite;
 }
 
@@ -34391,7 +34391,7 @@ fieldset.merchant-promo-form-body {
 .admin-restaurants-heading > div > span {
   display: block;
   margin-bottom: 5px;
-  color: #f4511e;
+  color: #88471e;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -34474,7 +34474,7 @@ fieldset.merchant-promo-form-body {
   place-items: center;
   border-radius: 10px;
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-pending-count > div {
@@ -34484,7 +34484,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-pending-count small {
-  color: #7e7e84;
+  color: #526058;
   font-size: 11px;
   font-weight: 550;
 }
@@ -34501,12 +34501,12 @@ fieldset.merchant-promo-form-body {
   gap: 11px;
   padding: 14px 17px;
   background: #fafafa;
-  color: #79797f;
+  color: #526058;
 }
 
 .admin-pending-description svg {
   flex: 0 0 auto;
-  color: #77777d;
+  color: #526058;
 }
 
 .admin-pending-description p {
@@ -34538,7 +34538,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-restaurants-toolbar > span {
   flex: 0 0 auto;
-  color: #85858b;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -34559,7 +34559,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid #dedee1;
   border-radius: 9px;
   background: #fafafa;
-  color: #929297;
+  color: #526058;
   box-sizing: border-box;
   transition:
     border-color 0.18s ease,
@@ -34625,7 +34625,7 @@ fieldset.merchant-promo-form-body {
   place-items: center;
   border-radius: 11px;
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-restaurant-request-info {
@@ -34778,7 +34778,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-restaurants-loading svg {
-  color: #f4511e;
+  color: #88471e;
   animation: admin-restaurant-spin 0.8s linear infinite;
 }
 
@@ -34800,7 +34800,7 @@ fieldset.merchant-promo-form-body {
 
 .admin-restaurants-empty p {
   margin: 6px 0 0;
-  color: #929297;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -35054,7 +35054,7 @@ fieldset.merchant-promo-form-body {
 .admin-promotions-heading > div:first-child > span {
   display: block;
   margin-bottom: 5px;
-  color: #f4511e;
+  color: #88471e;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -35114,8 +35114,8 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-promotions-heading-actions .create:hover:not(:disabled) {
-  border-color: #dd4214;
-  background: #dd4214;
+  border-color: var(--primary-hover, #1c463b);
+  background: var(--primary-hover, #1c463b);
 }
 
 .admin-promotions-heading-actions button:disabled {
@@ -35174,7 +35174,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-promotion-summary small {
-  color: #7f7f85;
+  color: #526058;
   font-size: 11px;
   font-weight: 550;
 }
@@ -35236,7 +35236,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid #dedee1;
   border-radius: 9px;
   background: #fafafa;
-  color: #929297;
+  color: #526058;
   box-sizing: border-box;
 }
 
@@ -35274,7 +35274,7 @@ fieldset.merchant-promo-form-body {
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
-  color: #77777d;
+  color: #526058;
   font:
     600 10px/1 "Be Vietnam Pro",
     sans-serif;
@@ -35289,7 +35289,7 @@ fieldset.merchant-promo-form-body {
 .admin-promotion-filters button.active {
   border-color: #ffd3c4;
   background: #fff0e8;
-  color: #e14a1b;
+  color: #88471e;
 }
 
 .admin-promotions-result {
@@ -35297,7 +35297,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 17px;
   border-bottom: 1px solid #eeeeef;
   background: #fafafa;
-  color: #85858a;
+  color: #526058;
   font-size: 11px;
   line-height: 37px;
 }
@@ -35325,7 +35325,7 @@ fieldset.merchant-promo-form-body {
   padding: 0 15px;
   border-bottom: 1px solid #e9e9eb;
   background: #fbfbfc;
-  color: #77777d;
+  color: #526058;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.035em;
@@ -35396,7 +35396,7 @@ fieldset.merchant-promo-form-body {
   place-items: center;
   border-radius: 9px;
   background: #fff0e8;
-  color: #f4511e;
+  color: #88471e;
 }
 
 .admin-promotion-code > div,
@@ -35420,14 +35420,14 @@ fieldset.merchant-promo-form-body {
 .admin-promotion-code small,
 .admin-promotion-discount small {
   overflow: hidden;
-  color: #939398;
+  color: #526058;
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-promotion-discount strong {
-  color: #e14a1b;
+  color: #88471e;
   font-size: 13px;
   font-weight: 750;
 }
@@ -35471,7 +35471,7 @@ fieldset.merchant-promo-form-body {
   min-width: 0;
   align-items: flex-start;
   gap: 7px;
-  color: #77777d;
+  color: #526058;
 }
 
 .admin-promotion-period svg {
@@ -35489,7 +35489,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-promotion-period small {
-  color: #99999e;
+  color: #526058;
   font-size: 10px;
 }
 
@@ -35527,7 +35527,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-promotion-state.inactive {
-  color: #77777d;
+  color: #526058;
 }
 
 .admin-promotion-state.inactive i {
@@ -35617,7 +35617,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .admin-promotions-loading svg {
-  color: #f4511e;
+  color: #88471e;
   animation: admin-promotion-spin 0.8s linear infinite;
 }
 
@@ -37343,7 +37343,7 @@ fieldset.merchant-promo-form-body {
     transform: translateY(-3px);
     filter: brightness(1.04);
 
-    box-shadow: 0 12px 26px rgba(234, 115, 52, 0.26);
+    box-shadow: none;
   }
 }
 
@@ -38244,9 +38244,9 @@ fieldset.merchant-promo-form-body {
   }
 
   .checkout-review-back:not(:disabled):hover {
-    border-color: rgba(234, 115, 52, 0.35);
+    border-color: var(--primary, #24584a);
 
-    background-color: rgba(255, 247, 242, 0.9);
+    background-color: var(--primary-soft, #eaf0eb);
   }
 }
 
@@ -39351,7 +39351,7 @@ fieldset.merchant-promo-form-body {
 
 .order-detail-food-item:hover .order-detail-food-price {
   scale: 1.06;
-  color: #ea580c;
+  color: #88471e;
 }
 
 /* Topping */
@@ -39449,13 +39449,13 @@ fieldset.merchant-promo-form-body {
 
 .order-delivery-address:hover svg {
   scale: 1.14;
-  color: #ea580c;
+  color: #88471e;
 }
 
 .order-delivery-note:hover svg {
   scale: 1.12;
   rotate: -6deg;
-  color: #ea580c;
+  color: #88471e;
 }
 
 @keyframes orderDeliveryInfoIn {
@@ -40059,7 +40059,7 @@ fieldset.merchant-promo-form-body {
   display: grid !important;
   place-items: center !important;
 
-  color: #64748b !important;
+  color: #526058 !important;
   opacity: 1 !important;
 
   transition:
@@ -41044,7 +41044,7 @@ fieldset.merchant-promo-form-body {
 
 .profile-avatar-button:hover .profile-avatar {
   scale: 1.035;
-  box-shadow: 0 16px 34px rgba(235, 93, 38, 0.3);
+  box-shadow: 0 4px 14px rgb(36 88 74 / 18%);
 }
 
 .profile-avatar-button:hover .profile-avatar-camera {
@@ -41339,8 +41339,8 @@ fieldset.merchant-promo-form-body {
 
 .profile-page-polished .profile-save-button:hover:not(:disabled) {
   translate: 0 -2px;
-  background: linear-gradient(135deg, #fb793c, #eb5c26);
-  box-shadow: 0 13px 26px rgba(235, 92, 38, 0.29);
+  background: var(--primary-hover, #1c463b);
+  box-shadow: none;
 }
 
 .profile-page-polished .profile-save-button:disabled {
@@ -41373,7 +41373,7 @@ fieldset.merchant-promo-form-body {
 
 .profile-page-polished .profile-address-link:hover {
   translate: 0 -3px;
-  border-color: rgba(239, 101, 44, 0.25);
+  border-color: var(--primary, #24584a);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 16px 36px rgba(58, 40, 29, 0.09);
 }
@@ -41401,7 +41401,7 @@ fieldset.merchant-promo-form-body {
 }
 
 .profile-page-polished .profile-address-text span {
-  color: #8f837b;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -42367,7 +42367,7 @@ button.profile-tool-card {
   position: relative;
   z-index: 1;
   margin: 0 0 16px;
-  color: #8c8078;
+  color: #526058;
   font-size: 11px;
   line-height: 1.55;
 }
@@ -42378,7 +42378,7 @@ button.profile-tool-card {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #b76a43;
+  color: #88471e;
   font-size: 10px;
   font-weight: 700;
 }
@@ -42537,7 +42537,7 @@ button.profile-tool-card {
 
 .profile-security-summary p {
   margin: 0;
-  color: #8f837b;
+  color: #526058;
   font-size: 11px;
 }
 
@@ -42875,7 +42875,7 @@ button.profile-tool-card {
 
 .forgot-password-primary:hover:not(:disabled) {
   translate: 0 -2px;
-  box-shadow: 0 13px 26px rgba(235, 92, 38, 0.29);
+  box-shadow: none;
 }
 
 .forgot-password-error {
@@ -44237,12 +44237,12 @@ button.profile-tool-card {
 
 .merchant-legal-page .merchant-info-field input:disabled {
     background: #f8fafc;
-    color: #64748b;
+    color: #526058;
     cursor: not-allowed;
 }
 
 .merchant-legal-help {
-    color: #64748b;
+    color: #526058;
     font-size: 14px;
     line-height: 1.7;
 }
@@ -44252,7 +44252,7 @@ button.profile-tool-card {
 }
 
 .merchant-legal-help a {
-    color: #ea580c;
+    color: #88471e;
     font-weight: 600;
     text-decoration: none;
 }
@@ -44293,7 +44293,7 @@ button.profile-tool-card {
         padding: 5px 9px;
         border-radius: 20px;
         background: #f1f5f9;
-        color: #64748b;
+        color: #526058;
         font-size: 12px;
     }
 
@@ -44303,7 +44303,7 @@ button.profile-tool-card {
         }
 
 .merchant-legal-document > p {
-    color: #64748b;
+    color: #526058;
     font-size: 13px;
     line-height: 1.6;
 }
@@ -44403,7 +44403,7 @@ button.profile-tool-card {
 
 .merchant-contract-fee {
     display: block;
-    color: #ea580c;
+    color: #88471e;
     font-size: 38px;
     line-height: 1.2;
 }
@@ -44422,7 +44422,7 @@ button.profile-tool-card {
 
     .merchant-contract-dates span,
     .merchant-contract-policy {
-        color: #64748b;
+        color: #526058;
         font-size: 14px;
         line-height: 1.7;
     }
@@ -44440,7 +44440,7 @@ button.profile-tool-card {
 }
 
 .merchant-contract-links a {
-    color: #ea580c;
+    color: #88471e;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
@@ -44480,7 +44480,7 @@ button.profile-tool-card {
     }
 
 .merchant-contract-sign-note {
-    color: #64748b;
+    color: #526058;
     font-size: 13px;
     line-height: 1.7;
 }
@@ -44493,7 +44493,7 @@ button.profile-tool-card {
 
 .admin-contract-back,
 .admin-contract-view-link {
-    color: #ea580c;
+    color: #88471e;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
@@ -44540,7 +44540,7 @@ button.profile-tool-card {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #ea580c;
+    color: #88471e;
     overflow-wrap: anywhere;
 }
 
@@ -44788,14 +44788,14 @@ button.profile-tool-card {
             height: 28px;
             border-radius: 50%;
             background: #fff7ed;
-            color: #ea580c;
+            color: #88471e;
             font-size: 13px;
             font-weight: 700;
         }
 
     .merchant-contract-resubmit-steps p {
         margin: 2px 0 0;
-        color: #64748b;
+        color: #526058;
         font-size: 14px;
         line-height: 1.7;
     }
@@ -44848,7 +44848,7 @@ button.profile-tool-card {
     height: 46px;
     border-radius: 14px;
     background: #fff7ed;
-    color: #ea580c;
+    color: #88471e;
 }
 
 .merchant-setup-heading h2 {
@@ -45547,7 +45547,7 @@ button.profile-tool-card {
   transform: rotate(-10deg) scale(1.12);
   background-color: var(--primary);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(244, 81, 30, 0.35);
+  box-shadow: none;
 }
 
 .admin-pro-brand-icon {
@@ -46522,7 +46522,7 @@ button.profile-tool-card {
 
 .customer-voucher-action:hover:not(:disabled) {
   transform: translate3d(0, -1px, 0) scale(1.02);
-  box-shadow: 0 4px 12px rgba(244, 81, 30, 0.25);
+  box-shadow: none;
 }
 
 .customer-voucher-action:active:not(:disabled) {
@@ -46722,7 +46722,7 @@ select:focus-visible {
     padding: 11px 14px;
     border: 1px solid #e7e5e4;
     border-radius: 10px;
-    color: #a8a29e;
+    color: #526058;
     background: #fafaf9;
 }
 
@@ -46845,7 +46845,7 @@ select:focus-visible {
     }
 
 .admin-contracts-detail {
-    color: #ea580c;
+    color: #88471e;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -47183,9 +47183,9 @@ select:focus-visible {
 }
 
 .wallet-refresh-button:hover:not(:disabled) {
-  border-color: #edb89f;
-  color: #df5927;
-  background: #fff9f5;
+  border-color: var(--primary, #24584a);
+  color: var(--primary-hover, #1c463b);
+  background: var(--primary-soft, #eaf0eb);
 }
 
 .wallet-refresh-button:disabled {
@@ -48307,7 +48307,7 @@ select:focus-visible {
   margin-bottom: 12px;
   font-size: 12.5px;
   font-weight: 550;
-  color: #64748b;
+  color: #526058;
 }
 
 .revenue-chart-legend .legend-item {
@@ -48349,7 +48349,7 @@ select:focus-visible {
   background: #fafaf9;
   border-radius: 10px;
   border: 1px dashed #e2e8f0;
-  color: #94a3b8;
+  color: #526058;
   font-size: 13px;
 }
 
@@ -48465,7 +48465,7 @@ select:focus-visible {
 }
 
 .admin-toolbar-info small {
-  color: #94a3b8;
+  color: #526058;
   margin-left: 4px;
 }
 
@@ -48499,7 +48499,7 @@ select:focus-visible {
 .admin-chart-period-summary small {
   display: block;
   font-size: 11px;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .admin-chart-period-summary strong {
@@ -48524,7 +48524,7 @@ select:focus-visible {
 
 .admin-chart-caption {
   font-size: 11px;
-  color: #94a3b8;
+  color: #526058;
   line-height: 1.5;
   margin-top: 12px;
   border-top: 1px solid #f8fafc;
@@ -48597,7 +48597,7 @@ select:focus-visible {
 
 .status-card-data small {
   font-size: 11px;
-  color: #64748b;
+  color: #526058;
   font-weight: 550;
 }
 
@@ -48625,7 +48625,7 @@ select:focus-visible {
   padding: 4px 10px;
   border-radius: 999px;
   background: #f0fdf4;
-  color: #16a34a;
+  color: #276548;
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -48704,7 +48704,7 @@ select:focus-visible {
 .admin-task-card .task-info p {
   margin: 2px 0 0;
   font-size: 11px;
-  color: #64748b;
+  color: #526058;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -48714,7 +48714,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .admin-task-card .task-badge span {
@@ -48731,7 +48731,7 @@ select:focus-visible {
 
 .admin-task-card .task-badge span.has-count {
   background: #ffedd5;
-  color: #ea580c;
+  color: #88471e;
 }
 
 .admin-task-card .task-badge span.has-urgent {
@@ -48741,7 +48741,7 @@ select:focus-visible {
 
 .admin-task-card .task-badge span.zero {
   background: #f1f5f9;
-  color: #94a3b8;
+  color: #526058;
 }
 
 /* --- MERCHANT LIVE EYEBROW & SOUND TOGGLE --- */
@@ -48847,7 +48847,7 @@ select:focus-visible {
   justify-content: center;
   text-align: center;
   padding: 28px 20px;
-  color: #64748b;
+  color: #526058;
 }
 
 .empty-check-icon {
@@ -48862,7 +48862,7 @@ select:focus-visible {
 
 .merchant-priority-empty p {
   font-size: 12px;
-  color: #94a3b8;
+  color: #526058;
   margin: 4px 0 0;
   max-width: 480px;
 }
@@ -48919,14 +48919,14 @@ select:focus-visible {
   align-items: center;
   gap: 4px;
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #526058;
   margin-top: 4px;
 }
 
 .priority-order-money {
   font-size: 14.5px;
   font-weight: 700;
-  color: #ea580c;
+  color: #88471e;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -49054,7 +49054,7 @@ select:focus-visible {
 
 .merchant-chart-header p {
   font-size: 12px;
-  color: #64748b;
+  color: #526058;
   margin: 0;
 }
 
@@ -49074,7 +49074,7 @@ select:focus-visible {
 .merchant-chart-totals small {
   display: block;
   font-size: 11px;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .merchant-chart-totals strong {
@@ -49105,7 +49105,7 @@ select:focus-visible {
 
 .merchant-chart-caption {
   font-size: 11px;
-  color: #94a3b8;
+  color: #526058;
   line-height: 1.5;
   margin-top: 12px;
   border-top: 1px solid #f8fafc;
@@ -49236,7 +49236,7 @@ select:focus-visible {
   justify-content: center;
   text-align: center;
   padding: 30px 16px;
-  color: #16a34a;
+  color: #276548;
   flex: 1;
 }
 
@@ -49249,7 +49249,7 @@ select:focus-visible {
 .merchant-alerts-empty p {
   margin: 4px 0 0;
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #526058;
   max-width: 320px;
 }
 
@@ -49304,7 +49304,7 @@ select:focus-visible {
 
 .review-customer-info small {
   font-size: 11px;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .review-stars {
@@ -49332,7 +49332,7 @@ select:focus-visible {
 
 .review-time {
   font-size: 10.5px;
-  color: #94a3b8;
+  color: #526058;
 }
 
 .merchant-reviews-empty {
@@ -49355,7 +49355,7 @@ select:focus-visible {
 .merchant-reviews-empty p {
   margin: 4px 0 0;
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #526058;
   max-width: 300px;
 }
 
@@ -49437,7 +49437,7 @@ select:focus-visible {
   border: 1px solid #e2e8f0;
   border-radius: 5px;
   background: #f8fafc;
-  color: #64748b;
+  color: #526058;
   cursor: pointer;
   transition: all 0.18s ease;
 }
@@ -49465,7 +49465,7 @@ select:focus-visible {
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background: transparent;
-  color: #64748b;
+  color: #526058;
   cursor: pointer;
   transition: all 0.15s ease;
 }

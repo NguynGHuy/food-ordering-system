@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import OrderAttentionList from "../components/OrderAttentionList";
 import { useCallback, useEffect, useRef, useState } from "react";
 import RestaurantSetupProgress from "../components/RestaurantSetupProgress";
@@ -466,7 +467,7 @@ function QuanHome() {
               <span className="priority-pulse-dot" />
               <div>
                 <h2>Đơn hàng cần xử lý ngay</h2>
-                <p>Tiếp nhận và chuẩn bị món nhanh chóng để tài xế kịp lấy hàng</p>
+                <p>Tiếp nhận và chuẩn bị món nhanh chóng để giao cho khách đúng hẹn</p>
               </div>
             </div>
             <span className="priority-count-badge">
@@ -637,47 +638,47 @@ function QuanHome() {
 
           <div className="merchant-alerts-list">
             {alerts.donChoLau > 0 && (
-              <div className="alert-item is-warning" onClick={() => navigate("/quan/don-hang?maTrangThai=1")}>
+              <Link className="alert-item is-warning" to="/quan/don-hang?maTrangThai=1">
                 <Clock3 size={18} />
                 <div className="alert-text">
                   <strong>{alerts.donChoLau} đơn chờ quá 15 phút chưa xác nhận</strong>
                   <p>Hãy kiểm tra và xác nhận ngay để khách không hủy đơn.</p>
                 </div>
                 <ArrowRight size={15} />
-              </div>
+              </Link>
             )}
 
             {alerts.monTamNgung > 0 && (
-              <div className="alert-item" onClick={() => navigate("/quan/menu")}>
+              <Link className="alert-item" to="/quan/menu">
                 <PackageX size={18} />
                 <div className="alert-text">
                   <strong>{alerts.monTamNgung} món đang tạm ngừng bán</strong>
                   <p>Món ăn bị ẩn khỏi thực đơn do hết nguyên liệu hoặc tạm tắt.</p>
                 </div>
                 <ArrowRight size={15} />
-              </div>
+              </Link>
             )}
 
             {alerts.voucherSapHetHan > 0 && (
-              <div className="alert-item" onClick={() => navigate("/quan/khuyen-mai")}>
+              <Link className="alert-item" to="/quan/khuyen-mai">
                 <TicketPercent size={18} />
                 <div className="alert-text">
                   <strong>{alerts.voucherSapHetHan} chương trình ưu đãi sắp hết hạn (3 ngày)</strong>
                   <p>Gia hạn hoặc tạo mới voucher để giữ chân khách hàng quen.</p>
                 </div>
                 <ArrowRight size={15} />
-              </div>
+              </Link>
             )}
 
             {alerts.hopDongSapHetHan && (
-              <div className="alert-item is-warning" onClick={() => navigate("/quan/hop-dong")}>
+              <Link className="alert-item is-warning" to="/quan/hop-dong">
                 <FileText size={18} />
                 <div className="alert-text">
                   <strong>Hợp đồng quán sắp hết hạn vào {alerts.ngayHetHanHopDong || "30 ngày tới"}</strong>
                   <p>Liên hệ quản trị viên hoặc chuẩn bị gia hạn hợp đồng mới.</p>
                 </div>
                 <ArrowRight size={15} />
-              </div>
+              </Link>
             )}
 
             {!hasAnyAlert && (

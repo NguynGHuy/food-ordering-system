@@ -81,6 +81,10 @@ export default function RevenueAreaChart({
   const [svgWidth, setSvgWidth] = useState<number>(700);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const hasData = data?.some(
+    (item) => item.value1 !== 0 || (item.value2 ?? 0) !== 0 || (item.count ?? 0) !== 0,
+  );
+
   // ResizeObserver to ensure SVG coordinate space matches real container pixels 1:1
   // This eliminates any horizontal text stretching or distortion!
   useEffect(() => {
@@ -103,11 +107,9 @@ export default function RevenueAreaChart({
 
     observer.observe(elem);
     return () => observer.disconnect();
-  }, []);
+  }, [hasData]);
 
-  const hasData = data?.some(
-    (item) => item.value1 !== 0 || (item.value2 ?? 0) !== 0 || (item.count ?? 0) !== 0,
-  );
+
 
   if (!data || data.length === 0 || !hasData) {
     return (
@@ -197,6 +199,23 @@ export default function RevenueAreaChart({
 
       <div className="revenue-chart-svg-wrap" style={{ height }}>
         <svg
+          tabIndex={0}
+          role="slider"
+          aria-label="Ngày báo cáo doanh thu"
+          aria-valuemin={1}
+          aria-valuemax={pointsCount}
+          aria-valuenow={Math.min(hoverIndex ?? 0, pointsCount - 1) + 1}
+          aria-valuetext={activePoint ? activePoint.fullDate + ", " + series1Name + ": " + formatVnd(activePoint.value1) +
+            (series2Name ? ", " + series2Name + ": " + formatVnd(activePoint.value2 ?? 0) : "") : data[0].fullDate}
+          onFocus={() => setHoverIndex(index => index ?? 0)}
+          onBlur={() => setHoverIndex(null)}
+          onKeyDown={event => {
+            const index = hoverIndex ?? 0;
+            const next = { ArrowRight: index + 1, ArrowUp: index + 1, ArrowLeft: index - 1, ArrowDown: index - 1, Home: 0, End: pointsCount - 1 }[event.key];
+            if (next === undefined) return;
+            event.preventDefault();
+            setHoverIndex(Math.min(pointsCount - 1, Math.max(0, next)));
+          }}
           viewBox={`0 0 ${svgWidth} ${height}`}
           className="revenue-chart-svg"
         >
@@ -334,19 +353,15 @@ export default function RevenueAreaChart({
             return (
               <rect
                 key={idx}
-                x={Math.max(x, paddingLeft)}
+                x={pointsCount === 1 ? paddingLeft : Math.max(x, paddingLeft)}
                 y={paddingTop}
-                width={Math.max(xStep, 24)}
+                width={pointsCount === 1 ? chartWidth : (idx === 0 || idx === pointsCount - 1 ? xStep / 2 : xStep)}
                 height={chartHeight}
                 fill="transparent"
                 style={{ cursor: "pointer" }}
-                tabIndex={0}
-                role="button"
-                aria-label={`${data[idx].fullDate}: ${series1Name} ${formatVnd(data[idx].value1)}`}
+                aria-hidden="true"
                 onPointerEnter={() => setHoverIndex(idx)}
                 onPointerDown={() => setHoverIndex(idx)}
-                onFocus={() => setHoverIndex(idx)}
-                onBlur={() => setHoverIndex(null)}
               />
             );
           })}

@@ -454,7 +454,7 @@ function RestaurantOrderDetail() {
                 </div>
                 <div className="discount">
                   <span>Giảm giá</span>
-                  <strong>-{formatMoney(order.soTienGiam)}</strong>
+                  <strong>{formatMoney(-Math.abs(order.soTienGiam) || 0)}</strong>
                 </div>
                 <div className="total">
                   <span>Thành tiền</span>

@@ -125,7 +125,7 @@ function EditPromotionForm({
                 <button
                     type="button"
                     aria-label="Đóng"
-                    onClick={onCancel}
+                    data-dialog-close onClick={onCancel}
                     disabled={busy}
                 >
                     <X size={18} />

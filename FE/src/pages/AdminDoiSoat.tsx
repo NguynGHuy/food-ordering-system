@@ -1,3 +1,4 @@
+import { formatDateOnly } from "../utils/formatDateOnly";
 import MotionPresence from "../components/MotionPresence";
 import { useCallback, useEffect, useState } from "react";
 import { Check, Eye, LoaderCircle, Plus, RefreshCw, Search, X } from "lucide-react";
@@ -139,7 +140,7 @@ export default function AdminDoiSoat() {
     setFormCreate({ maNhaHang: "", tuNgay: "", denNgay: "" });
     setRestaurantSearch("");
     setRestaurantOptionsError("");
-    setRestaurantPickerOpen(true);
+    setRestaurantPickerOpen(false);
     setShowCreate(true);
   };
 
@@ -302,7 +303,7 @@ export default function AdminDoiSoat() {
                   <tr key={item.maDoiSoat}>
                     <td>
                       <strong>Kỳ #{item.maDoiSoat}</strong>
-                      <small>{item.tuNgay} – {item.denNgay}</small>
+                      <small><time dateTime={item.tuNgay}>{formatDateOnly(item.tuNgay)}</time> – <time dateTime={item.denNgay}>{formatDateOnly(item.denNgay)}</time></small>
                     </td>
                     <td>{item.tenNhaHang}<small>Mã: {item.maNhaHang}</small></td>
                     <td>{item.tongSoDon} đơn</td>
@@ -335,13 +336,16 @@ export default function AdminDoiSoat() {
         )}
       </section>
 
-      <MotionPresence present={Boolean(showCreate)} portal>{showCreate && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
-          <div className="admin-promotion-modal edit-modal">
-            <button className="admin-promotion-modal-close" onClick={closeCreateModal} disabled={busy} aria-label="Đóng"><X size={18} /></button>
+      <MotionPresence present={Boolean(showCreate)} dialogLabel="Tạo kỳ đối soát" portal>{showCreate && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
+          <div className="admin-promotion-modal edit-modal reconciliation-create-modal">
+            <button className="admin-promotion-modal-close" data-dialog-close onClick={closeCreateModal} disabled={busy} aria-label="Đóng"><X size={18} /></button>
             <form onSubmit={(event) => void handleCreate(event)}>
               <h2>Tạo kỳ đối soát mới</h2>
               <p className="reconciliation-form-intro">Tổng hợp các đơn đã hoàn thành và chưa thuộc kỳ đối soát nào.</p>
-              <div className="reconciliation-form-field reconciliation-restaurant-picker">
+              <div className="reconciliation-form-field reconciliation-restaurant-picker"
+                onBlur={event => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setRestaurantPickerOpen(false);
+                }}>
                 <label htmlFor="reconciliation-restaurant-search">Nhà hàng</label>
                 <div className="reconciliation-restaurant-search-wrap">
                   <Search size={16} aria-hidden="true" />
@@ -415,9 +419,9 @@ export default function AdminDoiSoat() {
           </div>
         </div>)}</MotionPresence>
 
-      <MotionPresence present={Boolean(showDetail && detailData)} portal>{showDetail && detailData && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
+      <MotionPresence present={Boolean(showDetail && detailData)} dialogLabel="Chi tiết kỳ đối soát" portal>{showDetail && detailData && (<div className="admin-promotion-modal-overlay foodie-admin-portal">
           <div className="admin-promotion-modal reconciliation-modal">
-            <button className="admin-promotion-modal-close" onClick={closeDetail}><X size={18} /></button>
+            <button className="admin-promotion-modal-close" data-dialog-close onClick={closeDetail}><X size={18} /></button>
             <div className="reconciliation-modal-title">
               <span>Nhà hàng: {detailData.tenNhaHang}</span>
               <h2>Chi tiết kỳ đối soát #{detailData.maDoiSoat}</h2>

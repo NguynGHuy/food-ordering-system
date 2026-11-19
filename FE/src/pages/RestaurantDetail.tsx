@@ -380,7 +380,7 @@ function RestaurantDetail() {
 
   const handleViewMenu = () => {
     menuRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
       block: "start",
     });
   };
@@ -706,7 +706,7 @@ function RestaurantDetail() {
             </div>
             <div className="rd-dialog-footer">
               {(cartError || (showToppingValidation && selectedFood.nhomToppings.some((group) => group.batBuocChon && !group.toppings.some((topping) => selectedToppings.includes(topping.maTopping))))) && <p className="rd-dialog-error" role="alert"><CircleAlert size={15} aria-hidden="true" />{cartError || "Vui lòng chọn đầy đủ các nhóm bắt buộc được đánh đỏ ở trên."}</p>}
-              <div className="rd-dialog-actions"><div className="rd-quantity"><span className="rd-sr-only">Số lượng</span><button type="button" aria-label="Giảm số lượng" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} aria-hidden="true" /></button><strong aria-live="polite"><span className="rd-quantity-value" key={quantity}>{quantity}</span></strong><button type="button" aria-label="Tăng số lượng" onClick={() => setQuantity((value) => Math.min(100, value + 1))}><Plus size={16} aria-hidden="true" /></button></div><button type="button" className="rd-button rd-button-primary rd-add-confirm" disabled={addingToCart} onClick={handleAddToCart}><ShoppingBag size={17} aria-hidden="true" /><span>{addingToCart ? "Đang thêm..." : "Thêm vào giỏ"}</span>{!addingToCart && <strong className="rd-money">{formatMoney((selectedFood.gia + selectedToppingTotal) * quantity)}</strong>}</button></div>
+              <div className="rd-dialog-actions"><div className="rd-quantity"><span className="rd-sr-only">Số lượng</span><button type="button" aria-label="Giảm số lượng" disabled={quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} aria-hidden="true" /></button><strong aria-live="polite"><span className="rd-quantity-value" key={quantity}>{quantity}</span></strong><button type="button" aria-label="Tăng số lượng" disabled={quantity >= 100} onClick={() => setQuantity((value) => Math.min(100, value + 1))}><Plus size={16} aria-hidden="true" /></button></div><button type="button" className="rd-button rd-button-primary rd-add-confirm" disabled={addingToCart} onClick={handleAddToCart}><ShoppingBag size={17} aria-hidden="true" /><span>{addingToCart ? "Đang thêm..." : "Thêm vào giỏ"}</span>{!addingToCart && <strong className="rd-money">{formatMoney((selectedFood.gia + selectedToppingTotal) * quantity)}</strong>}</button></div>
             </div>
           </section>
         </div>

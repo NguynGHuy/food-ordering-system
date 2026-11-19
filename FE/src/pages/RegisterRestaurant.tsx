@@ -82,7 +82,7 @@ function RegisterRestaurant() {
         <main className="auth-page">
       <CustomerAuthIntro restaurant />
             <div className="auth-card register-card">
-                <h2>Đăng ký nhà hàng</h2>
+                <h1>Đăng ký nhà hàng</h1>
 
                 <p className="auth-description">
                     Tạo tài khoản trước, sau đó hoàn thiện hồ sơ pháp lý
@@ -188,7 +188,7 @@ function RegisterRestaurant() {
                 </p>
 
                 <p className="auth-footer">
-                    Đăng ký khách hàng? <Link to="/dang-ky">Tại đây</Link>
+                    Bạn muốn đặt món? <Link to="/dang-ky">Đăng ký tài khoản khách</Link>
                 </p>
             </div>
         </main>

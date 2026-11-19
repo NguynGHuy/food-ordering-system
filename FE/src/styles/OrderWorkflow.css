@@ -26,6 +26,7 @@
 .order-support-toolbar { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 24px 0; }
 .order-support-toolbar label:first-child { flex: 1; min-width: min(260px,100%); }
 .order-support-table-scroll { overflow-x: auto; border: 1px solid #dce1da; background: #fff; }
+.order-support-table-scroll .order-support-empty { position: sticky; left: 0; margin: 0; padding: 24px 16px; color: #46554d; }
 .order-support-admin table { border-collapse: collapse; width: 100%; min-width: 780px; }
 .order-support-admin :is(th,td) { text-align: left; padding: 14px 12px; border-bottom: 1px solid #dce1da; vertical-align: top; }
 .order-support-admin td { max-width: 260px; overflow-wrap: anywhere; font-size: 14px; }

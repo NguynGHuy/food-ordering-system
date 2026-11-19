@@ -16,20 +16,28 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [invalidField, setInvalidField] = useState("");
+  function fieldError(field: string, message: string) {
+    setInvalidField(field);
+    setError(message);
+    document.getElementById(field)?.focus();
+  }
+
   const handleRegister = async () => {
     setError("");
+    setInvalidField("");
 
     // =========================
     // HỌ TÊN
     // =========================
 
     if (!hoTen.trim()) {
-      setError("Vui lòng nhập họ tên.");
+      fieldError("cg-register-1", "Vui lòng nhập họ tên.");
       return;
     }
 
     if (hoTen.trim().length < 2) {
-      setError("Họ tên phải có ít nhất 2 ký tự.");
+      fieldError("cg-register-1", "Họ tên phải có ít nhất 2 ký tự.");
       return;
     }
 
@@ -38,14 +46,14 @@ function Register() {
     // =========================
 
     if (!email.trim()) {
-      setError("Vui lòng nhập email.");
+      fieldError("cg-register-2", "Vui lòng nhập email.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email.trim())) {
-      setError("Email không đúng định dạng.");
+      fieldError("cg-register-2", "Email không đúng định dạng.");
       return;
     }
 
@@ -54,12 +62,12 @@ function Register() {
     // =========================
 
     if (!matKhau) {
-      setError("Vui lòng nhập mật khẩu.");
+      fieldError("cg-register-3", "Vui lòng nhập mật khẩu.");
       return;
     }
 
     if (matKhau.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+      fieldError("cg-register-3", "Mật khẩu phải có ít nhất 6 ký tự.");
       return;
     }
 
@@ -68,14 +76,14 @@ function Register() {
     // =========================
 
     if (!soDienThoai.trim()) {
-      setError("Vui lòng nhập số điện thoại.");
+      fieldError("cg-register-4", "Vui lòng nhập số điện thoại.");
       return;
     }
 
     const phoneRegex = /^[0-9]{10,11}$/;
 
     if (!phoneRegex.test(soDienThoai.trim())) {
-      setError("Số điện thoại phải gồm 10 hoặc 11 chữ số.");
+      fieldError("cg-register-4", "Số điện thoại phải gồm 10 hoặc 11 chữ số.");
       return;
     }
 
@@ -84,7 +92,7 @@ function Register() {
     // =========================
 
     if (!ngaySinh) {
-      setError("Vui lòng chọn ngày sinh.");
+      fieldError("cg-register-5", "Vui lòng chọn ngày sinh.");
       return;
     }
 
@@ -92,7 +100,7 @@ function Register() {
     const today = new Date();
 
     if (selectedDate > today) {
-      setError("Ngày sinh không thể ở tương lai.");
+      fieldError("cg-register-5", "Ngày sinh không thể ở tương lai.");
       return;
     }
 
@@ -101,7 +109,7 @@ function Register() {
     // =========================
 
     if (!gioiTinh) {
-      setError("Vui lòng chọn giới tính.");
+      fieldError("cg-register-6", "Vui lòng chọn giới tính.");
       return;
     }
 
@@ -131,72 +139,79 @@ function Register() {
     }
   };
 
+  const errorMessage = error && <p id="register-error" role="alert" className="auth-error">{error}</p>;
+
   return (
     <main className="auth-page">
       <CustomerAuthIntro />
-      <div className="auth-card register-card">
-        <h2>Đăng ký </h2>
+      <form className="auth-card register-card" noValidate onSubmit={event => { event.preventDefault(); void handleRegister(); }}>
+        <h1>Đăng ký </h1>
 
         <p className="auth-description">Tạo tài khoản khách hàng</p>
 
         <div className="form-group">
           <label htmlFor="cg-register-1">Họ tên </label>
 
-          <input id="cg-register-1"
+          <input id="cg-register-1" aria-invalid={invalidField === "cg-register-1"} aria-describedby={invalidField === "cg-register-1" ? "register-error" : undefined}
             type="text"
             placeholder="Nhập họ tên"
             value={hoTen}
             onChange={(e) => setHoTen(e.target.value)}
           />
+          {invalidField === "cg-register-1" && errorMessage}
         </div>
 
         <div className="form-group">
           <label htmlFor="cg-register-2">Email </label>
 
-          <input id="cg-register-2"
+          <input id="cg-register-2" aria-invalid={invalidField === "cg-register-2"} aria-describedby={invalidField === "cg-register-2" ? "register-error" : undefined}
             type="email"
             placeholder="Nhập email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          {invalidField === "cg-register-2" && errorMessage}
         </div>
 
         <div className="form-group">
           <label htmlFor="cg-register-3">Mật khẩu </label>
 
-          <input id="cg-register-3"
+          <input id="cg-register-3" aria-invalid={invalidField === "cg-register-3"} aria-describedby={invalidField === "cg-register-3" ? "register-error" : undefined}
             type="password"
             placeholder="Nhập mật khẩu"
             value={matKhau}
             onChange={(e) => setMatKhau(e.target.value)}
           />
+          {invalidField === "cg-register-3" && errorMessage}
         </div>
 
         <div className="form-group">
           <label htmlFor="cg-register-4">Số điện thoại </label>
 
-          <input id="cg-register-4"
+          <input id="cg-register-4" aria-invalid={invalidField === "cg-register-4"} aria-describedby={invalidField === "cg-register-4" ? "register-error" : undefined}
             type="tel"
             placeholder="Nhập số điện thoại"
             value={soDienThoai}
             onChange={(e) => setSoDienThoai(e.target.value)}
           />
+          {invalidField === "cg-register-4" && errorMessage}
         </div>
 
         <div className="form-group">
           <label htmlFor="cg-register-5">Ngày sinh </label>
 
-          <input id="cg-register-5"
+          <input id="cg-register-5" aria-invalid={invalidField === "cg-register-5"} aria-describedby={invalidField === "cg-register-5" ? "register-error" : undefined}
             type="date"
             value={ngaySinh}
             onChange={(e) => setNgaySinh(e.target.value)}
           />
+          {invalidField === "cg-register-5" && errorMessage}
         </div>
 
         <div className="form-group">
           <label htmlFor="cg-register-6">Giới tính </label>
 
-          <select id="cg-register-6"
+          <select id="cg-register-6" aria-invalid={invalidField === "cg-register-6"} aria-describedby={invalidField === "cg-register-6" ? "register-error" : undefined}
             value={gioiTinh}
             onChange={(e) => setGioiTinh(e.target.value)}
           >
@@ -204,26 +219,27 @@ function Register() {
             <option value="Nữ"> Nữ </option>
             <option value="Khác"> Khác </option>
           </select>
+          {invalidField === "cg-register-6" && errorMessage}
         </div>
 
-        {error && <p className="auth-error">{error}</p>}
+        {!invalidField && errorMessage}
 
         <button
           className="auth-button"
-          onClick={handleRegister}
+          type="submit"
           disabled={loading}
         >
           {loading ? "Đang đăng ký..." : "Đăng ký"}
         </button>
 
         <p className="auth-footer">
-          Đã có tài khoản ? <Link to="/dang-nhap">Đăng nhập</Link>
+          Đã có tài khoản? <Link to="/dang-nhap">Đăng nhập</Link>
         </p>
         <p className="auth-footer">
           Bạn là chủ nhà hàng?{" "}
           <Link to="/dang-ky-nha-hang">Đăng ký nhà hàng</Link>
         </p>
-      </div>
+      </form>
     </main>
   );
 }

@@ -285,7 +285,7 @@ function RestaurantCategory() {
         {categoryPage && <Pagination {...categoryPage} disabled={saving || deletingId !== null} onPageChange={(page) => void loadDanhMucs(true, page)} />}
       </section>
 
-      <MotionPresence present={Boolean(editorOpen)}>{editorOpen && (
+      <MotionPresence present={Boolean(editorOpen)} dialogLabel="Thông tin danh mục">{editorOpen && (
         <div className="merchant-category-overlay" onMouseDown={closeEditor}>
           <form
             className="merchant-category-dialog"
@@ -306,7 +306,7 @@ function RestaurantCategory() {
               <button
                 type="button"
                 aria-label="Đóng"
-                onClick={closeEditor}
+                data-dialog-close onClick={closeEditor}
                 disabled={saving}
               >
                 <X size={18} />

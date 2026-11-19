@@ -204,7 +204,7 @@ function Login() {
     <main className="auth-page">
       <CustomerAuthIntro />
       <div className="auth-card">
-        <h2>Đăng nhập</h2>
+        <h1>Đăng nhập</h1>
         <p className="auth-description">Đăng nhập để tiếp tục sử dụng dịch vụ</p>
 
         <div className="form-group">
@@ -254,10 +254,15 @@ function Login() {
         </p>
       </div>
 
-      <MotionPresence present={Boolean(forgotOpen)}>{forgotOpen && (
-        <div className="forgot-password-overlay" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title" onMouseDown={closeForgotPassword}>
-          <section className="forgot-password-dialog" onMouseDown={(event) => event.stopPropagation()}>
-            <button type="button" className="forgot-password-close" aria-label="Đóng" disabled={forgotBusy} onClick={closeForgotPassword}>
+      <MotionPresence present={Boolean(forgotOpen)} dialogLabel="Khôi phục mật khẩu">{forgotOpen && (
+        <div className="forgot-password-overlay" aria-labelledby="forgot-password-title" onMouseDown={closeForgotPassword}>
+          <section onKeyDown={event => {
+            if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement) || forgotBusy) return;
+            event.preventDefault();
+            if (forgotStep === "email") void handleRequestReset();
+            if (forgotStep === "verify") void handleResetPassword();
+          }} className="forgot-password-dialog" onMouseDown={(event) => event.stopPropagation()}>
+            <button type="button" className="forgot-password-close" aria-label="Đóng" disabled={forgotBusy} data-dialog-close onClick={closeForgotPassword}>
               <X size={18} />
             </button>
 

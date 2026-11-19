@@ -1,8 +1,9 @@
 import { ArrowLeft, House, SearchX } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function NotFound() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <main className="not-found-page">
@@ -18,10 +19,10 @@ function NotFound() {
         </p>
 
         <div className="not-found-actions">
-          <button type="button" onClick={() => navigate(-1)}>
+          {location.key !== "default" && <button type="button" onClick={() => navigate(-1)}>
             <ArrowLeft size={18} />
             Quay lại
-          </button>
+          </button>}
           <Link to="/">
             <House size={18} />
             Về trang chủ

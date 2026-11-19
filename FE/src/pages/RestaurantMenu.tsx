@@ -772,13 +772,14 @@ function RestaurantMenu() {
         </div>
       )}</MotionPresence>
 
-      <MotionPresence present={Boolean(toppingMonId !== null)}>{toppingMonId !== null && (
+      <MotionPresence present={Boolean(toppingMonId !== null)} dialogLabel="Nhóm topping của món">{toppingMonId !== null && (
         <div
           className="merchant-topping-overlay"
           onMouseDown={closeToppingManager}
         >
           <section
             className="merchant-topping-dialog"
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
           >
             <header className="merchant-topping-header">
@@ -791,7 +792,7 @@ function RestaurantMenu() {
               <button
                 type="button"
                 aria-label="Đóng"
-                onClick={closeToppingManager}
+                data-dialog-close onClick={closeToppingManager}
                 disabled={loadingTopping}
               >
                 <X size={18} />

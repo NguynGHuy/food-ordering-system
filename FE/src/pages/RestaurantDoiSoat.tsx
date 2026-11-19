@@ -1,3 +1,4 @@
+import { formatDateOnly } from "../utils/formatDateOnly";
 import MotionPresence from "../components/MotionPresence";
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Eye, RefreshCw, X } from "lucide-react";
@@ -188,7 +189,7 @@ export default function RestaurantDoiSoat() {
                   <tr key={item.maDoiSoat}>
                     <td>
                       <strong>#{item.maDoiSoat}</strong>
-                      <small>{item.tuNgay} – {item.denNgay}</small>
+                      <small><time dateTime={item.tuNgay}>{formatDateOnly(item.tuNgay)}</time> – <time dateTime={item.denNgay}>{formatDateOnly(item.denNgay)}</time></small>
                     </td>
                     <td>{item.tongSoDon} đơn</td>
                     <td>{money(item.tongPhiNenTang)}</td>
@@ -220,14 +221,14 @@ export default function RestaurantDoiSoat() {
         )}
       </section>
 
-      <MotionPresence present={Boolean(showDetail && detailData)} portal>{showDetail && detailData && (<div className="merchant-config-overlay foodie-merchant-portal">
+      <MotionPresence present={Boolean(showDetail && detailData)} dialogLabel="Chi tiết kỳ đối soát" portal>{showDetail && detailData && (<div className="merchant-config-overlay foodie-merchant-portal">
           <div className="merchant-config-dialog reconciliation-modal">
             <header className="merchant-config-header">
               <div>
                 <span>BẢNG KÊ CHI TIẾT</span>
                 <h2>Kỳ đối soát #{detailData.maDoiSoat}</h2>
               </div>
-              <button type="button" onClick={closeDetail}><X size={18} /></button>
+              <button type="button" data-dialog-close onClick={closeDetail}><X size={18} /></button>
             </header>
             <div className="merchant-config-body">
               <ReconciliationBreakdown detail={detailData} perspective="restaurant" />

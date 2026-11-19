@@ -296,6 +296,7 @@ function RestaurantOrders() {
         >
           <button
             type="button"
+            aria-pressed={selectedStatus === null}
             className={`merchant-order-tab tab-all ${
               selectedStatus === null ? "is-active" : ""
             }`}
@@ -316,6 +317,7 @@ function RestaurantOrders() {
             return (
               <button
                 key={status.maTrangThai}
+                aria-pressed={selectedStatus === status.maTrangThai}
                 type="button"
                 className={`merchant-order-tab tab-${meta.className} ${
                   selectedStatus === status.maTrangThai ? "is-active" : ""
